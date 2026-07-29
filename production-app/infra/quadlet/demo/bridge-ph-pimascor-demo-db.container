@@ -12,7 +12,7 @@ NetworkAlias=database
 # directory so the rootless container never needs permission to create the
 # intermediate /var/lib/postgresql/18 directory inside a parent bind mount.
 # :U maps ownership for the image user; :Z applies a private SELinux label.
-Volume=%h/bridge-ph/pimascor-demo/data/postgres/18/docker:/var/lib/postgresql/18/docker:U,Z
+Volume=%h/pimascor-demo/data/postgres/18/docker:/var/lib/postgresql/18/docker:U,Z
 Secret=bridge_ph_pimascor_demo_postgres_password,uid=0,gid=0,mode=0400
 Environment=POSTGRES_DB=pimascor_demo
 Environment=POSTGRES_USER=pimascor

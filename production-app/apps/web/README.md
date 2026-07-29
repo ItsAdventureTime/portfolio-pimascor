@@ -33,7 +33,7 @@ runs in the deployed application and every rebuilt artifact is validated before
 it replaces the current site:
 
 ```sh
-podman build --pull=always --output type=local,dest="$HOME/bridge-ph/pimascor-demo/web-dist" --build-arg VITE_BASE_PATH=/pimascor/demo/ --build-arg VITE_API_URL=/pimascor/demo/api/v1 --build-arg VITE_CSRF_COOKIE_NAME=bridge_ph_pimascor_demo_csrf .
+podman build --pull=always --output type=local,dest="$HOME/pimascor-demo/web-dist" --build-arg VITE_BASE_PATH=/pimascor/demo/ --build-arg VITE_API_URL=/pimascor/demo/api/v1 --build-arg VITE_CSRF_COOKIE_NAME=bridge_ph_pimascor_demo_csrf .
 ```
 
 Use the maintenance procedure in `../../infra/README.md` when replacing an

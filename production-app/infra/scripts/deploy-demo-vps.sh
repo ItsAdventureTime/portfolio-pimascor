@@ -6,7 +6,6 @@ set -eu
 # entered after logging in to the VPS.
 
 SOURCE_ROOT="$(CDPATH= cd -- "$(dirname -- "$0")/../.." && pwd)"
-RELEASE_STAMP="$(date -u +%Y%m%dT%H%M%SZ)"
 
 cd "$SOURCE_ROOT"
 
@@ -32,15 +31,19 @@ COPYFILE_DISABLE=1 tar \
 | ssh gatewaysentry "
   set -eu
   umask 077
-  release_root=\"/var/home/jk/bridge-ph\"
-  stage_dir=\"\$(mktemp -d \"\$release_root/.pimascor-demo-release.next.XXXXXX\")\"
+  app_root=\"/var/home/jk/pimascor-demo\"
+  source_dir=\"\$app_root/source\"
+  install -d -m 700 \"\$app_root\"
+  stage_dir=\"\$(mktemp -d \"\$app_root/.source.next.XXXXXX\")\"
   tar -xzf - -C \"\$stage_dir\"
   find \"\$stage_dir\" -type f \( -name '._*' -o -name '*.pyc' \) -delete
-  if [ -d \"\$release_root/pimascor-demo-release\" ]; then
-    mv \"\$release_root/pimascor-demo-release\" \"\$release_root/pimascor-demo-release.previous.${RELEASE_STAMP}\"
+  if [ -e \"\$source_dir\" ] && [ ! -d \"\$source_dir\" ]; then
+    printf '%s\\n' \"Refusing to replace unexpected non-directory source path: \$source_dir\" >&2
+    exit 1
   fi
-  mv \"\$stage_dir\" \"\$release_root/pimascor-demo-release\"
+  rm -rf -- \"\$source_dir\"
+  mv \"\$stage_dir\" \"\$source_dir\"
 "
 
 printf '%s\n' 'Source transfer complete. Log in to the VPS, then run:'
-printf '%s\n' 'cd /var/home/jk/bridge-ph/pimascor-demo-release && ./infra/scripts/update-demo.sh --source /var/home/jk/bridge-ph/pimascor-demo-release'
+printf '%s\n' 'cd /var/home/jk/pimascor-demo/source && ./infra/scripts/update-demo.sh --source /var/home/jk/pimascor-demo/source'

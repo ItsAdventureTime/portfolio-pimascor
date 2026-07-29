@@ -22,18 +22,34 @@ changed by this safeguard.
 
 ## Transfer from this Mac
 
+The demo VPS uses these fixed locations:
+
+```text
+/var/home/jk/pimascor-demo                    demo application files, data, and source
+/var/home/jk/.config/containers/systemd/bridge-ph/pimascor-demo
+                                               demo Quadlet definitions
+```
+
+Before transferring, remove the three mistakenly created release directories.
+Run this once from the local Mac; it connects through `gatewaysentry`, prompts
+for the VPS password, and deletes only the three named directories with no
+backup:
+
+    /Users/jk.deguzman/dev/bridge-ph_Dashboard/production-app/infra/scripts/cleanup-mistaken-demo-vps-paths.sh
+
 From the local Terminal, run this exact command. It uses the existing
 `gatewaysentry` SSH alias and prompts once for its configured VPS password:
 
     /Users/jk.deguzman/dev/bridge-ph_Dashboard/production-app/infra/scripts/deploy-demo-vps.sh
 
 It sends the current local source tree (excluding Git history, virtual
-environments, build output, and local test data) to a timestamped private
-source directory at `/var/home/jk/bridge-ph/pimascor-demo-release`. It does
-not activate the release, remove demo data,
-or B2 objects. The transfer strips macOS AppleDouble metadata and sidecar files
-before extraction, so Linux containers never receive those binary metadata
-files as possible Python migration candidates.
+environments, build output, and local test data) to
+`/var/home/jk/pimascor-demo/source`. It first extracts to a private staging
+directory, then replaces only that source directory. It creates no previous
+source snapshot and does not remove demo data or B2 objects. The transfer
+strips macOS AppleDouble metadata and sidecar files before extraction, so Linux
+containers never receive those binary metadata files as possible Python
+migration candidates.
 
 ## Activate from the VPS
 
@@ -43,7 +59,7 @@ After the source transfer completes, log in:
 
 Then run this exact VPS command:
 
-    cd /var/home/jk/bridge-ph/pimascor-demo-release && ./infra/scripts/update-demo.sh --source /var/home/jk/bridge-ph/pimascor-demo-release
+    cd /var/home/jk/pimascor-demo/source && ./infra/scripts/update-demo.sh --source /var/home/jk/pimascor-demo/source
 
 ## What the transfer does before starting
 
@@ -77,7 +93,7 @@ Run these from the VPS under the demo service account:
 systemctl --user is-active bridge-ph-pimascor-demo-db.service
 systemctl --user is-active bridge-ph-pimascor-demo-api.service
 curl --fail --show-error https://delegateops.business/pimascor/demo/api/v1/health
-grep -R --quiet --fixed-strings 'Module-specific accounting CSVs' "$HOME/bridge-ph/pimascor-demo/web-dist/assets"
+grep -R --quiet --fixed-strings 'Module-specific accounting CSVs' "$HOME/pimascor-demo/web-dist/assets"
 ```
 
 Then use a private/incognito browser window to check the public demo:
@@ -124,3 +140,4 @@ once; do not delete CDN or B2 objects as a cache workaround.
 - [Bunny CDN cache purge](https://docs.bunny.net/cdn/purge-cache)
 - [Bunny exact URL purge API](https://docs.bunny.net/api-reference/core/purge/purge-url)
 - [Podman Quadlet basic usage](https://docs.podman.io/en/latest/markdown/podman-quadlet-basic-usage.7.html)
+- [Podman user Quadlet search paths](https://docs.podman.io/en/latest/markdown/podman-systemd.unit.5.html)

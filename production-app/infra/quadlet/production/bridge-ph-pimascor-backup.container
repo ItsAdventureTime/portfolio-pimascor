@@ -17,9 +17,9 @@ Environment=AWS_DEFAULT_REGION=us-west-001
 Environment=RESTIC_REPOSITORY=s3:https://s3.us-west-001.backblazeb2.com/bridge-ph/pimascor/backups/restic
 Environment=RESTIC_PASSWORD_FILE=/run/secrets/restic_password
 Environment=RESTIC_CACHE_DIR=/cache
-Volume=%h/bridge-ph/pimascor:/pimascor:ro
+Volume=%h/pimascor:/pimascor:ro
 Volume=%h/.config/containers/systemd/bridge-ph/pimascor:/quadlets:ro
-Volume=%h/bridge-ph/pimascor/restic-cache:/cache
+Volume=%h/pimascor/restic-cache:/cache
 SecurityLabelDisable=true
 Exec=backup /pimascor /quadlets --exclude=/pimascor/data/postgres --exclude=/pimascor/restic-cache --tag=bridge-ph-pimascor-production --host=bridge-ph-pimascor-production
 ReadOnly=true

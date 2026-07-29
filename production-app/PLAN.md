@@ -93,7 +93,7 @@ Additional Budgets remain linked to the original shipment and corresponding Liqu
 Production receives separate Quadlets, networks, secrets, cookies, database, Backblaze prefixes, retention policy, accounts, and acceptance evidence under:
 
 ```text
-~/bridge-ph/pimascor
+~/pimascor
 ~/.config/containers/systemd/bridge-ph/pimascor
 ```
 
