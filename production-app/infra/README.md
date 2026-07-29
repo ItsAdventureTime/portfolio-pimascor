@@ -145,7 +145,7 @@ podman build --pull=missing --file apps/web/Containerfile --output type=local,de
 install -d -m 700 ~/bridge-ph/pimascor-demo/web-dist
 find ~/bridge-ph/pimascor-demo/web-dist -mindepth 1 -maxdepth 1 -exec rm -rf -- {} +
 cp -a ~/bridge-ph/pimascor-demo/web-dist.new/. ~/bridge-ph/pimascor-demo/web-dist/
-rmdir ~/bridge-ph/pimascor-demo/web-dist.new
+rm -rf -- ~/bridge-ph/pimascor-demo/web-dist.new
 ```
 
 Install definitions:

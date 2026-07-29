@@ -80,7 +80,8 @@ Then run this exact VPS command:
 
 The final reconciliation step runs only after the corrected updater has built
 and verified the Caddy-served PWA. It removes only obsolete static-build
-directories matching `~/pimascor-demo/web-dist*`; it does not alter source,
+directories matching `~/pimascor-demo/web-dist*` and stale staging directories
+matching `~/bridge-ph/pimascor-demo/web-dist.next.*`; it does not alter source,
 database data, uploads, Quadlets, Caddy configuration, secrets, or the live
 `~/bridge-ph/pimascor-demo/web-dist` directory.
 

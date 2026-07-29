@@ -267,6 +267,11 @@ podman build --pull=always --tag localhost/bridge-ph-pimascor-demo-api:demo "${S
 
 install -d -m 700 "${WEB_ROOT}"
 web_stage="$(mktemp -d "${WEB_ROOT}/web-dist.next.XXXXXX")"
+cleanup_web_stage() {
+  [[ -n "${web_stage:-}" && -d "${web_stage}" ]] || return 0
+  rm -rf -- "${web_stage}"
+}
+trap cleanup_web_stage EXIT
 printf 'Building the revised static PWA into staging...\n'
 podman build \
   --pull=always \
@@ -303,7 +308,7 @@ else
 fi
 find "${WEB_ROOT}/web-dist" -mindepth 1 -maxdepth 1 -exec rm -rf -- {} +
 cp -a "${web_stage}/." "${WEB_ROOT}/web-dist/"
-rmdir "${web_stage}"
+rm -rf -- "${web_stage}"
 
 if [[ "${RESET_BASELINE}" == true ]]; then
   printf 'Applying migrations and reloading the approved synthetic demo baseline...\n'

@@ -31,5 +31,7 @@ actual_mounts="$(podman inspect caddy --format '{{range .Mounts}}{{println .Sour
 find "${APP_ROOT}" -maxdepth 1 -mindepth 1 -type d \
   \( -name 'web-dist' -o -name 'web-dist.next.*' -o -name 'web-dist.previous.*' \) \
   -print -exec rm -rf -- {} +
+find "${WEB_ROOT}" -maxdepth 1 -mindepth 1 -type d \
+  -name 'web-dist.next.*' -print -exec rm -rf -- {} +
 
-printf '%s\n' 'Removed only obsolete static-build directories under ~/pimascor-demo.'
+printf '%s\n' 'Removed only obsolete static-build directories and stale build staging directories.'
