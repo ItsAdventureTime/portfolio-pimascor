@@ -1,0 +1,44 @@
+# Add these handlers inside the existing delegateops.business site block and
+# before any catch-all handler for the domain.
+# Caddy keeps its existing public network, joins
+# bridge-ph-pimascor-demo-proxy.network solely to reach the private API, and
+# receives the compiled web-dist directory through a read-only bind mount.
+#
+# The surrounding delegateops.business block must import common_security once.
+# Email sign-in fragments never reach Caddy; the ordinary SPA handler below is
+# the correct landing route for both code entry and one-click verification.
+
+handle /pimascor/demo {
+    redir * /pimascor/demo/ 308
+}
+
+handle /pimascor/demo/api/* {
+    uri strip_prefix /pimascor/demo
+    header {
+        >Cache-Control "private, no-store"
+        >CDN-Cache-Control "no-store"
+        >Pragma "no-cache"
+        >X-Robots-Tag "noindex, nofollow, noarchive"
+    }
+    reverse_proxy bridge-ph-pimascor-demo-api:8000
+}
+
+handle_path /pimascor/demo/* {
+    header {
+        >Content-Security-Policy "default-src 'none'; script-src 'self'; script-src-attr 'none'; style-src 'self'; style-src-attr 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; connect-src 'self'; media-src 'self' blob:; object-src 'none'; frame-src 'self' blob:; frame-ancestors 'none'; worker-src 'self'; manifest-src 'self'; base-uri 'none'; form-action 'self'; upgrade-insecure-requests"
+        >X-Robots-Tag "noindex, nofollow, noarchive"
+    }
+    root * /srv/bridge-ph-pimascor-demo
+
+    route {
+        try_files {path} /index.html
+
+        @revalidate path / /index.html /sw.js /manifest.webmanifest /pimascor-app-icon.jpg /pimascor-logo.jpg /pimascor-icon-192.png /pimascor-icon-512.png /pimascor-icon-maskable-192.png /pimascor-icon-maskable-512.png /apple-touch-icon.png
+        header @revalidate >Cache-Control "public, max-age=0, must-revalidate"
+
+        @fingerprinted_assets path /assets/*
+        header @fingerprinted_assets >Cache-Control "public, max-age=31536000, immutable"
+
+        file_server
+    }
+}

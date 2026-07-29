@@ -1,0 +1,27 @@
+.DS_Store
+**/.DS_Store
+**/node_modules/
+**/dist/
+**/*.tgz
+**/*.local
+
+# Local Python environments, test output, and application runtime state
+**/.venv/
+**/__pycache__/
+**/.pytest_cache/
+**/.ruff_cache/
+**/.mypy_cache/
+**/.coverage
+**/coverage.xml
+**/htmlcov/
+**/var/
+**/*.db
+**/*.sqlite
+**/*.sqlite3
+**/tmp/
+
+# Local configuration and operational output
+.env
+.env.*
+!.env.example
+**/*.log

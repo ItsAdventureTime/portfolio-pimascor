@@ -1,0 +1,16 @@
+# Future production template. Enable only after recovery objectives and the
+# production backup service have been approved and tested.
+[Unit]
+Description=Back up PIMASCOR production every six hours
+
+[Timer]
+OnCalendar=*-*-* 00:15:00 Asia/Manila
+OnCalendar=*-*-* 06:15:00 Asia/Manila
+OnCalendar=*-*-* 12:15:00 Asia/Manila
+OnCalendar=*-*-* 18:15:00 Asia/Manila
+Persistent=true
+AccuracySec=1min
+Unit=bridge-ph-pimascor-backup.service
+
+[Install]
+WantedBy=timers.target

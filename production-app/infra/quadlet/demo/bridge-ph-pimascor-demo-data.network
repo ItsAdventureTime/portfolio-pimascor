@@ -1,0 +1,7 @@
+[Unit]
+Description=PIMASCOR demo private database network
+
+[Network]
+NetworkName=bridge-ph-pimascor-demo-data
+Driver=bridge
+Internal=true

@@ -1,0 +1,44 @@
+[Unit]
+Description=PIMASCOR demo PostgreSQL database
+
+[Container]
+Image=docker.io/library/postgres:18-alpine
+Pull=missing
+AutoUpdate=registry
+ContainerName=bridge-ph-pimascor-demo-db
+Network=bridge-ph-pimascor-demo-data.network
+NetworkAlias=database
+# PostgreSQL 18 uses /var/lib/postgresql/18/docker as PGDATA. Mount that exact
+# directory so the rootless container never needs permission to create the
+# intermediate /var/lib/postgresql/18 directory inside a parent bind mount.
+# :U maps ownership for the image user; :Z applies a private SELinux label.
+Volume=%h/bridge-ph/pimascor-demo/data/postgres/18/docker:/var/lib/postgresql/18/docker:U,Z
+Secret=bridge_ph_pimascor_demo_postgres_password,uid=0,gid=0,mode=0400
+Environment=POSTGRES_DB=pimascor_demo
+Environment=POSTGRES_USER=pimascor
+Environment=POSTGRES_PASSWORD_FILE=/run/secrets/bridge_ph_pimascor_demo_postgres_password
+Environment=PGDATA=/var/lib/postgresql/18/docker
+HealthCmd=pg_isready -U pimascor -d pimascor_demo
+HealthStartupCmd=pg_isready -U pimascor -d pimascor_demo
+HealthStartupInterval=2s
+HealthStartupTimeout=2s
+HealthStartupRetries=60
+HealthStartupSuccess=1
+HealthInterval=30s
+HealthTimeout=5s
+HealthRetries=3
+HealthOnFailure=kill
+Notify=healthy
+NoNewPrivileges=true
+PidsLimit=256
+Memory=2g
+ShmSize=256m
+LogDriver=journald
+
+[Service]
+Restart=on-failure
+RestartSec=5
+TimeoutStartSec=300
+
+[Install]
+WantedBy=default.target

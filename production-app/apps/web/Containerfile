@@ -1,0 +1,23 @@
+FROM docker.io/library/node:lts-alpine AS build
+
+WORKDIR /build
+COPY package.json package-lock.json ./
+RUN npm ci
+
+COPY index.html tsconfig*.json vite.config.ts ./
+COPY public ./public
+COPY src ./src
+
+ARG VITE_BASE_PATH=/pimascor/demo/
+ARG VITE_API_URL=/pimascor/demo/api/v1
+ARG VITE_CSRF_COOKIE_NAME=bridge_ph_pimascor_demo_csrf
+ENV VITE_BASE_PATH=${VITE_BASE_PATH}
+ENV VITE_API_URL=${VITE_API_URL}
+ENV VITE_CSRF_COOKIE_NAME=${VITE_CSRF_COOKIE_NAME}
+RUN npm run build
+
+# This artifact-only stage is exported to the host with:
+# podman build --output type=local,dest=/path/to/web-dist apps/web
+# Caddy serves these files directly; no frontend runtime container is needed.
+FROM scratch AS export
+COPY --from=build /build/dist /

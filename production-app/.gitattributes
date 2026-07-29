@@ -1,0 +1,14 @@
+# Normalize text files so commits stay portable across developer machines.
+* text=auto eol=lf
+
+# Preserve binary assets exactly.
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.ico binary
+*.pdf binary
+*.docx binary
+*.xlsx binary
+
+# Markdown uses two trailing spaces for an explicit line break.
+*.md whitespace=-trailing-space

@@ -1,0 +1,5 @@
+#!/bin/sh
+
+echo 'Push blocked: this NDA-covered repository is configured for local-only use.' >&2
+echo 'Obtain written authorization and explicitly change the repository policy before publishing.' >&2
+exit 1

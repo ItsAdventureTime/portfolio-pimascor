@@ -1,0 +1,41 @@
+[build-system]
+requires = ["hatchling==1.31.0"]
+build-backend = "hatchling.build"
+
+[project]
+name = "pimascor-api"
+version = "0.1.0"
+description = "PIMASCOR operational and finance API"
+requires-python = ">=3.12"
+dependencies = [
+  "alembic==1.18.5",
+  "argon2-cffi==25.1.0",
+  "boto3==1.43.52",
+  "email-validator==2.3.0",
+  "fastapi==0.139.2",
+  "httpx==0.28.1",
+  "psycopg[binary]==3.3.4",
+  "pydantic==2.13.4",
+  "pydantic-settings==2.14.2",
+  "python-multipart==0.0.32",
+  "sqlalchemy==2.0.51",
+  "uvicorn==0.51.0",
+]
+
+[project.optional-dependencies]
+dev = [
+  "httpx2==2.7.0",
+  "pytest==9.1.1",
+  "pytest-cov==7.1.0",
+]
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/pimascor_api"]
+
+[tool.pytest.ini_options]
+addopts = "-q"
+testpaths = ["tests"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"

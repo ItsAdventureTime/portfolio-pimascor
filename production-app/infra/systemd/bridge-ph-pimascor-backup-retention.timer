@@ -1,0 +1,13 @@
+# Future production template. Enable only with the approved production
+# retention policy.
+[Unit]
+Description=Prune expired PIMASCOR production snapshots every Sunday
+
+[Timer]
+OnCalendar=Sun *-*-* 05:00:00 Asia/Manila
+Persistent=true
+AccuracySec=5min
+Unit=bridge-ph-pimascor-backup-retention.service
+
+[Install]
+WantedBy=timers.target

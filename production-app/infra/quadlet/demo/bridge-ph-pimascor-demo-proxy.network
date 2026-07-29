@@ -1,0 +1,7 @@
+[Unit]
+Description=PIMASCOR demo private reverse-proxy network
+
+[Network]
+NetworkName=bridge-ph-pimascor-demo-proxy
+Driver=bridge
+Internal=true

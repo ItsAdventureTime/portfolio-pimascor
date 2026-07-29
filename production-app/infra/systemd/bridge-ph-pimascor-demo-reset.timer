@@ -1,0 +1,11 @@
+[Unit]
+Description=Reset the PIMASCOR team demo every day at 03:00 Asia/Manila
+
+[Timer]
+OnCalendar=*-*-* 03:00:00 Asia/Manila
+Persistent=true
+AccuracySec=1min
+Unit=bridge-ph-pimascor-demo-reset.service
+
+[Install]
+WantedBy=timers.target

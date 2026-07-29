@@ -1,0 +1,9 @@
+#!/bin/sh
+set -eu
+
+git diff --cached --check
+
+if git grep --cached -nI -E 'BEGIN [A-Z ]*PRIVATE KEY|AKIA[0-9A-Z]{16}|ghp_[A-Za-z0-9]{36}|xox[baprs]-' >/dev/null 2>&1; then
+  echo 'Commit blocked: staged content contains a high-signal private-key or token pattern.' >&2
+  exit 1
+fi

@@ -1,0 +1,45 @@
+[Unit]
+Description=Reset PIMASCOR demo to approved synthetic data
+After=bridge-ph-pimascor-demo-db.service
+Requires=bridge-ph-pimascor-demo-db.service
+
+[Container]
+Image=localhost/bridge-ph-pimascor-demo-api:demo
+Pull=never
+ContainerName=bridge-ph-pimascor-demo-reset
+Network=bridge-ph-pimascor-demo-egress.network
+Network=bridge-ph-pimascor-demo-data.network
+Secret=bridge_ph_pimascor_demo_database_url,uid=10001,gid=10001,mode=0400
+Secret=bridge_ph_pimascor_demo_b2_key_id,uid=10001,gid=10001,mode=0400
+Secret=bridge_ph_pimascor_demo_b2_application_key,uid=10001,gid=10001,mode=0400
+# Maintenance mode retains production database-secret enforcement without
+# requiring unrelated email or browser-session secrets in this reset job.
+Environment=APP_ENV=maintenance
+Environment=DEPLOYMENT_TIER=demo
+Environment=DATABASE_URL_FILE=/run/secrets/bridge_ph_pimascor_demo_database_url
+Environment=B2_ENDPOINT_URL=https://s3.us-west-001.backblazeb2.com
+Environment=B2_REGION=us-west-001
+Environment=B2_BUCKET=bridge-ph
+Environment=B2_OBJECT_PREFIX=pimascor/demo
+Environment=B2_KEY_ID_FILE=/run/secrets/bridge_ph_pimascor_demo_b2_key_id
+Environment=B2_APPLICATION_KEY_FILE=/run/secrets/bridge_ph_pimascor_demo_b2_application_key
+Timezone=Asia/Manila
+Exec=python -m pimascor_api.demo_reset
+ReadOnly=true
+ReadOnlyTmpfs=true
+Tmpfs=/tmp:rw,size=32m,mode=1777
+NoNewPrivileges=true
+DropCapability=all
+PidsLimit=64
+Memory=512m
+LogDriver=journald
+
+[Service]
+Type=oneshot
+Restart=no
+# Briefly close the API while the demo object prefix and database baseline are
+# replaced. ExecStopPost runs after success and failure; --no-block avoids a
+# systemd job-ordering deadlock.
+ExecStartPre=/usr/bin/systemctl --user stop bridge-ph-pimascor-demo-api.service
+ExecStopPost=-/usr/bin/systemctl --user start --no-block bridge-ph-pimascor-demo-api.service
+TimeoutStartSec=120

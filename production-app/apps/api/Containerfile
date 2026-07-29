@@ -1,0 +1,23 @@
+FROM docker.io/library/python:3.14-slim
+
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1 \
+    PATH=/opt/pimascor/bin:${PATH}
+
+RUN groupadd --system --gid 10001 pimascor \
+    && useradd --system --uid 10001 --gid pimascor --home-dir /opt/pimascor --shell /usr/sbin/nologin pimascor
+
+WORKDIR /opt/pimascor
+COPY pyproject.toml alembic.ini ./
+COPY migrations ./migrations
+COPY src ./src
+COPY container/entrypoint.sh ./bin/entrypoint
+
+RUN python -m pip install --no-cache-dir . \
+    && chmod 0555 ./bin/entrypoint \
+    && chown -R pimascor:pimascor /opt/pimascor
+
+USER pimascor
+EXPOSE 8000
+
+ENTRYPOINT ["/opt/pimascor/bin/entrypoint"]

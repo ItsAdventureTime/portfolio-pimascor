@@ -1,0 +1,76 @@
+[Unit]
+Description=PIMASCOR demo API
+After=bridge-ph-pimascor-demo-db.service
+Requires=bridge-ph-pimascor-demo-db.service
+
+[Container]
+Image=localhost/bridge-ph-pimascor-demo-api:demo
+Pull=never
+AutoUpdate=local
+ContainerName=bridge-ph-pimascor-demo-api
+# Attach the ordinary bridge first so outbound email and future object-storage
+# traffic has a default route. The proxy and database networks remain private.
+Network=bridge-ph-pimascor-demo-egress.network
+Network=bridge-ph-pimascor-demo-proxy.network
+Network=bridge-ph-pimascor-demo-data.network
+NetworkAlias=bridge-ph-pimascor-demo-api
+Secret=bridge_ph_pimascor_demo_database_url,uid=10001,gid=10001,mode=0400
+Secret=bridge_ph_pimascor_demo_resend_api_key,uid=10001,gid=10001,mode=0400
+Secret=bridge_ph_pimascor_demo_b2_key_id,uid=10001,gid=10001,mode=0400
+Secret=bridge_ph_pimascor_demo_b2_application_key,uid=10001,gid=10001,mode=0400
+Environment=APP_ENV=production
+Environment=DEPLOYMENT_TIER=demo
+Environment=APP_NAME=PIMASCOR-Demo-API
+Timezone=Asia/Manila
+Environment=DATABASE_URL_FILE=/run/secrets/bridge_ph_pimascor_demo_database_url
+# Pydantic Settings decodes list-valued environment variables as JSON before
+# field validators run, so preserve the inner JSON quotes in the value.
+Environment='FRONTEND_ORIGINS=["https://delegateops.business"]'
+Environment=PUBLIC_APP_URL=https://delegateops.business/pimascor/demo/
+Environment=SESSION_COOKIE_NAME=bridge_ph_pimascor_demo_session
+Environment=CSRF_COOKIE_NAME=bridge_ph_pimascor_demo_csrf
+Environment=SESSION_COOKIE_SECURE=true
+Environment=SESSION_TTL_HOURS=12
+Environment=EMAIL_CODE_TTL_MINUTES=5
+Environment=EMAIL_PROVIDER=resend
+Environment=RESEND_API_KEY_FILE=/run/secrets/bridge_ph_pimascor_demo_resend_api_key
+Environment=EMAIL_FROM_ADDRESS=no-reply@delegateops.business
+Environment=INCIDENT_EMAIL_ENABLED=true
+Environment=INCIDENT_ADMIN_EMAIL=alyssa.d@bridge-ph.com
+Environment=INCIDENT_DEVELOPER_EMAIL=jk@delegateops.business
+Environment=PDF_PREVIEW_RETENTION_HOURS=12
+Environment=B2_ENDPOINT_URL=https://s3.us-west-001.backblazeb2.com
+Environment=B2_REGION=us-west-001
+Environment=B2_BUCKET=bridge-ph
+Environment=B2_OBJECT_PREFIX=pimascor/demo
+Environment=B2_KEY_ID_FILE=/run/secrets/bridge_ph_pimascor_demo_b2_key_id
+Environment=B2_APPLICATION_KEY_FILE=/run/secrets/bridge_ph_pimascor_demo_b2_application_key
+ReadOnly=true
+ReadOnlyTmpfs=true
+# Starlette spools large multipart bodies to this private host directory. This
+# avoids holding a 100 MB document in RAM or exhausting a small tmpfs.
+Volume=%h/bridge-ph/pimascor-demo/data/uploads-tmp:/tmp:U,Z
+NoNewPrivileges=true
+DropCapability=all
+PidsLimit=256
+Memory=1g
+HealthCmd=python -c "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/api/v1/health', timeout=2)"
+HealthStartupCmd=python -c "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/api/v1/health', timeout=2)"
+HealthStartupInterval=2s
+HealthStartupTimeout=3s
+HealthStartupRetries=60
+HealthStartupSuccess=1
+HealthInterval=30s
+HealthTimeout=5s
+HealthRetries=3
+HealthOnFailure=kill
+Notify=healthy
+LogDriver=journald
+
+[Service]
+Restart=on-failure
+RestartSec=5
+TimeoutStartSec=180
+
+[Install]
+WantedBy=default.target

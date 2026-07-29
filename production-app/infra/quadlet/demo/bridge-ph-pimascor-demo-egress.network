@@ -1,0 +1,6 @@
+[Unit]
+Description=PIMASCOR demo API outbound-only application network
+
+[Network]
+NetworkName=bridge-ph-pimascor-demo-egress
+Driver=bridge

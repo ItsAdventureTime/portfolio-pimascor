@@ -1,0 +1,36 @@
+.tokensave
+
+.DS_Store
+**/.DS_Store
+**/node_modules/
+**/dist/
+**/*.tgz
+**/*.local
+*.zip
+
+# Local environments, test output, and runtime state
+**/.venv/
+**/__pycache__/
+**/.pytest_cache/
+**/.ruff_cache/
+**/.mypy_cache/
+**/.coverage
+**/coverage.xml
+**/htmlcov/
+**/var/
+**/*.db
+**/*.sqlite
+**/*.sqlite3
+**/tmp/
+
+# Secrets and machine-specific configuration
+.env
+.env.*
+!.env.example
+**/*.log
+*.bundle
+
+# Credential-bearing source material must never enter Git history.
+/Logins - Demo.docx
+/Logins - Demo.pdf
+/Re: Request for Website Credentials.pdf
