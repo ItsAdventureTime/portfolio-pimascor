@@ -1,10 +1,9 @@
 #!/bin/sh
 set -eu
 
-# One-command local Mac -> demo VPS release. The gatewaysentry SSH alias owns
-# its username/host settings and prompts for the VPS password exactly once.
-# A timestamped source release is retained on the VPS; this script never
-# deletes an existing release or the live demo data directory.
+# Local Mac -> demo VPS source transfer only. The gatewaysentry SSH alias owns
+# its username/host settings. Activation is deliberately a separate command
+# entered after logging in to the VPS.
 
 SOURCE_ROOT="$(CDPATH= cd -- "$(dirname -- "$0")/../.." && pwd)"
 RELEASE_STAMP="$(date -u +%Y%m%dT%H%M%SZ)"
@@ -33,11 +32,15 @@ COPYFILE_DISABLE=1 tar \
 | ssh gatewaysentry "
   set -eu
   umask 077
-  release_root=\"\$HOME/bridge-ph/releases\"
-  release_dir=\"\$release_root/pimascor-demo-${RELEASE_STAMP}\"
-  mkdir -p \"\$release_dir\"
-  tar -xzf - -C \"\$release_dir\"
-  find \"\$release_dir\" -type f \( -name '._*' -o -name '*.pyc' \) -delete
-  cd \"\$release_dir\"
-  ./infra/scripts/update-demo.sh --source \"\$release_dir\"
+  release_root=\"/var/home/jk/bridge-ph\"
+  stage_dir=\"\$(mktemp -d \"\$release_root/.pimascor-demo-release.next.XXXXXX\")\"
+  tar -xzf - -C \"\$stage_dir\"
+  find \"\$stage_dir\" -type f \( -name '._*' -o -name '*.pyc' \) -delete
+  if [ -d \"\$release_root/pimascor-demo-release\" ]; then
+    mv \"\$release_root/pimascor-demo-release\" \"\$release_root/pimascor-demo-release.previous.${RELEASE_STAMP}\"
+  fi
+  mv \"\$stage_dir\" \"\$release_root/pimascor-demo-release\"
 "
+
+printf '%s\n' 'Source transfer complete. Log in to the VPS, then run:'
+printf '%s\n' 'cd /var/home/jk/bridge-ph/pimascor-demo-release && ./infra/scripts/update-demo.sh --source /var/home/jk/bridge-ph/pimascor-demo-release'

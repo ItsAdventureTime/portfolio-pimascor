@@ -20,7 +20,7 @@ archives, email download notices, or retain archive objects in B2. Ordinary demo
 document viewing and the existing private document storage configuration are not
 changed by this safeguard.
 
-## One command from this Mac
+## Transfer from this Mac
 
 From the local Terminal, run this exact command. It uses the existing
 `gatewaysentry` SSH alias and prompts once for its configured VPS password:
@@ -29,29 +29,39 @@ From the local Terminal, run this exact command. It uses the existing
 
 It sends the current local source tree (excluding Git history, virtual
 environments, build output, and local test data) to a timestamped private
-release directory under the VPS account's `~/bridge-ph/releases/`, then runs
-the guarded demo updater. It does not remove an existing release, demo data,
+source directory at `/var/home/jk/bridge-ph/pimascor-demo-release`. It does
+not activate the release, remove demo data,
 or B2 objects. The transfer strips macOS AppleDouble metadata and sidecar files
 before extraction, so Linux containers never receive those binary metadata
 files as possible Python migration candidates.
 
-## What the command does before starting
+## Activate from the VPS
+
+After the source transfer completes, log in:
+
+    ssh gatewaysentry
+
+Then run this exact VPS command:
+
+    cd /var/home/jk/bridge-ph/pimascor-demo-release && ./infra/scripts/update-demo.sh --source /var/home/jk/bridge-ph/pimascor-demo-release
+
+## What the transfer does before starting
 
 1. Keep the existing demo online until the new release has passed its health and
    browser checks. Do not purge Bunny yet.
-2. It transfers the reviewed source tree containing commit `0008c19` and this
+2. It transfers the reviewed source tree and this
    runbook through the private SSH connection. This repository has no public
    remote.
-3. The updater confirms that migration `20260729_0011` and its required demo
+3. The VPS updater confirms that migration `20260729_0011` and its required demo
    safeguards are present.
 4. The remote update runs as the same non-root account selected by
    `gatewaysentry`; the update script refuses root and checks that Podman is
    rootless.
 
-## Deploy on the VPS
+## Deployment behavior on the VPS
 
-The one local command above runs the guarded demo updater automatically. Its
-default behavior applies migrations and reloads the approved synthetic demo
+The VPS command above runs the guarded demo updater. Its default behavior
+applies migrations and reloads the approved synthetic demo
 baseline, which is the correct choice for a demo release. It builds the API and
 PWA, saves local rollback material, installs the
 reviewed Quadlets, runs the database forward migration through the API/reset

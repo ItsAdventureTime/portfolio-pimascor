@@ -7,6 +7,7 @@ Create Date: 2026-07-29
 
 from alembic import op
 import sqlalchemy as sa
+from sqlalchemy.dialects import postgresql
 
 
 revision = "20260729_0011"
@@ -16,7 +17,13 @@ depends_on = None
 
 
 def upgrade() -> None:
-    status = sa.Enum("QUEUED", "PROCESSING", "READY", "EXPIRED", "FAILED", name="dataexportstatus")
+    # This migration may be retried after an interrupted deployment. Creating
+    # the named PostgreSQL enum separately, then allowing the table operation
+    # to create it again, leaves that retry stuck on DuplicateObject.
+    status = postgresql.ENUM(
+        "QUEUED", "PROCESSING", "READY", "EXPIRED", "FAILED",
+        name="dataexportstatus", create_type=False,
+    )
     status.create(op.get_bind(), checkfirst=True)
     op.create_table(
         "data_exports",
@@ -47,4 +54,4 @@ def downgrade() -> None:
     op.drop_index("ix_data_exports_status", table_name="data_exports")
     op.drop_index("ix_data_exports_requested_by_id", table_name="data_exports")
     op.drop_table("data_exports")
-    sa.Enum(name="dataexportstatus").drop(op.get_bind(), checkfirst=True)
+    postgresql.ENUM(name="dataexportstatus").drop(op.get_bind(), checkfirst=True)
