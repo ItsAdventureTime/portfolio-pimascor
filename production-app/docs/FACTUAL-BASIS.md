@@ -55,7 +55,7 @@ records the command output from the VPS.
 
 ## Current deployment evidence boundary
 
-**Confirmed in repository at commit `f01543c`.** The demo transfer helper
+**Confirmed in the current local repository HEAD.** The demo transfer helper
 stages source under `~/pimascor-demo/source`; the demo updater and demo Quadlets
 use `~/pimascor-demo` for runtime data; the compiled demo PWA is written to
 `~/bridge-ph/pimascor-demo/web-dist`; production backup Quadlets use
