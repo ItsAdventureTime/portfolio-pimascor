@@ -58,8 +58,8 @@ import {
   toneForStatus,
 } from './data'
 import type { BudgetRequest, PageId, Role, Tone } from './types'
-import type { ApiActivityCategory, ApiAdminActivity, ApiBilling, ApiBudgetRequest, ApiClient, ApiClientPayment, ApiCreditMemo, ApiDocument, ApiExpenseRequest, ApiExpenseType, ApiFundingSource, ApiLiquidation, ApiPaymentQueueItem, ApiQuotation, ApiQuotationLine, ApiShipmentProfitability, ApiTaxProfile, ApiUser } from './types'
-import { ApiError, closeLiquidation, createAdditionalBudget, createBillingDraft, createBillingReplacement, createBudgetRequest, createClientPayment, createCreditMemo, createExpenseRequest, createFundingSource, createQuotation, createTaxProfile, decideBilling, decideBudgetRequest, decideCreditMemo, decideExpenseRequest, decideQuotation, emitApiIncident, finalizeBilling, getAdminActivity, getBilling, getBudgetApprovalQueue, getBudgetRequests, getBudgetReviewQueue, getClientPayments, getClients, getCreditMemos, getDocumentBlob, getDocuments, getExpenseApprovalQueue, getExpenseRequests, getFundingSources, getLiquidations, getMe, getPayments, getQuotations, getReceivables, getShipmentProfitability, getTaxProfiles, overrideBudgetAsDcs, overrideQuotationAsDcs, recordPayment, recordQuotationAcceptance, returnBudgetFromReview, reviewBudgetRequest, saveLiquidation, signOut, startPassword, submitBilling, submitBudgetRequest, submitExpenseRequest, submitLiquidation, submitQuotation, updateBillingDraft, updateBudgetRequest, updateFundingSource, updatePayment, uploadLiquidationEvidence, uploadPaymentProof, verifyEmailCode, voidBilling } from './api'
+import type { ApiActivityCategory, ApiAdminActivity, ApiBilling, ApiBudgetRequest, ApiClient, ApiClientPayment, ApiCreditMemo, ApiDataExport, ApiDocument, ApiExpenseRequest, ApiExpenseType, ApiFundingSource, ApiLiquidation, ApiPaymentQueueItem, ApiQuotation, ApiQuotationLine, ApiShipmentProfitability, ApiTaxProfile, ApiUser } from './types'
+import { ApiError, closeLiquidation, createAdditionalBudget, createBillingDraft, createBillingReplacement, createBudgetRequest, createClientPayment, createCreditMemo, createExpenseRequest, createFundingSource, createQuotation, createTaxProfile, decideBilling, decideBudgetRequest, decideCreditMemo, decideExpenseRequest, decideQuotation, downloadDataExport, emitApiIncident, finalizeBilling, getAdminActivity, getBilling, getBudgetApprovalQueue, getBudgetRequests, getBudgetReviewQueue, getClientPayments, getClients, getCreditMemos, getDataExports, getDocumentBlob, getDocuments, getExpenseApprovalQueue, getExpenseRequests, getFundingSources, getLiquidations, getMe, getPayments, getQuotations, getReceivables, getShipmentProfitability, getTaxProfiles, overrideBudgetAsDcs, overrideQuotationAsDcs, recordPayment, recordQuotationAcceptance, requestDataExport, returnBudgetFromReview, reviewBudgetRequest, saveLiquidation, signOut, startPassword, submitBilling, submitBudgetRequest, submitExpenseRequest, submitLiquidation, submitQuotation, updateBillingDraft, updateBudgetRequest, updateFundingSource, updatePayment, uploadLiquidationEvidence, uploadPaymentProof, verifyEmailCode, voidBilling } from './api'
 import { IncidentCenter } from './IncidentCenter'
 import { ActionMessageDialog, type ActionMessage } from './ActionMessageDialog'
 
@@ -2223,21 +2223,63 @@ function AccountingPageLegacy() {
 function AccountingPage() {
   const [billing, setBilling] = useState<ApiBilling[]>([])
   const [payments, setPayments] = useState<ApiClientPayment[]>([])
+  const [archives, setArchives] = useState<ApiDataExport[]>([])
   const [error, setError] = useState('')
-  useEffect(() => { Promise.all([getBilling(), getClientPayments()]).then(([bills, receipts]) => { setBilling(bills); setPayments(receipts) }).catch((reason) => setError(reason instanceof Error ? reason.message : 'Could not load accounting export data.')) }, [])
-  const entries = useMemo<(string | number)[][]>(() => [
-    ...billing.filter((item) => item.status === 'FINALIZED').map((item) => [item.reference, item.issue_date, 'Billing finalized', item.budget_request.client.name, Number(item.adjusted_net_due), 0, 'Posted']),
-    ...payments.map((item) => [item.reference, item.payment_date, 'Client payment received', `${item.client.name} • ${item.payment_reference}`, 0, Number(item.amount), 'Posted']),
-  ].sort((a, b) => String(b[1]).localeCompare(String(a[1]))), [billing, payments])
-  const debits = entries.reduce((sum, row) => sum + Number(row[4]), 0)
-  const credits = entries.reduce((sum, row) => sum + Number(row[5]), 0)
-  const csvRows = [['Source reference', 'Date', 'Event', 'Description', 'Debit', 'Credit', 'Status'], ...entries]
+  const [requestingArchive, setRequestingArchive] = useState(false)
+  const [archiveMessage, setArchiveMessage] = useState('')
+  const refresh = useCallback(() => {
+    Promise.all([getBilling(), getClientPayments(), getDataExports()])
+      .then(([bills, receipts, exportRows]) => { setBilling(bills); setPayments(receipts); setArchives(exportRows) })
+      .catch((reason) => setError(reason instanceof Error ? reason.message : 'Could not load accounting export data.'))
+  }, [])
+  useEffect(() => { refresh() }, [refresh])
+  const finalizedBilling = useMemo(() => billing.filter((item) => item.status === 'FINALIZED'), [billing])
+  const billed = finalizedBilling.reduce((sum, item) => sum + Number(item.adjusted_net_due), 0)
+  const collected = payments.reduce((sum, item) => sum + Number(item.amount), 0)
+  const outstanding = finalizedBilling.reduce((sum, item) => sum + Number(item.remaining_amount), 0)
+  const billingCsv = useMemo<(string | number)[][]>(() => [
+    ['Billing reference', 'Issue date', 'Due date', 'Client', 'Gross amount', 'VAT', 'Withholding', 'Net due', 'Collected', 'Outstanding', 'Collection status'],
+    ...finalizedBilling.map((item) => [item.reference, item.issue_date, item.due_date ?? '', item.budget_request.client.name, item.total_amount, item.vat_amount, item.withholding_amount, item.adjusted_net_due, item.collected_amount, item.remaining_amount, item.collection_status]),
+  ], [finalizedBilling])
+  const collectionsCsv = useMemo<(string | number)[][]>(() => [
+    ['Collection reference', 'Payment date', 'Client', 'Bank', 'Method', 'External reference', 'Received amount', 'Allocated amount', 'Unallocated amount'],
+    ...payments.map((item) => {
+      const allocated = item.allocations.reduce((sum, allocation) => sum + Number(allocation.amount), 0)
+      return [item.reference, item.payment_date, item.client.name, item.receiving_bank, item.payment_method, item.payment_reference, item.amount, allocated, Number(item.amount) - allocated]
+    }),
+  ], [payments])
+  const requestArchive = () => {
+    setRequestingArchive(true)
+    setArchiveMessage('')
+    requestDataExport()
+      .then((archive) => { setArchives((current) => [archive, ...current]); setArchiveMessage('Archive request accepted. It is being prepared; the requester will receive an email only after it is ready.') })
+      .catch((reason) => setArchiveMessage(reason instanceof Error ? reason.message : 'Could not request the local records archive.'))
+      .finally(() => setRequestingArchive(false))
+  }
+  const downloadArchive = (archive: ApiDataExport) => {
+    downloadDataExport(archive.id)
+      .then(({ blob, fileName }) => {
+        const url = URL.createObjectURL(blob)
+        const link = document.createElement('a')
+        link.href = url
+        link.download = fileName
+        link.click()
+        URL.revokeObjectURL(url)
+        setArchiveMessage('Download started. Store the archive only on encrypted, approved media.')
+      })
+      .catch((reason) => setArchiveMessage(reason instanceof Error ? reason.message : 'Could not download the archive.'))
+  }
   return <div className="page-stack">
     {error ? <div className="callout callout--danger"><AlertCircle size={18} /><span>{error}</span></div> : null}
-    <div className="kpi-grid kpi-grid--four"><Card className="kpi"><div className="kpi__top"><span>Exportable events</span><BookOpen size={17} /></div><strong>{entries.length}</strong><p>From persistent records</p></Card><Card className="kpi"><div className="kpi__top"><span>Billing debits</span><ArrowRight size={17} /></div><strong>{money(debits)}</strong><p>Finalized records</p></Card><Card className="kpi"><div className="kpi__top"><span>Collection credits</span><ArrowRight size={17} /></div><strong>{money(credits)}</strong><p>Recorded receipts</p></Card><Card className="kpi"><div className="kpi__top"><span>Control note</span><ShieldCheck size={17} /></div><strong>Review</strong><p>Map accounts before import</p></Card></div>
-    <Card><SectionHeader eyebrow="Administrator accounting view" title="Operational accounting export" description="This is a neutral transaction CSV, not a claim of direct compatibility with a particular accounting product. Review and map account codes before importing it into QuickBooks, Xero, or another ledger." action={<Button tone="ghost" icon={Download} onClick={() => downloadCsv('pimascor-accounting-events.csv', csvRows)}>Export Accounting CSV</Button>} />
-      <div className="callout callout--info"><BookOpen size={18} /><span>Like translating a shipping manifest into another company’s format, the amounts and references are preserved here, while an accountant maps them to the destination software’s chart of accounts.</span></div>
-      <div className="table-wrap"><table><thead><tr><th>Source reference</th><th>Date</th><th>Event</th><th>Description</th><th>Debit</th><th>Credit</th><th>Status</th></tr></thead><tbody>{entries.map((row) => <tr key={`${row[0]}-${row[2]}`}><td data-label="Source reference"><strong>{row[0]}</strong></td><td data-label="Date">{row[1]}</td><td data-label="Event">{row[2]}</td><td data-label="Description">{row[3]}</td><td data-label="Debit" className="number">{row[4] ? money(Number(row[4])) : '—'}</td><td data-label="Credit" className="number">{row[5] ? money(Number(row[5])) : '—'}</td><td data-label="Status"><Status>{row[6]}</Status></td></tr>)}</tbody></table></div>
+    <div className="kpi-grid kpi-grid--four"><Card className="kpi"><div className="kpi__top"><span>Finalized billings</span><FileText size={17} /></div><strong>{finalizedBilling.length}</strong><p>Exported from the Billing module</p></Card><Card className="kpi"><div className="kpi__top"><span>Net billed</span><ArrowRight size={17} /></div><strong>{money(billed)}</strong><p>Operational receivable, not a journal debit</p></Card><Card className="kpi"><div className="kpi__top"><span>Collections received</span><ArrowRight size={17} /></div><strong>{money(collected)}</strong><p>Exported from Client Payments</p></Card><Card className="kpi"><div className="kpi__top"><span>Outstanding</span><ShieldCheck size={17} /></div><strong>{money(outstanding)}</strong><p>Requires accountant review and mapping</p></Card></div>
+    <Card><SectionHeader eyebrow="Administrator accounting view" title="Module-specific accounting CSVs" description="The earlier combined debit/credit view was not a balanced journal. Billing and collections now export separately so the accountant can map each source module to the approved chart of accounts." action={<div className="action-row"><Button tone="ghost" icon={Download} onClick={() => downloadCsv('pimascor-billing.csv', billingCsv)}>Billing CSV</Button><Button tone="ghost" icon={Download} onClick={() => downloadCsv('pimascor-collections.csv', collectionsCsv)}>Collections CSV</Button></div>} />
+      <div className="callout callout--info"><BookOpen size={18} /><span>These are traceable operational records, not a substitute for a signed-off general-ledger posting. The destination accounting system must supply the accounts, tax treatment, and balancing entries.</span></div>
+      <div className="table-wrap"><table><thead><tr><th>Billing reference</th><th>Issue date</th><th>Client</th><th>Net due</th><th>Collected</th><th>Outstanding</th><th>Status</th></tr></thead><tbody>{finalizedBilling.map((item) => <tr key={item.id}><td data-label="Billing reference"><strong>{item.reference}</strong></td><td data-label="Issue date">{item.issue_date}</td><td data-label="Client">{item.budget_request.client.name}</td><td data-label="Net due" className="number">{money(Number(item.adjusted_net_due))}</td><td data-label="Collected" className="number">{money(Number(item.collected_amount))}</td><td data-label="Outstanding" className="number">{money(Number(item.remaining_amount))}</td><td data-label="Status"><Status>{item.collection_status}</Status></td></tr>)}</tbody></table></div>
+    </Card>
+    <Card><SectionHeader eyebrow="Administrator-only recovery copy" title="Complete local records archive" description="Creates one ZIP containing UTF-8 CSVs for operational modules plus the original uploaded files. Passwords, sessions, and login codes are deliberately excluded. The archive stays private, is available only while signed in, and is deleted one hour after completion." action={<Button icon={Archive} disabled={requestingArchive} onClick={requestArchive}>{requestingArchive ? 'Requesting archive…' : 'Request local archive'}</Button>} />
+      {archiveMessage ? <div className="callout callout--info"><ShieldCheck size={18} /><span>{archiveMessage}</span></div> : null}
+      <div className="callout callout--warning"><Clock3 size={18} /><span>Limit: two archive requests per Philippine calendar week for the whole organization. This limits compute and storage use; it is not a limit on retrying a permitted download during its one-hour availability window.</span></div>
+      {archives.length ? <div className="table-wrap"><table><thead><tr><th>Requested</th><th>Requested by</th><th>Status</th><th>Available until</th><th>Archive</th></tr></thead><tbody>{archives.map((archive) => <tr key={archive.id}><td data-label="Requested">{activityTime(archive.requested_at)}</td><td data-label="Requested by">{archive.requested_by.display_name}</td><td data-label="Status"><Status>{archive.status}</Status></td><td data-label="Available until">{archive.expires_at ? activityTime(archive.expires_at) : '—'}</td><td data-label="Archive">{archive.status === 'READY' ? <Button tone="secondary" icon={Download} onClick={() => downloadArchive(archive)}>Download {archive.size_bytes ? `(${formatBytes(archive.size_bytes)})` : ''}</Button> : archive.status === 'FAILED' ? archive.error_message ?? 'Could not create archive' : 'Email is sent when ready'}</td></tr>)}</tbody></table></div> : <EmptyState icon={Archive} title="No local archive requested" detail="When needed, request a complete recovery copy here. The archive is never made public." />}
     </Card>
   </div>
 }

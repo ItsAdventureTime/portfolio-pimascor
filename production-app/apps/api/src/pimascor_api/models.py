@@ -145,6 +145,14 @@ class IncidentDecision(str, enum.Enum):
     DISMISSED = "DISMISSED"
 
 
+class DataExportStatus(str, enum.Enum):
+    QUEUED = "QUEUED"
+    PROCESSING = "PROCESSING"
+    READY = "READY"
+    EXPIRED = "EXPIRED"
+    FAILED = "FAILED"
+
+
 class User(Base):
     __tablename__ = "users"
 
@@ -715,6 +723,27 @@ class AuditEvent(Base):
     reason: Mapped[str | None] = mapped_column(Text)
     correlation_id: Mapped[str | None] = mapped_column(String(36), index=True)
     occurred_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now, index=True)
+
+
+class DataExport(Base):
+    __tablename__ = "data_exports"
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=uuid_string)
+    requested_by_id: Mapped[str] = mapped_column(ForeignKey("users.id"), index=True)
+    status: Mapped[DataExportStatus] = mapped_column(
+        Enum(DataExportStatus), default=DataExportStatus.QUEUED, index=True
+    )
+    requested_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now, index=True)
+    started_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    completed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    expires_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), index=True)
+    storage_key: Mapped[str | None] = mapped_column(String(500))
+    file_name: Mapped[str | None] = mapped_column(String(240))
+    size_bytes: Mapped[int | None] = mapped_column(Integer)
+    sha256: Mapped[str | None] = mapped_column(String(64))
+    error_message: Mapped[str | None] = mapped_column(Text)
+
+    requested_by: Mapped[User] = relationship()
 
 
 class IncidentReport(Base):

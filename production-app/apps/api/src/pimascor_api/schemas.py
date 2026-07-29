@@ -6,6 +6,7 @@ from pydantic import BaseModel, ConfigDict, EmailStr, Field, field_validator, mo
 from .models import (
     BillingStatus,
     CreditMemoStatus,
+    DataExportStatus,
     BudgetKind,
     BudgetStatus,
     EvidenceKind,
@@ -615,6 +616,19 @@ class DocumentLibraryResponse(ApiModel):
     client_name: str
     uploaded_by: MeResponse
     available: bool
+
+
+class DataExportResponse(ApiModel):
+    id: str
+    status: DataExportStatus
+    requested_at: datetime
+    started_at: datetime | None
+    completed_at: datetime | None
+    expires_at: datetime | None
+    file_name: str | None
+    size_bytes: int | None
+    error_message: str | None
+    requested_by: MeResponse
 
 
 class LiquidationLineResponse(ApiModel):

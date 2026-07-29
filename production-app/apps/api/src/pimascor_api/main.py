@@ -10,7 +10,7 @@ from fastapi.responses import JSONResponse
 from .config import get_settings
 from .db import Base, SessionLocal, engine
 from .models import IncidentReport, IncidentSeverity, IncidentSource
-from .routers import admin_activity, auth, budget_requests, documents, expense_requests, health, incidents, operations, payments, quotations
+from .routers import admin_activity, auth, budget_requests, data_exports, documents, expense_requests, health, incidents, operations, payments, quotations
 from .services.audit import record_audit
 from .services.incidents import incident_reference, safe_trace_summary
 
@@ -222,6 +222,12 @@ def friendly_http_error(status_code: int, detail: object) -> tuple[str, str, boo
             True,
         )
     if status_code == 429:
+        if "full-record export" in detail_text.lower():
+            return (
+                "This organization has reached its two full-record archive requests for this Philippine calendar week.",
+                "Use a ready archive if one is still available, or request another after the next Philippine calendar week begins.",
+                False,
+            )
         return (
             "There have been too many attempts in a short time.",
             "Wait a moment before trying again.",
@@ -247,5 +253,6 @@ app.include_router(expense_requests.router, prefix=settings.api_prefix)
 app.include_router(payments.router, prefix=settings.api_prefix)
 app.include_router(operations.router, prefix=settings.api_prefix)
 app.include_router(documents.router, prefix=settings.api_prefix)
+app.include_router(data_exports.router, prefix=settings.api_prefix)
 app.include_router(admin_activity.router, prefix=settings.api_prefix)
 app.include_router(incidents.router, prefix=settings.api_prefix)

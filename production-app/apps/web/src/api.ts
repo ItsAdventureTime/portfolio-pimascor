@@ -1,4 +1,4 @@
-import type { ApiActivityCategory, ApiAdminActivity, ApiBilling, ApiBudgetRequest, ApiClient, ApiClientPayment, ApiCreditMemo, ApiDocument, ApiExpenseRequest, ApiExpenseType, ApiFundingSource, ApiIncident, ApiIncidentReport, ApiLiquidation, ApiPaymentQueueItem, ApiQuotation, ApiShipmentProfitability, ApiTaxProfile, ApiUser } from './types'
+import type { ApiActivityCategory, ApiAdminActivity, ApiBilling, ApiBudgetRequest, ApiClient, ApiClientPayment, ApiCreditMemo, ApiDataExport, ApiDocument, ApiExpenseRequest, ApiExpenseType, ApiFundingSource, ApiIncident, ApiIncidentReport, ApiLiquidation, ApiPaymentQueueItem, ApiQuotation, ApiShipmentProfitability, ApiTaxProfile, ApiUser } from './types'
 
 const API_BASE = import.meta.env.VITE_API_URL ?? 'http://127.0.0.1:8000/api/v1'
 const CSRF_COOKIE_NAME = import.meta.env.VITE_CSRF_COOKIE_NAME ?? 'pimascor_csrf'
@@ -467,6 +467,21 @@ export function uploadLiquidationEvidence(id: string, expectedVersion: number, k
 
 export function getDocuments() {
   return request<ApiDocument[]>('/documents')
+}
+
+export function getDataExports() {
+  return request<ApiDataExport[]>('/data-exports')
+}
+
+export function requestDataExport() {
+  return request<ApiDataExport>('/data-exports', { method: 'POST' })
+}
+
+export async function downloadDataExport(id: string) {
+  const response = await requestResponse(`/data-exports/${encodeURIComponent(id)}/download`, { cache: 'no-store' })
+  const disposition = response.headers.get('Content-Disposition') ?? ''
+  const fileName = /filename="?([^";]+)"?/i.exec(disposition)?.[1] ?? 'pimascor-records.zip'
+  return { blob: await response.blob(), fileName }
 }
 
 export async function getDocumentBlob(id: string, signal?: AbortSignal) {

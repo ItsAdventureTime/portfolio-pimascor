@@ -361,6 +361,19 @@ export interface ApiDocument {
   available: boolean
 }
 
+export interface ApiDataExport {
+  id: string
+  status: 'QUEUED' | 'PROCESSING' | 'READY' | 'EXPIRED' | 'FAILED'
+  requested_at: string
+  started_at: string | null
+  completed_at: string | null
+  expires_at: string | null
+  file_name: string | null
+  size_bytes: number | null
+  error_message: string | null
+  requested_by: ApiUser
+}
+
 export interface ApiBilling {
   id: string
   reference: string
