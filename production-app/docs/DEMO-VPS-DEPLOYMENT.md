@@ -20,35 +20,38 @@ archives, email download notices, or retain archive objects in B2. Ordinary demo
 document viewing and the existing private document storage configuration are not
 changed by this safeguard.
 
-## Before starting
+## One command from this Mac
+
+From the local Terminal, run this exact command. It uses the existing
+`gatewaysentry` SSH alias and prompts once for its configured VPS password:
+
+    /Users/jk.deguzman/dev/bridge-ph_Dashboard/production-app/infra/scripts/deploy-demo-vps.sh
+
+It sends the current local source tree (excluding Git history, virtual
+environments, build output, and local test data) to a timestamped private
+release directory under the VPS account's `~/bridge-ph/releases/`, then runs
+the guarded demo updater. It does not remove an existing release, demo data,
+or B2 objects.
+
+## What the command does before starting
 
 1. Keep the existing demo online until the new release has passed its health and
    browser checks. Do not purge Bunny yet.
-2. Transfer the reviewed `production-app` source tree containing commit
-   `0008c19` and this runbook to an approved release directory on the VPS. Use
-   your approved private transfer method; this repository has no public remote.
-3. Confirm that the release directory contains `apps/api/migrations/versions/20260729_0011_data_exports.py` and
-   `infra/scripts/update-demo.sh`.
-4. Sign in to the VPS as the same non-root account that owns the demo services.
-   The update script refuses root and checks that Podman is rootless.
+2. It transfers the reviewed source tree containing commit `0008c19` and this
+   runbook through the private SSH connection. This repository has no public
+   remote.
+3. The updater confirms that migration `20260729_0011` and its required demo
+   safeguards are present.
+4. The remote update runs as the same non-root account selected by
+   `gatewaysentry`; the update script refuses root and checks that Podman is
+   rootless.
 
 ## Deploy on the VPS
 
-Set the release path to the directory you transferred, then run the guarded
-demo updater. The default behavior applies migrations and reloads the approved
-synthetic demo baseline, which is the correct choice for a demo release.
-
-```bash
-cd /path/to/production-app
-./infra/scripts/update-demo.sh --source "$(pwd)"
-```
-
-Do not add `--keep-demo-data` unless preserving the current synthetic demo data
-is explicitly required. That option retains current demo records while applying
-forward migrations; it is not appropriate when the approved baseline needs to
-be restored.
-
-The updater builds the API and PWA, saves local rollback material, installs the
+The one local command above runs the guarded demo updater automatically. Its
+default behavior applies migrations and reloads the approved synthetic demo
+baseline, which is the correct choice for a demo release. It builds the API and
+PWA, saves local rollback material, installs the
 reviewed Quadlets, runs the database forward migration through the API/reset
 entrypoint, restarts Caddy, and probes both the health endpoint and public demo
 route. Stop if it reports an error. Do not purge the CDN after a failed update.
