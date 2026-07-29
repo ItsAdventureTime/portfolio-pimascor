@@ -233,6 +233,14 @@ class SalesQuotation(Base):
     signed_content_type: Mapped[str | None] = mapped_column(String(120))
     signed_size_bytes: Mapped[int | None] = mapped_column(Integer)
     signed_sha256: Mapped[str | None] = mapped_column(String(64))
+    mode_of_transport: Mapped[str | None] = mapped_column(String(40))
+    container_type: Mapped[str | None] = mapped_column(String(40))
+    origin: Mapped[str | None] = mapped_column(String(160))
+    destination: Mapped[str | None] = mapped_column(String(160))
+    incoterms: Mapped[str | None] = mapped_column(String(40))
+    cargo_details: Mapped[str | None] = mapped_column(String(500))
+    payment_terms: Mapped[str | None] = mapped_column(String(500))
+    validity_hours: Mapped[int] = mapped_column(Integer, default=48)
     version: Mapped[int] = mapped_column(Integer, default=1)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now)
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now, onupdate=utc_now)
@@ -240,6 +248,24 @@ class SalesQuotation(Base):
     client: Mapped[Client] = relationship()
     created_by: Mapped[User] = relationship(foreign_keys=[created_by_id])
     approved_by: Mapped[User | None] = relationship(foreign_keys=[approved_by_id])
+    lines: Mapped[list[SalesQuotationLine]] = relationship(
+        back_populates="quotation", cascade="all, delete-orphan", order_by="SalesQuotationLine.position"
+    )
+
+
+class SalesQuotationLine(Base):
+    __tablename__ = "sales_quotation_lines"
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=uuid_string)
+    quotation_id: Mapped[str] = mapped_column(ForeignKey("sales_quotations.id"), index=True)
+    section: Mapped[str] = mapped_column(String(40))
+    description: Mapped[str] = mapped_column(String(300))
+    currency: Mapped[str] = mapped_column(String(3))
+    amount: Mapped[Decimal] = mapped_column(Numeric(18, 2))
+    billed_by: Mapped[str] = mapped_column(String(30), default="PIMASCOR")
+    position: Mapped[int] = mapped_column(Integer, default=0)
+
+    quotation: Mapped[SalesQuotation] = relationship(back_populates="lines")
 
 
 class TaxProfile(Base):

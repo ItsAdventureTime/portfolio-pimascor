@@ -1,6 +1,44 @@
 from .conftest import sign_in
 
 
+def test_quotation_preserves_php_and_usd_print_lines(client):
+    requester_headers = {"X-CSRF-Token": sign_in(client, "requester")}
+    configured_client = client.get("/api/v1/clients").json()[0]
+
+    quotation = client.post(
+        "/api/v1/quotations",
+        headers=requester_headers,
+        json={
+            "client_id": configured_client["id"],
+            "shipment_reference": "ACT-USD-PHP-001",
+            "quoted_amount": "18000.00",
+            "currency": "PHP",
+            "mode_of_transport": "SEA",
+            "container_type": "FCL",
+            "origin": "Shanghai",
+            "destination": "Port of Manila",
+            "incoterms": "FOB",
+            "cargo_details": "1 x 40ft container",
+            "payment_terms": "Duties before BOC lodgment; service fees on delivery.",
+            "validity_hours": 48,
+            "terms_and_conditions": "Duties and taxes are pass-through costs subject to actual assessment.",
+            "lines": [
+                {"section": "ORIGIN_FREIGHT", "description": "International Freight", "currency": "USD", "amount": "1250.00", "billed_by": "PIMASCOR"},
+                {"section": "DESTINATION_CLEARANCE", "description": "Customs Duties & Taxes", "currency": "PHP", "amount": "18000.00", "billed_by": "BOC"},
+            ],
+        },
+    )
+
+    assert quotation.status_code == 201, quotation.text
+    payload = quotation.json()
+    assert [(line["section"], line["currency"], line["billed_by"]) for line in payload["lines"]] == [
+        ("ORIGIN_FREIGHT", "USD", "PIMASCOR"),
+        ("DESTINATION_CLEARANCE", "PHP", "BOC"),
+    ]
+    assert payload["origin"] == "Shanghai"
+    assert payload["validity_hours"] == 48
+
+
 def test_accepted_quotation_precedes_mich_and_gm_budget_approval(client, monkeypatch):
     monkeypatch.setattr("pimascor_api.routers.quotations.put_document", lambda **_: None)
     requester_headers = {"X-CSRF-Token": sign_in(client, "requester")}

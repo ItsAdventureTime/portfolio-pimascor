@@ -86,12 +86,31 @@ export interface ApiQuotation {
   signed_content_type: string | null
   signed_size_bytes: number | null
   signed_sha256: string | null
+  mode_of_transport: string | null
+  container_type: string | null
+  origin: string | null
+  destination: string | null
+  incoterms: string | null
+  cargo_details: string | null
+  payment_terms: string | null
+  validity_hours: number
+  lines: ApiQuotationLine[]
   version: number
   created_at: string
   updated_at: string
   client: ApiClient
   created_by: ApiUser
   approved_by: ApiUser | null
+}
+
+export interface ApiQuotationLine {
+  id: string
+  section: 'ORIGIN_FREIGHT' | 'DESTINATION_CLEARANCE'
+  description: string
+  currency: 'PHP' | 'USD'
+  amount: string
+  billed_by: 'PIMASCOR' | 'BOC'
+  position: number
 }
 
 export interface ApiBudgetRequest {

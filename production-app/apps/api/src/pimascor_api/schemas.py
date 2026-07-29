@@ -69,12 +69,55 @@ class ClientResponse(ApiModel):
     name: str
 
 
+class QuotationLineCreate(BaseModel):
+    section: str = Field(pattern=r"^(ORIGIN_FREIGHT|DESTINATION_CLEARANCE)$")
+    description: str = Field(min_length=2, max_length=300)
+    currency: str = Field(min_length=3, max_length=3)
+    amount: Decimal = Field(gt=0, max_digits=18, decimal_places=2)
+    billed_by: str = Field(default="PIMASCOR", pattern=r"^(PIMASCOR|BOC)$")
+
+    @field_validator("currency")
+    @classmethod
+    def supported_currency(cls, value: str) -> str:
+        value = value.upper()
+        if value not in {"PHP", "USD"}:
+            raise ValueError("Quotation lines support PHP or USD only")
+        return value
+
+
+class QuotationLineResponse(ApiModel):
+    id: str
+    section: str
+    description: str
+    currency: str
+    amount: Decimal
+    billed_by: str
+    position: int
+
+
 class QuotationCreate(BaseModel):
     client_id: str
     shipment_reference: str = Field(min_length=2, max_length=120)
     quoted_amount: Decimal = Field(gt=0, max_digits=18, decimal_places=2)
     currency: str = Field(default="PHP", min_length=3, max_length=3)
     terms_and_conditions: str = Field(min_length=10, max_length=10000)
+    mode_of_transport: str | None = Field(default=None, max_length=40)
+    container_type: str | None = Field(default=None, max_length=40)
+    origin: str | None = Field(default=None, max_length=160)
+    destination: str | None = Field(default=None, max_length=160)
+    incoterms: str | None = Field(default=None, max_length=40)
+    cargo_details: str | None = Field(default=None, max_length=500)
+    payment_terms: str | None = Field(default=None, max_length=500)
+    validity_hours: int = Field(default=48, ge=1, le=720)
+    lines: list[QuotationLineCreate] = Field(default_factory=list)
+
+    @field_validator("currency")
+    @classmethod
+    def supported_currency(cls, value: str) -> str:
+        value = value.upper()
+        if value not in {"PHP", "USD"}:
+            raise ValueError("Quotation currency must be PHP or USD")
+        return value
 
 
 class QuotationResponse(ApiModel):
@@ -94,6 +137,15 @@ class QuotationResponse(ApiModel):
     signed_content_type: str | None
     signed_size_bytes: int | None
     signed_sha256: str | None
+    mode_of_transport: str | None
+    container_type: str | None
+    origin: str | None
+    destination: str | None
+    incoterms: str | None
+    cargo_details: str | None
+    payment_terms: str | None
+    validity_hours: int
+    lines: list[QuotationLineResponse]
     version: int
     created_at: datetime
     updated_at: datetime

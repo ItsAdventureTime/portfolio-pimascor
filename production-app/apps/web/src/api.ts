@@ -188,6 +188,15 @@ export function createQuotation(input: {
   quoted_amount: string
   currency: string
   terms_and_conditions: string
+  mode_of_transport?: string
+  container_type?: string
+  origin?: string
+  destination?: string
+  incoterms?: string
+  cargo_details?: string
+  payment_terms?: string
+  validity_hours?: number
+  lines?: { section: 'ORIGIN_FREIGHT' | 'DESTINATION_CLEARANCE'; description: string; currency: 'PHP' | 'USD'; amount: string; billed_by: 'PIMASCOR' | 'BOC' }[]
 }) {
   return request<ApiQuotation>('/quotations', { method: 'POST', body: JSON.stringify(input) })
 }

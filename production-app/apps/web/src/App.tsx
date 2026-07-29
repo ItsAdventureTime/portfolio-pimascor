@@ -58,7 +58,7 @@ import {
   toneForStatus,
 } from './data'
 import type { BudgetRequest, PageId, Role, Tone } from './types'
-import type { ApiActivityCategory, ApiAdminActivity, ApiBilling, ApiBudgetRequest, ApiClient, ApiClientPayment, ApiCreditMemo, ApiDocument, ApiExpenseRequest, ApiExpenseType, ApiFundingSource, ApiLiquidation, ApiPaymentQueueItem, ApiQuotation, ApiShipmentProfitability, ApiTaxProfile, ApiUser } from './types'
+import type { ApiActivityCategory, ApiAdminActivity, ApiBilling, ApiBudgetRequest, ApiClient, ApiClientPayment, ApiCreditMemo, ApiDocument, ApiExpenseRequest, ApiExpenseType, ApiFundingSource, ApiLiquidation, ApiPaymentQueueItem, ApiQuotation, ApiQuotationLine, ApiShipmentProfitability, ApiTaxProfile, ApiUser } from './types'
 import { ApiError, closeLiquidation, createAdditionalBudget, createBillingDraft, createBillingReplacement, createBudgetRequest, createClientPayment, createCreditMemo, createExpenseRequest, createFundingSource, createQuotation, createTaxProfile, decideBilling, decideBudgetRequest, decideCreditMemo, decideExpenseRequest, decideQuotation, emitApiIncident, finalizeBilling, getAdminActivity, getBilling, getBudgetApprovalQueue, getBudgetRequests, getBudgetReviewQueue, getClientPayments, getClients, getCreditMemos, getDocumentBlob, getDocuments, getExpenseApprovalQueue, getExpenseRequests, getFundingSources, getLiquidations, getMe, getPayments, getQuotations, getReceivables, getShipmentProfitability, getTaxProfiles, overrideBudgetAsDcs, overrideQuotationAsDcs, recordPayment, recordQuotationAcceptance, returnBudgetFromReview, reviewBudgetRequest, saveLiquidation, signOut, startPassword, submitBilling, submitBudgetRequest, submitExpenseRequest, submitLiquidation, submitQuotation, updateBillingDraft, updateBudgetRequest, updateFundingSource, updatePayment, uploadLiquidationEvidence, uploadPaymentProof, verifyEmailCode, voidBilling } from './api'
 import { IncidentCenter } from './IncidentCenter'
 import { ActionMessageDialog, type ActionMessage } from './ActionMessageDialog'
@@ -170,6 +170,15 @@ function money(value: number) {
   }).format(value)
 }
 
+function moneyInCurrency(value: number, currency: 'PHP' | 'USD' | string) {
+  return new Intl.NumberFormat('en-PH', {
+    style: 'currency',
+    currency: currency === 'USD' ? 'USD' : 'PHP',
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  }).format(value)
+}
+
 type AnimatedNumberKind = 'money' | 'integer' | 'percent'
 
 function formatAnimatedNumber(value: number, kind: AnimatedNumberKind) {
@@ -231,19 +240,22 @@ function downloadCsv(fileName: string, rows: (string | number)[][]) {
   URL.revokeObjectURL(url)
 }
 
-async function printOfficialDocument() {
+async function printDocument(bodyClass: string, selector: string) {
   const cleanup = () => {
-    document.body.classList.remove('printing-official-document')
+    document.body.classList.remove(bodyClass)
     window.removeEventListener('afterprint', cleanup)
   }
-  document.body.classList.add('printing-official-document')
+  document.body.classList.add(bodyClass)
   window.addEventListener('afterprint', cleanup)
-  const images = Array.from(document.querySelectorAll<HTMLImageElement>('.print-document-host img'))
+  const images = Array.from(document.querySelectorAll<HTMLImageElement>(`${selector} img`))
   await Promise.all(images.map((image) => image.complete ? Promise.resolve() : image.decode().catch(() => undefined)))
   await new Promise<void>((resolve) => requestAnimationFrame(() => requestAnimationFrame(() => resolve())))
   window.print()
   window.setTimeout(cleanup, 1500)
 }
+
+function printOfficialDocument() { return printDocument('printing-official-document', '.print-document-host') }
+function printQuotationDocument() { return printDocument('printing-quotation-document', '.print-quotation-host') }
 
 const apiRoleToRole: Record<ApiUser['role'], Role> = {
   ADMIN: 'Admin',
@@ -722,6 +734,53 @@ function BudgetLineEditor({ lines, setLines }: { lines: BudgetFormLine[]; setLin
   </div>})}<Button tone="ghost" icon={Plus} onClick={() => setLines([...lines, { description: 'Brokerage Fee', classification: 'SERVICE_CHARGE', buying: '', selling: '' }])}>Add line item</Button></fieldset>
 }
 
+type QuotationLineDraft = {
+  section: 'ORIGIN_FREIGHT' | 'DESTINATION_CLEARANCE'
+  description: string
+  currency: 'PHP' | 'USD'
+  amount: string
+  billed_by: 'PIMASCOR' | 'BOC'
+}
+
+function QuotationPrintDocument({ quotation, printCopy = false }: { quotation: ApiQuotation; printCopy?: boolean }) {
+  const originLines = quotation.lines.filter((line) => line.section === 'ORIGIN_FREIGHT')
+  const destinationLines = quotation.lines.filter((line) => line.section === 'DESTINATION_CLEARANCE')
+  const total = (lines: ApiQuotationLine[], currency: 'PHP' | 'USD', billedBy?: 'PIMASCOR' | 'BOC') => lines
+    .filter((line) => line.currency === currency && (!billedBy || line.billed_by === billedBy))
+    .reduce((sum, line) => sum + Number(line.amount), 0)
+  const formatDate = new Date(quotation.created_at).toLocaleDateString('en-PH', { month: 'long', day: 'numeric', year: 'numeric' })
+
+  return <article className={`official-billing official-quotation ${printCopy ? 'official-quotation--print' : 'official-quotation--preview'}`}>
+    {quotation.status !== 'CLIENT_ACCEPTED' ? <div className="official-billing__watermark">{quotation.status.replaceAll('_', ' ')}</div> : null}
+    <header className="official-billing__letterhead">
+      <img src={brandIconUrl} alt="PIMASCOR" />
+      <div><strong>Philippine Interactive Maritime and Arrastre Services</strong><span>DELIVER | CONVERGE | SUPPLY</span></div>
+      <p><small>Quotation No.</small><b>{quotation.reference}</b></p>
+    </header>
+    <section className="official-quotation__meta">
+      <p><b>Date:</b> {formatDate}</p><p><b>Attention:</b> {quotation.client.name}</p><p><b>Client Ref. No.:</b> {quotation.client.code}</p><p><b>Project Ref:</b> {quotation.shipment_reference}</p>
+    </section>
+    <section className="official-quotation__shipment">
+      <h2>I. Shipment summary</h2>
+      <ul><li><b>Mode of Transport:</b> {quotation.mode_of_transport || '—'}</li><li><b>Container:</b> {quotation.container_type || '—'}</li><li><b>Origin:</b> {quotation.origin || '—'}</li><li><b>Destination:</b> {quotation.destination || '—'}</li><li><b>Incoterms:</b> {quotation.incoterms || '—'}</li><li><b>Cargo Details:</b> {quotation.cargo_details || '—'}</li></ul>
+    </section>
+    <section className="official-quotation__charge-section">
+      <h2>II. Section A: Origin &amp; International Freight</h2><p>Charges related to pick up at origin, export documentation, and transit to the Philippines.</p>
+      <table className="official-billing__charges"><colgroup><col /><col className="official-billing__currency-col" /><col className="official-billing__amount-col" /></colgroup><thead><tr><th>Description</th><th>Currency</th><th>Total amount</th></tr></thead><tbody>{originLines.length ? originLines.map((line) => <tr key={line.id}><td>{line.description}</td><td>{line.currency}</td><td>{moneyInCurrency(Number(line.amount), line.currency)}</td></tr>) : <tr><td colSpan={3}>No origin or international freight charges entered.</td></tr>}<tr className="official-billing__calculation-row official-billing__calculation-row--total"><th colSpan={2}>Total Section A (origin &amp; freight)</th><td>{moneyInCurrency(total(originLines, 'USD'), 'USD')}</td></tr></tbody></table>
+    </section>
+    <section className="official-quotation__charge-section">
+      <h2>III. Section B: Destination &amp; Customs Clearance</h2><p>Charges related to arrival, brokerage, and legal processing in the Philippines.</p>
+      <table className="official-billing__charges"><colgroup><col /><col className="official-billing__currency-col" /><col className="official-billing__amount-col" /></colgroup><thead><tr><th>Description</th><th>Currency</th><th>Total amount</th></tr></thead><tbody>{destinationLines.length ? destinationLines.map((line) => <tr key={line.id}><td>{line.description}{line.billed_by === 'BOC' ? <small className="official-quotation__boc">To be billed by BOC</small> : null}</td><td>{line.currency}</td><td>{moneyInCurrency(Number(line.amount), line.currency)}</td></tr>) : <tr><td colSpan={3}>No destination or clearance charges entered.</td></tr>}<tr className="official-billing__calculation-row official-billing__calculation-row--total"><th colSpan={2}>Total Section B (local services)</th><td>{moneyInCurrency(total(destinationLines, 'PHP'), 'PHP')}</td></tr></tbody></table>
+    </section>
+    <section className="official-quotation__terms">
+      <h2>IV. Grand total summary</h2><ul className="official-quotation__totals"><li><b>Total origin &amp; international freight:</b> {moneyInCurrency(total(originLines, 'USD'), 'USD')}</li><li><b>Total destination &amp; local services:</b><span>{moneyInCurrency(total(destinationLines, 'PHP', 'PIMASCOR'), 'PHP')} <small>(To be billed by PIMASCOR)</small></span><span>{moneyInCurrency(total(destinationLines, 'PHP', 'BOC'), 'PHP')} <small>(To be billed by BOC)</small></span></li></ul>
+      <h2>V. Terms and conditions</h2><div className="official-quotation__terms-copy"><p>{quotation.terms_and_conditions}</p><p><b>Validity:</b> This quotation shall be valid for {quotation.validity_hours} hours from receipt hereof.</p><p><b>Term of payment:</b> {quotation.payment_terms || 'To be agreed with the client.'}</p><p><b>Conformity:</b> Upon your conformity hereunder, this quotation shall serve as our agreement on the matter.</p></div>
+      <div className="official-quotation__signatures"><div><b>WITH MY CONFORMITY:</b><span></span><small>Signature over printed Name</small><small>DULY AUTHORIZED FOR THE PURPOSE</small></div><div><p><b>Prepared by:</b> {quotation.created_by.display_name}</p><p><b>Approved by:</b> {quotation.approved_by?.display_name || 'Pending GM approval'}</p></div></div>
+    </section>
+    <footer><span>PIMASCOR • Sales quotation</span><span>{quotation.reference}</span></footer>
+  </article>
+}
+
 function QuotationsPage({ role, notify }: { role: Role; notify: Notify }) {
   const [rows, setRows] = useState<ApiQuotation[] | null>(null)
   const [clients, setClients] = useState<ApiClient[]>([])
@@ -729,6 +788,8 @@ function QuotationsPage({ role, notify }: { role: Role; notify: Notify }) {
   const [creating, setCreating] = useState(false)
   const [busy, setBusy] = useState(false)
   const [note, setNote] = useState('')
+  const [quotationLines, setQuotationLines] = useState<QuotationLineDraft[]>([])
+  const [previewZoom, setPreviewZoom] = useState(() => window.innerWidth <= 760 ? 50 : 85)
 
   const load = useCallback(() => {
     Promise.all([getQuotations(), getClients()])
@@ -743,12 +804,17 @@ function QuotationsPage({ role, notify }: { role: Role; notify: Notify }) {
     setBusy(true)
     const data = new FormData(event.currentTarget)
     try {
+      const phpTotal = quotationLines.filter((line) => line.currency === 'PHP').reduce((sum, line) => sum + Number(line.amount || 0), 0)
+      const usdTotal = quotationLines.filter((line) => line.currency === 'USD').reduce((sum, line) => sum + Number(line.amount || 0), 0)
+      if (!quotationLines.length || (!phpTotal && !usdTotal)) throw new Error('Add at least one PHP or USD quotation charge.')
       let item = await createQuotation({
         client_id: String(data.get('client_id')),
         shipment_reference: String(data.get('shipment_reference')),
-        quoted_amount: Number(data.get('quoted_amount')).toFixed(2),
-        currency: 'PHP',
+        quoted_amount: (phpTotal || usdTotal).toFixed(2),
+        currency: phpTotal ? 'PHP' : 'USD',
         terms_and_conditions: String(data.get('terms_and_conditions')),
+        mode_of_transport: String(data.get('mode_of_transport') || ''), container_type: String(data.get('container_type') || ''), origin: String(data.get('origin') || ''), destination: String(data.get('destination') || ''), incoterms: String(data.get('incoterms') || ''), cargo_details: String(data.get('cargo_details') || ''), payment_terms: String(data.get('payment_terms') || ''), validity_hours: Number(data.get('validity_hours') || 48),
+        lines: quotationLines.map((line) => ({ ...line, amount: Number(line.amount).toFixed(2) })),
       })
       if ((event.nativeEvent as SubmitEvent).submitter?.getAttribute('data-action') === 'submit') item = await submitQuotation(item.id, item.version)
       setCreating(false)
@@ -790,14 +856,22 @@ function QuotationsPage({ role, notify }: { role: Role; notify: Notify }) {
     } catch (error) { notifyLocalFailure(error, 'Could not record client acceptance.', notify) } finally { setBusy(false) }
   }
 
+  function beginCreate() {
+    setQuotationLines([{ section: 'ORIGIN_FREIGHT', description: 'International Freight (Air/Sea)', currency: 'USD', amount: '', billed_by: 'PIMASCOR' }, { section: 'DESTINATION_CLEARANCE', description: 'Customs Duties & Taxes', currency: 'PHP', amount: '', billed_by: 'BOC' }])
+    setCreating(true)
+  }
+
+  function openQuotation(item: ApiQuotation) { setSelected(item); setNote(''); setPreviewZoom(window.innerWidth <= 760 ? 50 : 85) }
+
   return <div className="page-stack">
     <div className="explanation-banner"><span><FileCheck2 size={20} /></span><div><strong>The accepted quotation is the shipment contract.</strong><p>Sales prepares it, the GM approves it, and the signed client copy stays linked from Budget Request through collection.</p></div></div>
     <Card>
-      <SectionHeader eyebrow="Contract-first control" title="Sales Quotations" description="No approved quotation is silently replaced; every decision remains attributable." action={(role === 'Requester' || role === 'Admin') ? <Button icon={Plus} onClick={() => setCreating(true)}>Create Sales Quotation</Button> : undefined} />
-      {rows === null ? <EmptyState icon={RefreshCw} title="Loading quotations" detail="Opening the quotation register." /> : <div className="table-wrap"><table><thead><tr><th>Quotation</th><th>Client / shipment</th><th>Amount</th><th>Prepared by</th><th>Status</th><th></th></tr></thead><tbody>{rows.map((item) => <tr key={item.id}><td data-label="Quotation"><strong>{item.reference}</strong><small>{new Date(item.created_at).toLocaleDateString('en-PH')}</small></td><td data-label="Client / shipment"><strong>{item.client.name}</strong><small>{item.shipment_reference}</small></td><td data-label="Amount" className="number">{money(Number(item.quoted_amount))}</td><td data-label="Prepared by">{item.created_by.display_name}</td><td data-label="Status"><Status>{item.status.replaceAll('_', ' ')}</Status></td><td><Button tone="ghost" onClick={() => { setSelected(item); setNote('') }}>Open</Button></td></tr>)}</tbody></table></div>}
+      <SectionHeader eyebrow="Contract-first control" title="Sales Quotations" description="Prepare the PHP and USD charge schedule, review it in the printable contract format, then send it to the GM." action={(role === 'Requester' || role === 'Admin') ? <Button icon={Plus} onClick={beginCreate}>Create Sales Quotation</Button> : undefined} />
+      {rows === null ? <EmptyState icon={RefreshCw} title="Loading quotations" detail="Opening the quotation register." /> : <div className="table-wrap"><table><thead><tr><th>Quotation</th><th>Client / shipment</th><th>Currency totals</th><th>Prepared by</th><th>Status</th><th></th></tr></thead><tbody>{rows.map((item) => { const php = item.lines.filter((line) => line.currency === 'PHP').reduce((sum, line) => sum + Number(line.amount), 0); const usd = item.lines.filter((line) => line.currency === 'USD').reduce((sum, line) => sum + Number(line.amount), 0); return <tr key={item.id}><td data-label="Quotation"><strong>{item.reference}</strong><small>{new Date(item.created_at).toLocaleDateString('en-PH')}</small></td><td data-label="Client / shipment"><strong>{item.client.name}</strong><small>{item.shipment_reference}</small></td><td data-label="Currency totals" className="number"><strong>{moneyInCurrency(php, 'PHP')}</strong><small>{moneyInCurrency(usd, 'USD')}</small></td><td data-label="Prepared by">{item.created_by.display_name}</td><td data-label="Status"><Status>{item.status.replaceAll('_', ' ')}</Status></td><td><Button tone="ghost" onClick={() => openQuotation(item)}>Open</Button></td></tr> })}</tbody></table></div>}
     </Card>
-    <Drawer open={Boolean(selected)} onClose={() => setSelected(null)} eyebrow="Sales quotation / shipment contract" title={selected?.reference ?? ''}>{selected ? <div className="form-stack"><div className="summary-grid summary-grid--two"><div><span>Client</span><strong>{selected.client.name}</strong></div><div><span>Shipment reference</span><strong>{selected.shipment_reference}</strong></div><div><span>Quoted amount</span><strong>{money(Number(selected.quoted_amount))}</strong></div><div><span>Status</span><Status>{selected.status.replaceAll('_', ' ')}</Status></div></div><div className="decision-purpose"><span>Terms and conditions</span><strong>{selected.terms_and_conditions}</strong></div>{selected.signed_file_name ? <DocumentItem name={selected.signed_file_name} meta={`Client accepted by ${selected.client_signatory} • ${selected.client_accepted_at}`} /> : null}{(role === 'Requester' || role === 'Admin') && (selected.status === 'DRAFT' || selected.status === 'REJECTED') ? <Button onClick={() => submit(selected)} disabled={busy}>Submit to GM</Button> : null}{(role === 'GM' || role === 'Admin' || role === 'DCS') && selected.status === 'PENDING_APPROVAL' ? <><label>Decision note<textarea rows={3} value={note} onChange={(event) => setNote(event.target.value)} placeholder={role === 'DCS' ? 'Required reason for exceptional override' : 'Required when returning'} /></label><div className="drawer-actions">{role !== 'DCS' ? <Button tone="danger" onClick={() => decide(selected, false)}>Return</Button> : null}<Button onClick={() => decide(selected, true)}>{role === 'DCS' ? 'Use DCS Override' : 'Approve Quotation'}</Button></div></> : null}{(role === 'Requester' || role === 'Admin') && selected.status === 'APPROVED' ? <form className="form-stack" onSubmit={accept}><SectionHeader title="Record client acceptance" description="Attach the signed or otherwise accepted quotation before creating the Budget Request." /><label>Acceptance date<input name="accepted_on" type="date" defaultValue={new Date().toISOString().slice(0, 10)} required /></label><label>Client signatory<input name="client_signatory" required /></label><label>Signed quotation<input name="document" type="file" accept=".pdf,.jpg,.jpeg,.png" required /></label><Button type="submit" disabled={busy}>Save Client-Accepted Contract</Button></form> : null}</div> : null}</Drawer>
-    <Modal open={creating} onClose={() => setCreating(false)} title="Create Sales Quotation"><form className="form-stack" onSubmit={create}><label>Client<select name="client_id" required>{clients.map((client) => <option value={client.id} key={client.id}>{client.name}</option>)}</select></label><label>Shipment reference<input name="shipment_reference" placeholder="Example: ACT-172" required /></label><label>Quoted amount<input name="quoted_amount" type="number" min="0.01" step="0.01" required /></label><label>Terms and conditions<textarea name="terms_and_conditions" rows={7} minLength={10} required placeholder="Payment terms, validity, scope, exclusions, and acceptance conditions" /></label><div className="modal-actions"><Button tone="secondary" onClick={() => setCreating(false)}>Cancel</Button><button className="button button--secondary" type="submit">Save as Draft</button><button className="button button--primary" type="submit" data-action="submit">Submit to GM</button></div></form></Modal>
+    <Drawer className="drawer--document" open={Boolean(selected)} onClose={() => setSelected(null)} eyebrow="Sales quotation / shipment contract" title={selected?.reference ?? ''}>{selected ? <div className="record-stack"><div className="billing-preview-toolbar" role="group" aria-label="Quotation print preview zoom controls"><strong>Print preview</strong><button type="button" onClick={() => setPreviewZoom((value) => Math.max(40, value - 10))} aria-label="Zoom out">−</button><label><span className="visually-hidden">Preview zoom</span><input type="range" min="40" max="160" step="10" value={previewZoom} onChange={(event) => setPreviewZoom(Number(event.target.value))} /></label><output aria-live="polite">{previewZoom}%</output><button type="button" onClick={() => setPreviewZoom((value) => Math.min(160, value + 10))} aria-label="Zoom in">+</button><button type="button" className="billing-preview-toolbar__reset" onClick={() => setPreviewZoom(window.innerWidth <= 760 ? 50 : 85)}>Fit</button></div><div className="billing-preview-stage" tabIndex={0} aria-label="Scrollable Sales Quotation print preview"><div className="billing-preview-stage__document" style={{ zoom: `${previewZoom}%` }}><QuotationPrintDocument quotation={selected} /></div></div>{selected.signed_file_name ? <DocumentItem name={selected.signed_file_name} meta={`Client accepted by ${selected.client_signatory} • ${selected.client_accepted_at}`} /> : null}{(role === 'Requester' || role === 'Admin') && (selected.status === 'DRAFT' || selected.status === 'REJECTED') ? <Button onClick={() => submit(selected)} disabled={busy}>Submit to GM</Button> : null}{(role === 'GM' || role === 'Admin' || role === 'DCS') && selected.status === 'PENDING_APPROVAL' ? <><label>Decision note<textarea rows={3} value={note} onChange={(event) => setNote(event.target.value)} placeholder={role === 'DCS' ? 'Required reason for exceptional override' : 'Required when returning'} /></label><div className="drawer-actions">{role !== 'DCS' ? <Button tone="danger" onClick={() => decide(selected, false)}>Return</Button> : null}<Button onClick={() => decide(selected, true)}>{role === 'DCS' ? 'Use DCS Override' : 'Approve Quotation'}</Button></div></> : null}{(role === 'Requester' || role === 'Admin') && selected.status === 'APPROVED' ? <form className="form-stack" onSubmit={accept}><SectionHeader title="Record client acceptance" description="Attach the signed or otherwise accepted quotation before creating the Budget Request." /><label>Acceptance date<input name="accepted_on" type="date" defaultValue={new Date().toISOString().slice(0, 10)} required /></label><label>Client signatory<input name="client_signatory" required /></label><label>Signed quotation<input name="document" type="file" accept=".pdf,.jpg,.jpeg,.png" required /></label><Button type="submit" disabled={busy}>Save Client-Accepted Contract</Button></form> : null}<div className="drawer-actions"><Button tone="secondary" icon={FileText} onClick={printQuotationDocument}>Print Quotation / Save PDF</Button></div></div> : null}</Drawer>
+    {selected ? createPortal(<div className="print-quotation-host"><QuotationPrintDocument quotation={selected} printCopy /></div>, document.body) : null}
+    <Modal open={creating} onClose={() => setCreating(false)} title="Create Sales Quotation"><form className="form-stack quotation-form" onSubmit={create}><label>Client<select name="client_id" required>{clients.map((client) => <option value={client.id} key={client.id}>{client.name}</option>)}</select></label><label>Shipment reference<input name="shipment_reference" placeholder="Example: ACT-172" required /></label><div className="form-grid form-grid--three"><label>Mode of transport<input name="mode_of_transport" placeholder="SEA / AIR" /></label><label>Container<input name="container_type" placeholder="FCL / LCL" /></label><label>Incoterms<input name="incoterms" placeholder="EXW / FOB / FCA" /></label><label>Origin<input name="origin" /></label><label>Destination<input name="destination" /></label><label>Cargo details<input name="cargo_details" placeholder="Weight / dimensions" /></label></div><SectionHeader title="Charge schedule" description="Use USD for origin/international freight and PHP for destination/customs items. Mark Bureau of Customs charges separately for the print summary." />{quotationLines.map((line, index) => <div className="quotation-line-editor" key={`${line.section}-${index}`}><label>Description<input value={line.description} onChange={(event) => setQuotationLines((current) => current.map((item, row) => row === index ? { ...item, description: event.target.value } : item))} required /></label><label>Section<select value={line.section} onChange={(event) => setQuotationLines((current) => current.map((item, row) => row === index ? { ...item, section: event.target.value as QuotationLineDraft['section'], currency: event.target.value === 'ORIGIN_FREIGHT' ? 'USD' : 'PHP' } : item))}><option value="ORIGIN_FREIGHT">Origin &amp; freight</option><option value="DESTINATION_CLEARANCE">Destination &amp; clearance</option></select></label><label>Currency<select value={line.currency} onChange={(event) => setQuotationLines((current) => current.map((item, row) => row === index ? { ...item, currency: event.target.value as 'PHP' | 'USD' } : item))}><option value="USD">USD</option><option value="PHP">PHP</option></select></label><label>Amount<input type="number" min="0.01" step="0.01" value={line.amount} onChange={(event) => setQuotationLines((current) => current.map((item, row) => row === index ? { ...item, amount: event.target.value } : item))} required /></label><label>Billing<select value={line.billed_by} onChange={(event) => setQuotationLines((current) => current.map((item, row) => row === index ? { ...item, billed_by: event.target.value as 'PIMASCOR' | 'BOC' } : item))}><option value="PIMASCOR">PIMASCOR</option><option value="BOC">BOC</option></select></label><button type="button" className="icon-button" aria-label="Remove quotation charge" onClick={() => setQuotationLines((current) => current.filter((_, row) => row !== index))}><X size={16} /></button></div>)}<div className="drawer-actions"><Button type="button" tone="secondary" onClick={() => setQuotationLines((current) => [...current, { section: 'ORIGIN_FREIGHT', description: '', currency: 'USD', amount: '', billed_by: 'PIMASCOR' }])}>Add USD origin charge</Button><Button type="button" tone="secondary" onClick={() => setQuotationLines((current) => [...current, { section: 'DESTINATION_CLEARANCE', description: '', currency: 'PHP', amount: '', billed_by: 'PIMASCOR' }])}>Add PHP local charge</Button></div><label>Terms and conditions<textarea name="terms_and_conditions" rows={5} minLength={10} required defaultValue="Duties and taxes are pass-through costs subject to actual assessment. Storage, demurrage, detention, and stripping charges are excluded unless agreed in writing." /></label><label>Payment terms<input name="payment_terms" defaultValue="Duties and taxes prior to BOC lodgment; service fees upon delivery." /></label><label>Quotation validity (hours)<input name="validity_hours" type="number" min="1" max="720" defaultValue="48" required /></label><div className="modal-actions"><Button tone="secondary" onClick={() => setCreating(false)}>Cancel</Button><button className="button button--secondary" type="submit">Save as Draft</button><button className="button button--primary" type="submit" data-action="submit">Submit to GM</button></div></form></Modal>
   </div>
 }
 

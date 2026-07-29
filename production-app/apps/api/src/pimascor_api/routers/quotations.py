@@ -8,7 +8,7 @@ from sqlalchemy.orm import Session, selectinload
 
 from ..db import get_db
 from ..dependencies import AuthContext, csrf_roles_allowed, roles_allowed
-from ..models import Client, QuotationStatus, Role, SalesQuotation, utc_now
+from ..models import Client, QuotationStatus, Role, SalesQuotation, SalesQuotationLine, utc_now
 from ..schemas import DecisionRequest, QuotationCreate, QuotationDecision, QuotationResponse
 from ..services.audit import record_audit
 from ..services.storage import (
@@ -27,6 +27,7 @@ def quotation_query():
         selectinload(SalesQuotation.client),
         selectinload(SalesQuotation.created_by),
         selectinload(SalesQuotation.approved_by),
+        selectinload(SalesQuotation.lines),
     )
 
 
@@ -78,8 +79,27 @@ def create_quotation(
         quoted_amount=payload.quoted_amount,
         currency=payload.currency.upper(),
         terms_and_conditions=payload.terms_and_conditions.strip(),
+        mode_of_transport=payload.mode_of_transport.strip() if payload.mode_of_transport else None,
+        container_type=payload.container_type.strip() if payload.container_type else None,
+        origin=payload.origin.strip() if payload.origin else None,
+        destination=payload.destination.strip() if payload.destination else None,
+        incoterms=payload.incoterms.strip() if payload.incoterms else None,
+        cargo_details=payload.cargo_details.strip() if payload.cargo_details else None,
+        payment_terms=payload.payment_terms.strip() if payload.payment_terms else None,
+        validity_hours=payload.validity_hours,
         created_by_id=context.user.id,
     )
+    item.lines = [
+        SalesQuotationLine(
+            section=line.section,
+            description=line.description.strip(),
+            currency=line.currency,
+            amount=line.amount,
+            billed_by=line.billed_by,
+            position=index,
+        )
+        for index, line in enumerate(payload.lines)
+    ]
     db.add(item)
     db.flush()
     record_audit(
