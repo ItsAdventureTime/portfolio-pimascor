@@ -1,9 +1,14 @@
 #!/bin/sh
 set -eu
 
-# Local Mac -> demo VPS source transfer only. The gatewaysentry SSH alias owns
-# its username/host settings. Activation is deliberately a separate command
-# entered after logging in to the VPS.
+# Local Mac -> demo VPS source transfer only. The confirmed endpoint is kept
+# explicit so this script does not depend on an unprovisioned shell/SSH alias.
+# Activation is deliberately a separate command entered after login.
+
+SSH_HOST="216.75.75.136"
+SSH_USER="jk"
+SSH_PORT="22"
+SSH_TARGET="${SSH_USER}@${SSH_HOST}"
 
 SOURCE_ROOT="$(CDPATH= cd -- "$(dirname -- "$0")/../.." && pwd)"
 
@@ -35,7 +40,12 @@ git archive \
   --format=tar.gz \
   --add-virtual-file="${source_prefix}/.deployment-source-commit:${release_commit}" \
   HEAD "$source_prefix" \
-| ssh gatewaysentry "
+| ssh \
+  -o ConnectTimeout=15 \
+  -o ServerAliveInterval=30 \
+  -o ServerAliveCountMax=3 \
+  -p "${SSH_PORT}" \
+  "${SSH_TARGET}" "
   set -eu
   umask 077
   app_root=\"/var/home/jk/pimascor-demo\"

@@ -37,14 +37,14 @@ The demo VPS uses these fixed locations:
 ```
 
 Before transferring, remove the three mistakenly created release directories.
-Run this once from the local Mac; it connects through `gatewaysentry`, prompts
-for the VPS password, and deletes only the three named directories with no
-backup:
+Run this once from the local Mac; it connects to the confirmed
+`jk@216.75.75.136:22` endpoint, prompts for the VPS password, and deletes only
+the three named directories with no backup:
 
     /Users/jk.deguzman/dev/bridge-ph_Dashboard/production-app/infra/scripts/cleanup-mistaken-demo-vps-paths.sh
 
-From the local Terminal, run this exact command. It uses the existing
-`gatewaysentry` SSH alias and prompts once for its configured VPS password:
+From the local Terminal, run this exact command. It uses the confirmed
+`jk@216.75.75.136:22` endpoint and prompts once for its VPS password:
 
     /Users/jk.deguzman/dev/bridge-ph_Dashboard/production-app/infra/scripts/deploy-demo-vps.sh
 
@@ -72,7 +72,7 @@ the live directory during activation; this preserves the container mount.
 
 After the source transfer completes, log in:
 
-    ssh gatewaysentry
+    ssh -p 22 jk@216.75.75.136
 
 Then run this exact VPS command:
 
@@ -103,9 +103,8 @@ as evidence that the VPS has been updated.
    remote.
 3. The VPS updater confirms that migration `20260729_0011` and its required demo
    safeguards are present.
-4. The remote update runs as the same non-root account selected by
-   `gatewaysentry`; the update script refuses root and checks that Podman is
-   rootless.
+4. The remote update runs as the confirmed non-root `jk` account; the update
+   script refuses root and checks that Podman is rootless.
 
 ## Deployment behavior on the VPS
 

@@ -76,7 +76,7 @@ demo release, the handoff must include both exact, single-line commands below:
 ```
 
 Run that command locally on the Mac. After it succeeds and after logging in with
-`ssh gatewaysentry`, run this command on the VPS:
+`ssh -p 22 jk@216.75.75.136`, run this command on the VPS:
 
 ```bash
 cd ~/pimascor-demo/source && ./infra/scripts/update-demo.sh --source ~/pimascor-demo/source && bash ./infra/scripts/reconcile-demo-web-root.sh

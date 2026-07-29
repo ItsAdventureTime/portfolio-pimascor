@@ -5,7 +5,12 @@ set -eu
 # script. It does not touch ~/pimascor-demo, ~/pimascor, Quadlets, secrets,
 # PostgreSQL data, Caddy, Backblaze, or any other ~/bridge-ph content.
 
-ssh gatewaysentry '
+ssh \
+  -o ConnectTimeout=15 \
+  -o ServerAliveInterval=30 \
+  -o ServerAliveCountMax=3 \
+  -p 22 \
+  jk@216.75.75.136 '
   set -eu
   rm -rf -- \
     "$HOME/bridge-ph/pimascor-demo-release" \
