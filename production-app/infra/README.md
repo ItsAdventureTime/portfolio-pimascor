@@ -10,7 +10,9 @@ Short manual runbook for the rootless Fedora CoreOS deployment at:
 https://delegateops.business/pimascor/demo/
 ```
 
-Application files live in `~/pimascor-demo`; globally unique Quadlets live in `~/.config/containers/systemd/bridge-ph/pimascor-demo`.
+Application source and runtime data live in `~/pimascor-demo`; the Caddy-served
+PWA lives in `~/bridge-ph/pimascor-demo/web-dist`; globally unique Quadlets live
+in `~/.config/containers/systemd/bridge-ph/pimascor-demo`.
 
 ## 1. What runs
 
@@ -34,7 +36,7 @@ Internet -> Caddy -> static PWA
 Run as the rootless service owner:
 
 ```bash
-install -d -m 700 ~/pimascor-demo/source ~/pimascor-demo/data/postgres/18/docker ~/pimascor-demo/data/uploads-tmp ~/.config/containers/systemd/bridge-ph/pimascor-demo ~/.config/systemd/user
+install -d -m 700 ~/pimascor-demo/source ~/pimascor-demo/data/postgres/18/docker ~/pimascor-demo/data/uploads-tmp ~/bridge-ph/pimascor-demo ~/.config/containers/systemd/bridge-ph/pimascor-demo ~/.config/systemd/user
 ```
 
 `install -d` creates directories and applies the requested mode; it does not install a software package or overwrite an existing database.
@@ -138,9 +140,12 @@ Export the PWA:
 
 ```bash
 cd ~/pimascor-demo/source
-mkdir -p ~/pimascor-demo/web-dist.new
-podman build --pull=missing --file apps/web/Containerfile --output type=local,dest="$HOME/pimascor-demo/web-dist.new" apps/web
-mv ~/pimascor-demo/web-dist.new ~/pimascor-demo/web-dist
+mkdir -p ~/bridge-ph/pimascor-demo/web-dist.new
+podman build --pull=missing --file apps/web/Containerfile --output type=local,dest="$HOME/bridge-ph/pimascor-demo/web-dist.new" apps/web
+install -d -m 700 ~/bridge-ph/pimascor-demo/web-dist
+find ~/bridge-ph/pimascor-demo/web-dist -mindepth 1 -maxdepth 1 -exec rm -rf -- {} +
+cp -a ~/bridge-ph/pimascor-demo/web-dist.new/. ~/bridge-ph/pimascor-demo/web-dist/
+rmdir ~/bridge-ph/pimascor-demo/web-dist.new
 ```
 
 Install definitions:
@@ -159,7 +164,9 @@ systemd-analyze --user --generators=true verify bridge-ph-pimascor-demo-db.servi
 
 ## 6. Caddy connection
 
-Caddy must share `bridge-ph-pimascor-demo-proxy` with the API and mount the compiled PWA read-only at `/srv/bridge-ph-pimascor-demo`.
+Caddy must share `bridge-ph-pimascor-demo-proxy` with the API and bind
+`~/bridge-ph/pimascor-demo/web-dist` read-only at
+`/srv/bridge-ph-pimascor-demo`.
 
 The relevant site handlers are:
 

@@ -31,6 +31,7 @@ The demo VPS uses these fixed locations:
 
 ```text
 /var/home/jk/pimascor-demo                    demo application files, data, and source
+/var/home/jk/bridge-ph/pimascor-demo/web-dist compiled demo PWA served by Caddy
 /var/home/jk/.config/containers/systemd/bridge-ph/pimascor-demo
                                                demo Quadlet definitions
 ```
@@ -57,6 +58,16 @@ tree plus a commit marker. Using Git's archive format excludes macOS metadata,
 ignored build output, virtual environments, and Git history. The updater refuses
 a source tree without a valid commit marker.
 
+The source/runtime tree and the Caddy-served PWA are intentionally separate:
+the updater builds the PWA only into
+`/var/home/jk/bridge-ph/pimascor-demo/web-dist`. Caddy's rootless Quadlet must
+bind that exact host directory read-only to `/srv/bridge-ph-pimascor-demo`.
+It must not mount `~/pimascor-demo/web-dist`.
+
+Because Caddy bind-mounts the `web-dist` directory itself, the updater keeps
+that directory in place and replaces its validated contents. It does not rename
+the live directory during activation; this preserves the container mount.
+
 ## Activate from the VPS
 
 After the source transfer completes, log in:
@@ -65,7 +76,13 @@ After the source transfer completes, log in:
 
 Then run this exact VPS command:
 
-    cd ~/pimascor-demo/source && ./infra/scripts/update-demo.sh --source ~/pimascor-demo/source
+    cd ~/pimascor-demo/source && ./infra/scripts/update-demo.sh --source ~/pimascor-demo/source && bash ./infra/scripts/reconcile-demo-web-root.sh
+
+The final reconciliation step runs only after the corrected updater has built
+and verified the Caddy-served PWA. It removes only obsolete static-build
+directories matching `~/pimascor-demo/web-dist*`; it does not alter source,
+database data, uploads, Quadlets, Caddy configuration, secrets, or the live
+`~/bridge-ph/pimascor-demo/web-dist` directory.
 
 ## Required handoff for every demo-relevant change
 
@@ -100,7 +117,7 @@ reviewed Quadlets, runs the database forward migration through the API/reset
 entrypoint, restarts Caddy, and probes both the health endpoint and public demo
 route. It prints the activated Git commit and expected CSS/JavaScript asset
 names, then verifies that Caddy's mounted `index.html` matches the newly built
-host file. A warning that the public route still returns an older index means
+`~/bridge-ph/pimascor-demo/web-dist/index.html`. A warning that the public route still returns an older index means
 the origin is updated but Bunny still needs the documented targeted purge. Stop
 if it reports an error. Do not purge the CDN after a failed update.
 Do not run `update-demo.sh` directly from macOS; it is intentionally VPS-only.
@@ -113,7 +130,7 @@ Run these from the VPS under the demo service account:
 systemctl --user is-active bridge-ph-pimascor-demo-db.service
 systemctl --user is-active bridge-ph-pimascor-demo-api.service
 curl --fail --show-error https://delegateops.business/pimascor/demo/api/v1/health
-grep -R --quiet --fixed-strings 'Module-specific accounting CSVs' "$HOME/pimascor-demo/web-dist/assets"
+grep -R --quiet --fixed-strings 'Module-specific accounting CSVs' "$HOME/bridge-ph/pimascor-demo/web-dist/assets"
 ```
 
 Then use a private/incognito browser window to check the public demo:

@@ -28,13 +28,14 @@ Quadlet paths that the current demo deployment instructions may use:
 ```text
 ~/pimascor
 ~/pimascor-demo
+~/bridge-ph/pimascor-demo
 ~/.config/containers/systemd/bridge-ph/pimascor
 ~/.config/containers/systemd/bridge-ph/pimascor-demo
 ```
 
-`bridge-ph-pimascor-*` names in Quadlet files, systemd units, Podman networks,
-container names, and secrets are identifiers, not evidence of a
-`~/bridge-ph/...` application directory.
+`~/bridge-ph/pimascor-demo` is the confirmed static-PWA location only. The
+demo source, runtime data, and Quadlets remain under `~/pimascor-demo` and
+`~/.config/containers/systemd/bridge-ph/pimascor-demo` respectively.
 
 ## Confirmed cleanup scope
 
@@ -56,7 +57,8 @@ records the command output from the VPS.
 
 **Confirmed in repository at commit `f01543c`.** The demo transfer helper
 stages source under `~/pimascor-demo/source`; the demo updater and demo Quadlets
-use `~/pimascor-demo` for runtime data; production backup Quadlets use
+use `~/pimascor-demo` for runtime data; the compiled demo PWA is written to
+`~/bridge-ph/pimascor-demo/web-dist`; production backup Quadlets use
 `~/pimascor`.
 
 This confirms intended repository configuration only. It does not establish
@@ -77,7 +79,7 @@ Run that command locally on the Mac. After it succeeds and after logging in with
 `ssh gatewaysentry`, run this command on the VPS:
 
 ```bash
-cd ~/pimascor-demo/source && ./infra/scripts/update-demo.sh --source ~/pimascor-demo/source
+cd ~/pimascor-demo/source && ./infra/scripts/update-demo.sh --source ~/pimascor-demo/source && bash ./infra/scripts/reconcile-demo-web-root.sh
 ```
 
 **Confirmed in repository.** The local transfer sends reviewed source, not a

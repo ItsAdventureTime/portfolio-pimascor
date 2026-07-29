@@ -54,4 +54,4 @@ git archive \
 
 printf 'Transferred committed release: %s\n' "$release_commit"
 printf '%s\n' 'Source transfer complete. Log in to the VPS, then run:'
-printf '%s\n' 'cd /var/home/jk/pimascor-demo/source && ./infra/scripts/update-demo.sh --source /var/home/jk/pimascor-demo/source'
+printf '%s\n' 'cd /var/home/jk/pimascor-demo/source && ./infra/scripts/update-demo.sh --source /var/home/jk/pimascor-demo/source && bash ./infra/scripts/reconcile-demo-web-root.sh'

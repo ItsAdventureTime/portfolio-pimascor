@@ -6,6 +6,7 @@ set -Eeuo pipefail
 # update unrelated containers.
 
 APP_ROOT="${HOME}/pimascor-demo"
+WEB_ROOT="${HOME}/bridge-ph/pimascor-demo"
 QUADLET_ROOT="${HOME}/.config/containers/systemd/bridge-ph/pimascor-demo"
 TIMER_ROOT="${HOME}/.config/systemd/user"
 PUBLIC_URL="https://delegateops.business/pimascor/demo/"
@@ -264,7 +265,8 @@ fi
 printf 'Building the revised API image...\n'
 podman build --pull=always --tag localhost/bridge-ph-pimascor-demo-api:demo "${SOURCE_ROOT}/apps/api"
 
-web_stage="$(mktemp -d "${APP_ROOT}/web-dist.next.XXXXXX")"
+install -d -m 700 "${WEB_ROOT}"
+web_stage="$(mktemp -d "${WEB_ROOT}/web-dist.next.XXXXXX")"
 printf 'Building the revised static PWA into staging...\n'
 podman build \
   --pull=always \
@@ -291,11 +293,17 @@ expected_css="${BASH_REMATCH[1]}"
 expected_js="${BASH_REMATCH[1]}"
 printf 'Built web assets: %s %s\n' "${expected_css}" "${expected_js}"
 
-previous_web="${APP_ROOT}/web-dist.previous.${release_stamp}"
-if [[ -d "${APP_ROOT}/web-dist" ]]; then
-  mv "${APP_ROOT}/web-dist" "${previous_web}"
+previous_web="${WEB_ROOT}/web-dist.previous.${release_stamp}"
+if [[ -d "${WEB_ROOT}/web-dist" ]]; then
+  # Caddy bind-mounts web-dist itself. Keep that directory inode in place so
+  # the running container observes the new files after its restart.
+  cp -a "${WEB_ROOT}/web-dist" "${previous_web}"
+else
+  install -d -m 700 "${WEB_ROOT}/web-dist"
 fi
-mv "${web_stage}" "${APP_ROOT}/web-dist"
+find "${WEB_ROOT}/web-dist" -mindepth 1 -maxdepth 1 -exec rm -rf -- {} +
+cp -a "${web_stage}/." "${WEB_ROOT}/web-dist/"
+rmdir "${web_stage}"
 
 if [[ "${RESET_BASELINE}" == true ]]; then
   printf 'Applying migrations and reloading the approved synthetic demo baseline...\n'
@@ -331,10 +339,10 @@ fi
 podman exec caddy caddy validate --config /etc/caddy/Caddyfile --adapter caddyfile
 systemctl --user restart caddy.service
 
-host_index_sha="$(sha256sum "${APP_ROOT}/web-dist/index.html" | awk '{print $1}')"
+host_index_sha="$(sha256sum "${WEB_ROOT}/web-dist/index.html" | awk '{print $1}')"
 caddy_index_sha="$(podman exec caddy cat /srv/bridge-ph-pimascor-demo/index.html | sha256sum | awk '{print $1}')"
 [[ "${host_index_sha}" == "${caddy_index_sha}" ]] || {
-  printf '%s\n' 'Caddy is still mounted to a previous web directory; refusing to report a successful update.' >&2
+  printf '%s\n' 'Caddy does not serve the current ~/bridge-ph/pimascor-demo/web-dist release; refusing to report a successful update.' >&2
   exit 1
 }
 
