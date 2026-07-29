@@ -64,6 +64,16 @@ that the VPS has received the commit, that a migration completed, that a service
 is healthy, or that a CDN purge occurred. Those facts require current VPS or
 provider command output.
 
+## Sales quotation printing
+
+**Confirmed in the current local repository.**
+`docs/reference/AAA FORMAT QUOTATION.pdf` is a visual layout reference, not a
+static form or a source of quotation values. The quotation preview and print
+copy render the selected persisted `ApiQuotation`: its reference, client,
+shipment details, terms, approval state, line items, currencies, amounts, and
+per-currency totals. Placeholder amounts or client details must never be copied
+from the reference PDF into a live quotation.
+
 ## Required wording for operational work
 
 1. Cite the file path, command output, owner statement, or primary source near
