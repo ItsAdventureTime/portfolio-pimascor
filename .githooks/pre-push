@@ -1,5 +1,15 @@
 #!/bin/sh
+set -eu
 
-echo 'Push blocked: this NDA-covered repository is configured for local-only use.' >&2
-echo 'Obtain written authorization and explicitly change the repository policy before publishing.' >&2
-exit 1
+remote_name="${1:-}"
+remote_url="${2:-}"
+approved_remote='git@github.com:ItsAdventureTime/bridge-pimascor.git'
+
+if [ "${remote_url}" != "${approved_remote}" ] ||
+   [ "${PIMASCOR_ALLOW_PRIVATE_GITHUB_PUSH:-}" != '1' ]; then
+  printf '%s\n' 'Push blocked: this NDA-covered repository permits only the explicitly approved private GitHub remote.' >&2
+  printf '%s\n' 'For the approved remote, use PIMASCOR_ALLOW_PRIVATE_GITHUB_PUSH=1 with git push.' >&2
+  exit 1
+fi
+
+printf 'Authorized private push: %s (%s)\n' "${remote_name}" "${remote_url}" >&2
