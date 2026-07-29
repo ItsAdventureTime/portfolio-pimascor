@@ -1,5 +1,9 @@
 # PIMASCOR demo deployment
 
+Before following this runbook, read `../docs/FACTUAL-BASIS.md`. The commands
+describe the reviewed repository configuration; they do not prove the current
+VPS state. Verify host-specific facts with command output before modifying them.
+
 Short manual runbook for the rootless Fedora CoreOS deployment at:
 
 ```text

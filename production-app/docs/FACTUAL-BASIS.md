@@ -1,0 +1,82 @@
+# Factual basis and evidence policy
+
+This document controls how PIMASCOR documentation, deployment instructions,
+and implementation notes state facts. It prevents an observed file, a user
+statement, a verified command result, and an assumption from being presented as
+the same kind of evidence.
+
+## Evidence labels
+
+- **Confirmed by owner**: directly supplied by the system owner or operator.
+- **Confirmed in repository**: present in the checked local source and named
+  commit.
+- **Confirmed by command output**: captured from the relevant host or service.
+- **External reference**: supported by the linked primary documentation.
+- **Inference**: a reasoned recommendation, not a verified fact.
+- **Unknown**: requires a command, log, configuration file, or owner decision
+  before an instruction may depend on it.
+
+Never convert an inference or unknown into a command that can modify the VPS,
+database, storage, secrets, DNS, or CDN. State the missing evidence and obtain
+it first.
+
+## Confirmed VPS layout
+
+**Confirmed by owner on 30 July 2026.** These are the only application and
+Quadlet paths that the current demo deployment instructions may use:
+
+```text
+~/pimascor
+~/pimascor-demo
+~/.config/containers/systemd/bridge-ph/pimascor
+~/.config/containers/systemd/bridge-ph/pimascor-demo
+```
+
+`bridge-ph-pimascor-*` names in Quadlet files, systemd units, Podman networks,
+container names, and secrets are identifiers, not evidence of a
+`~/bridge-ph/...` application directory.
+
+## Confirmed cleanup scope
+
+**Confirmed by owner on 30 July 2026.** The only erroneous VPS directories
+authorized for removal are:
+
+```text
+~/bridge-ph/pimascor-demo-release
+~/bridge-ph/pimascor-demo-release.previous.20260729T161528Z
+~/bridge-ph/releases
+```
+
+The repository provides a local SSH helper that targets only those paths:
+`infra/scripts/cleanup-mistaken-demo-vps-paths.sh`. Its existence does **not**
+prove that the deletion has run. Treat deletion as unknown until the operator
+records the command output from the VPS.
+
+## Current deployment evidence boundary
+
+**Confirmed in repository at commit `f01543c`.** The demo transfer helper
+stages source under `~/pimascor-demo/source`; the demo updater and demo Quadlets
+use `~/pimascor-demo` for runtime data; production backup Quadlets use
+`~/pimascor`.
+
+This confirms intended repository configuration only. It does not establish
+that the VPS has received the commit, that a migration completed, that a service
+is healthy, or that a CDN purge occurred. Those facts require current VPS or
+provider command output.
+
+## Required wording for operational work
+
+1. Cite the file path, command output, owner statement, or primary source near
+   each operational claim.
+2. Say "run this to verify" when a server state has not been observed.
+3. Say "not yet verified" rather than claiming a deployment, deletion, restart,
+   migration, backup, or purge completed.
+4. Stop and ask for direction if a requested change needs an unknown path,
+   credential, retention rule, legal requirement, or production decision.
+5. Keep commands scoped to exact paths. Do not add backup, rollback, deletion,
+   or external-service operations that the owner did not authorize.
+
+## External references
+
+- [Podman user Quadlet search paths](https://docs.podman.io/en/latest/markdown/podman-systemd.unit.5.html)
+- [Bunny CDN cache purge documentation](https://docs.bunny.net/cdn/purge-cache)

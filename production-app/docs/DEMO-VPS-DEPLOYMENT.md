@@ -1,5 +1,10 @@
 # Demo VPS release procedure
 
+Read [Factual basis and evidence policy](FACTUAL-BASIS.md) first. The paths in
+this guide are confirmed by the owner; completion of a transfer, cleanup,
+migration, restart, or Bunny purge remains unverified until its current command
+output is captured.
+
 This procedure is only for the public synthetic-data demo at
 `https://delegateops.business/pimascor/demo/`. It is not a production-data
 deployment and must be run by the rootless Linux user that owns the demo

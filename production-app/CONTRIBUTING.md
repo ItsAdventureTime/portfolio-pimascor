@@ -4,6 +4,13 @@
 
 This repository contains the deployable PIMASCOR application, its operational documentation, and its deployment definitions. Do not add credentials, local databases, uploaded documents, production exports, or real personal or financial data.
 
+## Evidence discipline
+
+Follow `docs/FACTUAL-BASIS.md`. Separate owner-confirmed facts, repository
+configuration, command output, external references, inferences, and unknowns.
+Do not state that a VPS action completed without its command output, and do not
+invent a path, service state, provider configuration, or production decision.
+
 ## Local workflow
 
 1. Start from `main` and create one short-lived branch per focused change, such as `feat/client-payment-filter` or `fix/demo-reset-health-check`.

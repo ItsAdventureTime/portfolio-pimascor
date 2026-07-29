@@ -21,6 +21,14 @@ requirements document as the source of truth. When sources disagree, identify th
 conflict and ask only when the answer would materially change workflow, permissions,
 data, security, or deployment.
 
+## Evidence discipline
+
+Classify every operational claim as owner-confirmed, repository-confirmed,
+command-output-confirmed, externally referenced, inference, or unknown. Do not
+invent paths, service status, migrations, provider configuration, legal rules,
+or completed actions. A command that could change infrastructure must use an
+exact verified target and stay within the owner's explicit authorization.
+
 ## Goal
 
 Build `[APPLICATION NAME]` for `[ORGANIZATION]` in `[INDUSTRY]`.

@@ -7,6 +7,9 @@ Current target: team demo at `https://delegateops.business/pimascor/demo/`
 
 Implementation follows `docs/REQUIREMENTS-V2.md`, which reconciles the July 2026 evaluation records and screenshots. The correct name is **Mich**.
 
+Operational and deployment assertions follow `docs/FACTUAL-BASIS.md`; an
+unverified server, storage, CDN, or migration state is recorded as unknown.
+
 ## 2. Product outcome
 
 PIMASCOR provides one accountable path from operational request to approval, payment, Liquidation, Billing, and collection. The demo uses realistic fictional records, resets at 03:00 Asia/Manila, and must never hold live financial or personal data.
