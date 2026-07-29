@@ -283,8 +283,12 @@ accessibility, testing, and recovery properties.
 9. Run focused tests first, then the full API suite and frontend production build.
 10. Verify the actual user path at desktop and mobile widths when UI changes.
 11. Update each rule once in the authoritative document and link to it elsewhere.
-12. Lead the final response with the outcome, verification evidence, migration or
-    deployment impact, exact commands, and remaining decisions.
+12. For every deployment-relevant change, lead the final response with the
+    outcome, actual local verification evidence, and exactly two clearly labeled
+    one-line commands: one to transfer from the operator's local machine and one
+    to activate after VPS login. State whether the current workflow transfers a
+    compiled artifact or source, and never describe local checks as proof of VPS
+    deployment. Then state migration/CDN impact and remaining decisions.
 
 ## Required deliverables
 

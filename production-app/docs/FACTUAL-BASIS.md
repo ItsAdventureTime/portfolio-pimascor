@@ -64,6 +64,30 @@ that the VPS has received the commit, that a migration completed, that a service
 is healthy, or that a CDN purge occurred. Those facts require current VPS or
 provider command output.
 
+## Required demo deployment handoff
+
+**Confirmed by owner on 30 July 2026.** Whenever a completed change affects the
+demo release, the handoff must include both exact, single-line commands below:
+
+```bash
+/Users/jk.deguzman/dev/bridge-ph_Dashboard/production-app/infra/scripts/deploy-demo-vps.sh
+```
+
+Run that command locally on the Mac. After it succeeds and after logging in with
+`ssh gatewaysentry`, run this command on the VPS:
+
+```bash
+cd ~/pimascor-demo/source && ./infra/scripts/update-demo.sh --source ~/pimascor-demo/source
+```
+
+**Confirmed in repository.** The local transfer sends reviewed source, not a
+pre-built release artifact: it excludes local `apps/web/dist`, `node_modules`,
+virtual environments, and test data. A local test or `npm run build` is evidence
+of local validation only. The VPS updater builds the API and PWA there before it
+activates the demo. Report those two evidence categories separately and never
+claim the VPS update, migration, restart, health check, or CDN purge completed
+until its command output is available.
+
 ## Sales quotation printing
 
 **Confirmed in the current local repository.**

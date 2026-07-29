@@ -24,6 +24,10 @@ invent a path, service state, provider configuration, or production decision.
 - Never rewrite published `main` history or move a release tag.
 - Tag an accepted release only after the demo or production validation evidence is recorded.
 - Treat secrets, personal data, live finance records, and production exports as incident-sensitive: do not commit them. If one is committed, stop distribution, rotate the affected secret or access, and use an approved remediation process rather than casually rewriting history.
+- For every demo-relevant change handoff, provide the exact one-line local
+  transfer command and exact one-line VPS activation command from
+  `docs/DEMO-VPS-DEPLOYMENT.md`, plus the checks that actually passed. Keep
+  local validation distinct from VPS activation evidence.
 
 ## Future hosted-repository controls
 

@@ -64,7 +64,17 @@ After the source transfer completes, log in:
 
 Then run this exact VPS command:
 
-    cd /var/home/jk/pimascor-demo/source && ./infra/scripts/update-demo.sh --source /var/home/jk/pimascor-demo/source
+    cd ~/pimascor-demo/source && ./infra/scripts/update-demo.sh --source ~/pimascor-demo/source
+
+## Required handoff for every demo-relevant change
+
+Every implementation handoff must repeat the two single-line commands above:
+the local transfer command first, then the VPS activation command after login.
+It must also state which local checks actually passed and what the VPS command
+still needs to verify. This repository's current workflow validates source
+locally, transfers source, and builds the API/PWA on the VPS. It does not
+transfer a locally compiled artifact, so a local build must never be presented
+as evidence that the VPS has been updated.
 
 ## What the transfer does before starting
 
