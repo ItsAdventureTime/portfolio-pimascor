@@ -10,6 +10,7 @@ from .conftest import TestingSession, sign_in
 
 
 def test_admin_can_queue_only_two_local_record_archives_per_ph_week(client, monkeypatch):
+    monkeypatch.setattr("pimascor_api.routers.data_exports.get_settings", lambda: type("Settings", (), {"data_export_enabled": True})())
     monkeypatch.setattr("pimascor_api.routers.data_exports.require_storage", lambda: None)
     csrf = sign_in(client, "admin")
 
@@ -30,6 +31,13 @@ def test_full_record_archives_are_admin_only(client):
     assert response.status_code == 403, response.text
     response = client.post("/api/v1/data-exports", headers={"X-CSRF-Token": csrf})
     assert response.status_code == 403, response.text
+
+
+def test_demo_explicitly_disables_complete_local_archives(client):
+    csrf = sign_in(client, "admin")
+    response = client.post("/api/v1/data-exports", headers={"X-CSRF-Token": csrf})
+    assert response.status_code == 503, response.text
+    assert response.json()["error"]["message"] == "Complete local records archives are disabled in this demo."
 
 
 def test_worker_creates_csv_and_attachment_ready_archive_without_credentials(monkeypatch):

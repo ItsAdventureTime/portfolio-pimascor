@@ -39,6 +39,7 @@ Environment=INCIDENT_EMAIL_ENABLED=true
 Environment=INCIDENT_ADMIN_EMAIL=alyssa.d@bridge-ph.com
 Environment=INCIDENT_DEVELOPER_EMAIL=jk@delegateops.business
 Environment=PDF_PREVIEW_RETENTION_HOURS=12
+Environment=DATA_EXPORT_ENABLED=false
 Environment=B2_ENDPOINT_URL=https://s3.us-west-001.backblazeb2.com
 Environment=B2_REGION=us-west-001
 Environment=B2_BUCKET=bridge-ph

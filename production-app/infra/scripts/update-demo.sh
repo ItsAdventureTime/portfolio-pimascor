@@ -66,6 +66,9 @@ required_files=(
   "${SOURCE_ROOT}/apps/api/migrations/versions/20260723_0006_document_storage.py"
   "${SOURCE_ROOT}/apps/api/migrations/versions/20260723_0007_incident_reporting.py"
   "${SOURCE_ROOT}/apps/api/migrations/versions/20260723_0008_profitability_billing_controls.py"
+  "${SOURCE_ROOT}/apps/api/migrations/versions/20260724_0009_meeting_workflow_controls.py"
+  "${SOURCE_ROOT}/apps/api/migrations/versions/20260729_0010_sales_quotation_print_fields.py"
+  "${SOURCE_ROOT}/apps/api/migrations/versions/20260729_0011_data_exports.py"
   "${SOURCE_ROOT}/apps/api/src/pimascor_api/incident_admin.py"
   "${SOURCE_ROOT}/apps/web/Containerfile"
   "${SOURCE_ROOT}/infra/quadlet/demo/bridge-ph-pimascor-demo-api.container"
@@ -121,12 +124,28 @@ grep -Fq 'revision: str = "20260723_0008"' "${SOURCE_ROOT}/apps/api/migrations/v
   printf 'Refusing to update: the profitability and Billing-control migration is missing or has an unexpected revision ID.\n' >&2
   exit 1
 }
+grep -Fq 'revision: str = "20260724_0009"' "${SOURCE_ROOT}/apps/api/migrations/versions/20260724_0009_meeting_workflow_controls.py" || {
+  printf 'Refusing to update: the meeting-workflow migration is missing or has an unexpected revision ID.\n' >&2
+  exit 1
+}
+grep -Fq 'revision: str = "20260729_0010"' "${SOURCE_ROOT}/apps/api/migrations/versions/20260729_0010_sales_quotation_print_fields.py" || {
+  printf 'Refusing to update: the quotation print-format migration is missing or has an unexpected revision ID.\n' >&2
+  exit 1
+}
+grep -Fq 'revision = "20260729_0011"' "${SOURCE_ROOT}/apps/api/migrations/versions/20260729_0011_data_exports.py" || {
+  printf 'Refusing to update: the controlled data-export migration is missing or has an unexpected revision ID.\n' >&2
+  exit 1
+}
 grep -Fqx 'Environment=INCIDENT_ADMIN_EMAIL=alyssa.d@bridge-ph.com' "${api_quadlet}" || {
   printf 'Refusing to update: the reviewed Bridge PH incident recipient is missing from the API Quadlet.\n' >&2
   exit 1
 }
 grep -Fqx 'Environment=INCIDENT_DEVELOPER_EMAIL=jk@delegateops.business' "${api_quadlet}" || {
   printf 'Refusing to update: the reviewed Developer incident recipient is missing from the API Quadlet.\n' >&2
+  exit 1
+}
+grep -Fqx 'Environment=DATA_EXPORT_ENABLED=false' "${api_quadlet}" || {
+  printf 'Refusing to update: full-record archives must remain disabled in the demo API.\n' >&2
   exit 1
 }
 [[ "$(podman info --format '{{.Host.Security.Rootless}}')" == 'true' ]] || {

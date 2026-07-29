@@ -7,6 +7,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session, selectinload
 
 from ..db import get_db
+from ..config import get_settings
 from ..dependencies import AuthContext, csrf_roles_allowed, roles_allowed
 from ..models import DataExport, DataExportStatus, Role
 from ..schemas import DataExportResponse
@@ -32,11 +33,21 @@ def ph_week_start(now: datetime) -> datetime:
     return monday.astimezone(ZoneInfo("UTC"))
 
 
+def require_data_exports_enabled() -> None:
+    if not get_settings().data_export_enabled:
+        raise HTTPException(
+            status_code=503,
+            detail="Complete local records archives are disabled in this demo environment",
+        )
+
+
 @router.get("", response_model=list[DataExportResponse])
 def list_exports(
     _: AuthContext = Depends(roles_allowed(Role.ADMIN)),
     db: Session = Depends(get_db),
 ):
+    if not get_settings().data_export_enabled:
+        return []
     return db.scalars(
         select(DataExport)
         .options(selectinload(DataExport.requested_by))
@@ -51,6 +62,7 @@ def request_export(
     context: AuthContext = Depends(csrf_roles_allowed(Role.ADMIN)),
     db: Session = Depends(get_db),
 ):
+    require_data_exports_enabled()
     require_storage()
     week_start = ph_week_start(datetime.now(PH_TZ))
     used = db.scalars(
@@ -89,6 +101,7 @@ def download_export(
     context: AuthContext = Depends(roles_allowed(Role.ADMIN)),
     db: Session = Depends(get_db),
 ):
+    require_data_exports_enabled()
     export = db.scalar(
         select(DataExport)
         .options(selectinload(DataExport.requested_by))

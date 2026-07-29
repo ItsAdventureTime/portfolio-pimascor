@@ -39,6 +39,9 @@ class Settings(BaseSettings):
     b2_key_id_file: Path | None = None
     b2_application_key_file: Path | None = None
     pdf_preview_retention_hours: int = 12
+    # A demo must never create a reusable archive containing all records and
+    # attachments. Production enables this only after its worker is deployed.
+    data_export_enabled: bool = False
 
     @model_validator(mode="after")
     def validate_runtime_security(self) -> "Settings":

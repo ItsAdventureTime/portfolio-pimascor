@@ -233,6 +233,12 @@ def friendly_http_error(status_code: int, detail: object) -> tuple[str, str, boo
             "Wait a moment before trying again.",
             True,
         )
+    if status_code == 503 and "archives are disabled in this demo" in detail_text.lower():
+        return (
+            "Complete local records archives are disabled in this demo.",
+            "The demo can show the controlled workflow, but it cannot create an all-records archive or send a download email.",
+            False,
+        )
     if status_code >= 500:
         return (
             "The service could not complete this action.",
