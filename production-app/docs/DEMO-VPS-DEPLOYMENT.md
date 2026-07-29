@@ -31,7 +31,9 @@ It sends the current local source tree (excluding Git history, virtual
 environments, build output, and local test data) to a timestamped private
 release directory under the VPS account's `~/bridge-ph/releases/`, then runs
 the guarded demo updater. It does not remove an existing release, demo data,
-or B2 objects.
+or B2 objects. The transfer strips macOS AppleDouble metadata and sidecar files
+before extraction, so Linux containers never receive those binary metadata
+files as possible Python migration candidates.
 
 ## What the command does before starting
 
@@ -55,6 +57,7 @@ PWA, saves local rollback material, installs the
 reviewed Quadlets, runs the database forward migration through the API/reset
 entrypoint, restarts Caddy, and probes both the health endpoint and public demo
 route. Stop if it reports an error. Do not purge the CDN after a failed update.
+Do not run `update-demo.sh` directly from macOS; it is intentionally VPS-only.
 
 ## Verify before any Bunny purge
 

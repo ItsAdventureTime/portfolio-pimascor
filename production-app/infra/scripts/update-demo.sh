@@ -15,6 +15,10 @@ RESET_BASELINE=true
 RUNTIME_ROOT="${XDG_RUNTIME_DIR:-/run/user/$(id -u)}"
 MAINTENANCE_LOCK="${RUNTIME_ROOT}/bridge-ph-pimascor-demo-maintenance.lock"
 
+[[ "$(uname -s)" != "Darwin" ]] || {
+  printf '%s\n' 'This is the VPS-only updater. Run infra/scripts/deploy-demo-vps.sh from your Mac instead.' >&2
+  exit 1
+}
 [[ "${EUID}" -ne 0 ]] || {
   printf '%s\n' 'Refusing to run as root: use the rootless Linux user that owns the PIMASCOR demo.' >&2
   exit 1

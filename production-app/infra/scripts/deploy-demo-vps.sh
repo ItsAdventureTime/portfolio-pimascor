@@ -11,8 +11,18 @@ RELEASE_STAMP="$(date -u +%Y%m%dT%H%M%SZ)"
 
 cd "$SOURCE_ROOT"
 
-tar \
+# macOS tar otherwise writes Apple metadata (xattrs/ACLs/AppleDouble sidecars)
+# into the stream. Linux tar warns about those headers and an AppleDouble file
+# ending in .py can make Alembic try to import binary bytes as a migration.
+COPYFILE_DISABLE=1 tar \
+  --no-mac-metadata \
+  --no-xattrs \
+  --no-acls \
+  --no-fflags \
   --exclude='./.git' \
+  --exclude='./.DS_Store' \
+  --exclude='./._*' \
+  --exclude='*/._*' \
   --exclude='./apps/web/node_modules' \
   --exclude='./apps/web/dist' \
   --exclude='./apps/api/.venv' \
@@ -27,6 +37,7 @@ tar \
   release_dir=\"\$release_root/pimascor-demo-${RELEASE_STAMP}\"
   mkdir -p \"\$release_dir\"
   tar -xzf - -C \"\$release_dir\"
+  find \"\$release_dir\" -type f \( -name '._*' -o -name '*.pyc' \) -delete
   cd \"\$release_dir\"
   ./infra/scripts/update-demo.sh --source \"\$release_dir\"
 "
