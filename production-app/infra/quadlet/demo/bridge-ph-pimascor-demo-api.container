@@ -50,7 +50,7 @@ ReadOnly=true
 ReadOnlyTmpfs=true
 # Starlette spools large multipart bodies to this private host directory. This
 # avoids holding a 100 MB document in RAM or exhausting a small tmpfs.
-Volume=%h/pimascor-demo/data/uploads-tmp:/tmp:U,Z
+Volume=%h/bridge-ph/pimascor-demo/data/uploads-tmp:/tmp:U,Z
 NoNewPrivileges=true
 DropCapability=all
 PidsLimit=256

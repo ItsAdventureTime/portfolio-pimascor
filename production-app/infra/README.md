@@ -10,8 +10,8 @@ Short manual runbook for the rootless Fedora CoreOS deployment at:
 https://delegateops.business/pimascor/demo/
 ```
 
-Application source and runtime data live in `~/pimascor-demo`; the Caddy-served
-PWA lives in `~/bridge-ph/pimascor-demo/web-dist`; globally unique Quadlets live
+Application source, runtime data, and the Caddy-served PWA live under
+`~/bridge-ph/pimascor-demo`; globally unique Quadlets live
 in `~/.config/containers/systemd/bridge-ph/pimascor-demo`.
 
 ## 1. What runs
@@ -36,7 +36,7 @@ Internet -> Caddy -> static PWA
 Run as the rootless service owner:
 
 ```bash
-install -d -m 700 ~/pimascor-demo/source ~/pimascor-demo/data/postgres/18/docker ~/pimascor-demo/data/uploads-tmp ~/bridge-ph/pimascor-demo ~/.config/containers/systemd/bridge-ph/pimascor-demo ~/.config/systemd/user
+install -d -m 700 ~/bridge-ph/pimascor-demo/source ~/bridge-ph/pimascor-demo/data/postgres/18/docker ~/bridge-ph/pimascor-demo/data/uploads-tmp ~/.config/containers/systemd/bridge-ph/pimascor-demo ~/.config/systemd/user
 ```
 
 `install -d` creates directories and applies the requested mode; it does not install a software package or overwrite an existing database.
@@ -55,11 +55,11 @@ Expected: `true` and `Linger=yes`.
 From the computer containing `production-app`, first preview and then copy. Replace `VPS_HOST`:
 
 ```bash
-rsync -avhn --delete --exclude '.DS_Store' --exclude 'node_modules/' --exclude '.venv/' --exclude 'dist/' /Users/jk.deguzman/Downloads/bridge-ph_Dashboard/production-app/ jk@VPS_HOST:/var/home/jk/pimascor-demo/source/
+rsync -avhn --delete --exclude '.DS_Store' --exclude 'node_modules/' --exclude '.venv/' --exclude 'dist/' /Users/jk.deguzman/Downloads/bridge-ph_Dashboard/production-app/ jk@VPS_HOST:/var/home/jk/bridge-ph/pimascor-demo/source/
 ```
 
 ```bash
-rsync -avh --delete --exclude '.DS_Store' --exclude 'node_modules/' --exclude '.venv/' --exclude 'dist/' /Users/jk.deguzman/Downloads/bridge-ph_Dashboard/production-app/ jk@VPS_HOST:/var/home/jk/pimascor-demo/source/
+rsync -avh --delete --exclude '.DS_Store' --exclude 'node_modules/' --exclude '.venv/' --exclude 'dist/' /Users/jk.deguzman/Downloads/bridge-ph_Dashboard/production-app/ jk@VPS_HOST:/var/home/jk/bridge-ph/pimascor-demo/source/
 ```
 
 `--delete` affects only the destination `source/` mirror, never live PostgreSQL data, installed Quadlets, Podman secrets, or Caddy.
@@ -123,7 +123,7 @@ the Resend key remains a Podman secret.
 For an already installed demo, use the guarded updater:
 
 ```bash
-cd ~/pimascor-demo/source
+cd ~/bridge-ph/pimascor-demo/source
 infra/scripts/update-demo.sh
 ```
 
@@ -132,14 +132,14 @@ It verifies secrets and migrations, installs the reviewed Quadlets, checks Postg
 For a first deployment, build the API:
 
 ```bash
-cd ~/pimascor-demo/source
+cd ~/bridge-ph/pimascor-demo/source
 podman build --pull=missing --tag localhost/bridge-ph-pimascor-demo-api:demo apps/api
 ```
 
 Export the PWA:
 
 ```bash
-cd ~/pimascor-demo/source
+cd ~/bridge-ph/pimascor-demo/source
 mkdir -p ~/bridge-ph/pimascor-demo/web-dist.new
 podman build --pull=missing --file apps/web/Containerfile --output type=local,dest="$HOME/bridge-ph/pimascor-demo/web-dist.new" apps/web
 install -d -m 700 ~/bridge-ph/pimascor-demo/web-dist
@@ -277,7 +277,7 @@ pimascor/
 - Production documents use `pimascor/documents/`.
 - Production encrypted backups use `pimascor/backups/restic/`.
 - Object keys use lowercase prefixes and opaque IDs. The original filename stays in PostgreSQL for display and audit, not in the object key.
-- Each PDF/JPEG/PNG may be up to 100 MB. Validation reads bounded chunks, and `%h/pimascor-demo/data/uploads-tmp` is the private disk-backed spool used while Boto3 performs a managed multipart transfer.
+- Each PDF/JPEG/PNG may be up to 100 MB. Validation reads bounded chunks, and `%h/bridge-ph/pimascor-demo/data/uploads-tmp` is the private disk-backed spool used while Boto3 performs a managed multipart transfer.
 - S3 storage is flat. These are prefixes, not real folders. Do not pre-create them; the first object upload creates the visible hierarchy automatically.
 - The production PostgreSQL dump is staged locally and captured inside Restic. Do not create a duplicate `pimascor/db` backup tree.
 
@@ -320,13 +320,13 @@ After synchronizing the source, update, migrate, reload the demo baseline, resta
 Caddy, and run the public health checks:
 
 ```bash
-cd ~/pimascor-demo/source && infra/scripts/update-demo.sh
+cd ~/bridge-ph/pimascor-demo/source && infra/scripts/update-demo.sh
 ```
 
 List or remove accepted local rollback material interactively:
 
 ```bash
-cd ~/pimascor-demo/source && infra/scripts/cleanup-demo-rollback.sh
+cd ~/bridge-ph/pimascor-demo/source && infra/scripts/cleanup-demo-rollback.sh
 ```
 
 Delete only stored demo incident reports and their incident audit events:
@@ -397,7 +397,7 @@ journalctl --user -u bridge-ph-pimascor-demo-db.service -u bridge-ph-pimascor-de
 PostgreSQL permission error: verify the exact mount is present in the installed database Quadlet:
 
 ```text
-%h/pimascor-demo/data/postgres/18/docker:/var/lib/postgresql/18/docker:U,Z
+%h/bridge-ph/pimascor-demo/data/postgres/18/docker:/var/lib/postgresql/18/docker:U,Z
 ```
 
 Backblaze `403`: verify endpoint, region, bucket, secret names, and that the application key permits `listFiles`, `readFiles`, `writeFiles`, and `deleteFiles` below `pimascor/demo/`.

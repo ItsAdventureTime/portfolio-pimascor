@@ -5,8 +5,8 @@ set -Eeuo pipefail
 # does not create/replace secrets, modify Caddy configuration, publish ports, or
 # update unrelated containers.
 
-APP_ROOT="${HOME}/pimascor-demo"
-WEB_ROOT="${HOME}/bridge-ph/pimascor-demo"
+APP_ROOT="${HOME}/bridge-ph/pimascor-demo"
+WEB_ROOT="${APP_ROOT}"
 QUADLET_ROOT="${HOME}/.config/containers/systemd/bridge-ph/pimascor-demo"
 TIMER_ROOT="${HOME}/.config/systemd/user"
 PUBLIC_URL="https://delegateops.business/pimascor/demo/"
@@ -100,7 +100,8 @@ grep -Fq '.record-tabs, .tabbed-heading { display: flex; flex-wrap: wrap;' \
   printf 'Refusing to update: the transferred source does not contain the reviewed tab overflow fix.\n' >&2
   exit 1
 }
-grep -Fq 'overflow: clip; color: #fff;' "${SOURCE_ROOT}/apps/web/src/styles.css" || {
+grep -Fq 'grid-template-columns: minmax(0, 1.12fr) minmax(360px, .88fr); overflow: hidden;' \
+  "${SOURCE_ROOT}/apps/web/src/styles.css" || {
   printf 'Refusing to update: the transferred source does not contain the reviewed login overflow fix.\n' >&2
   exit 1
 }
@@ -109,7 +110,7 @@ printf 'Activating committed release: %s\n' "${release_commit}"
 db_quadlet="${SOURCE_ROOT}/infra/quadlet/demo/bridge-ph-pimascor-demo-db.container"
 api_quadlet="${SOURCE_ROOT}/infra/quadlet/demo/bridge-ph-pimascor-demo-api.container"
 reset_quadlet="${SOURCE_ROOT}/infra/quadlet/demo/bridge-ph-pimascor-demo-reset.container"
-grep -Fqx 'Volume=%h/pimascor-demo/data/postgres/18/docker:/var/lib/postgresql/18/docker:U,Z' "${db_quadlet}" || {
+grep -Fqx 'Volume=%h/bridge-ph/pimascor-demo/data/postgres/18/docker:/var/lib/postgresql/18/docker:U,Z' "${db_quadlet}" || {
   printf 'Refusing to update: the PostgreSQL Quadlet does not use the required direct PostgreSQL 18 PGDATA mount.\n' >&2
   exit 1
 }
@@ -117,7 +118,7 @@ grep -Fqx 'Environment=PGDATA=/var/lib/postgresql/18/docker' "${db_quadlet}" || 
   printf 'Refusing to update: the PostgreSQL Quadlet does not declare the required PostgreSQL 18 PGDATA path.\n' >&2
   exit 1
 }
-grep -Fqx 'Volume=%h/pimascor-demo/data/uploads-tmp:/tmp:U,Z' "${api_quadlet}" || {
+grep -Fqx 'Volume=%h/bridge-ph/pimascor-demo/data/uploads-tmp:/tmp:U,Z' "${api_quadlet}" || {
   printf 'Refusing to update: the API Quadlet does not provide the required private upload spool for 100 MB documents.\n' >&2
   exit 1
 }

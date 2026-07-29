@@ -2,8 +2,9 @@
 set -eu
 
 # Removes only the three mistaken paths created by the earlier local transfer
-# script. It does not touch ~/pimascor-demo, ~/pimascor, Quadlets, secrets,
-# PostgreSQL data, Caddy, Backblaze, or any other ~/bridge-ph content.
+# script. It does not touch the canonical ~/bridge-ph/pimascor-demo or
+# ~/bridge-ph/pimascor roots, Quadlets, secrets, PostgreSQL data, Caddy,
+# Backblaze, or any other ~/bridge-ph content.
 
 ssh \
   -o ConnectTimeout=15 \

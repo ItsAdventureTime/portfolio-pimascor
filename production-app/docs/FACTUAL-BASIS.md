@@ -26,16 +26,15 @@ it first.
 Quadlet paths that the current demo deployment instructions may use:
 
 ```text
-~/pimascor
-~/pimascor-demo
 ~/bridge-ph/pimascor-demo
+~/bridge-ph/pimascor
 ~/.config/containers/systemd/bridge-ph/pimascor
 ~/.config/containers/systemd/bridge-ph/pimascor-demo
 ```
 
-`~/bridge-ph/pimascor-demo` is the confirmed static-PWA location only. The
-demo source, runtime data, and Quadlets remain under `~/pimascor-demo` and
-`~/.config/containers/systemd/bridge-ph/pimascor-demo` respectively.
+Demo source, runtime data, and compiled web assets remain under
+`~/bridge-ph/pimascor-demo`. Quadlets remain under
+`~/.config/containers/systemd/bridge-ph/pimascor-demo`.
 
 ## Confirmed cleanup scope
 
@@ -56,10 +55,10 @@ records the command output from the VPS.
 ## Current deployment evidence boundary
 
 **Confirmed in the current local repository HEAD.** The demo transfer helper
-stages source under `~/pimascor-demo/source`; the demo updater and demo Quadlets
-use `~/pimascor-demo` for runtime data; the compiled demo PWA is written to
+stages source under `~/bridge-ph/pimascor-demo/source`; the demo updater and demo Quadlets
+use `~/bridge-ph/pimascor-demo` for runtime data; the compiled demo PWA is written to
 `~/bridge-ph/pimascor-demo/web-dist`; production backup Quadlets use
-`~/pimascor`.
+`~/bridge-ph/pimascor`.
 
 This confirms intended repository configuration only. It does not establish
 that the VPS has received the commit, that a migration completed, that a service
@@ -79,7 +78,7 @@ Run that command locally on the Mac. After it succeeds and after logging in with
 `ssh -p 22 jk@216.75.75.136`, run this command on the VPS:
 
 ```bash
-cd ~/pimascor-demo/source && ./infra/scripts/update-demo.sh --source ~/pimascor-demo/source && bash ./infra/scripts/reconcile-demo-web-root.sh
+cd ~/bridge-ph/pimascor-demo/source && ./infra/scripts/update-demo.sh --source ~/bridge-ph/pimascor-demo/source && bash ./infra/scripts/reconcile-demo-web-root.sh
 ```
 
 **Confirmed in repository.** The local transfer sends reviewed source, not a

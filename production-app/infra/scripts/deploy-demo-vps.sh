@@ -48,7 +48,7 @@ git archive \
   "${SSH_TARGET}" "
   set -eu
   umask 077
-  app_root=\"/var/home/jk/pimascor-demo\"
+  app_root=\"/var/home/jk/bridge-ph/pimascor-demo\"
   source_dir=\"\$app_root/source\"
   install -d -m 700 \"\$app_root\"
   stage_dir=\"\$(mktemp -d \"\$app_root/.source.next.XXXXXX\")\"
@@ -64,4 +64,4 @@ git archive \
 
 printf 'Transferred committed release: %s\n' "$release_commit"
 printf '%s\n' 'Source transfer complete. Log in to the VPS, then run:'
-printf '%s\n' 'cd /var/home/jk/pimascor-demo/source && ./infra/scripts/update-demo.sh --source /var/home/jk/pimascor-demo/source && bash ./infra/scripts/reconcile-demo-web-root.sh'
+printf '%s\n' 'cd /var/home/jk/bridge-ph/pimascor-demo/source && ./infra/scripts/update-demo.sh --source /var/home/jk/bridge-ph/pimascor-demo/source && bash ./infra/scripts/reconcile-demo-web-root.sh'

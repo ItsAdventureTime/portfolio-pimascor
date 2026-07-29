@@ -5,7 +5,7 @@ set -Eeuo pipefail
 # exact targets and receiving one explicit confirmation. This script never
 # touches the active deployment, PostgreSQL, secrets, Quadlets, or Backblaze.
 
-APP_ROOT="${HOME}/pimascor-demo"
+APP_ROOT="${HOME}/bridge-ph/pimascor-demo"
 IMAGE_REPOSITORY="localhost/bridge-ph-pimascor-demo-api"
 RUNTIME_ROOT="${XDG_RUNTIME_DIR:-/run/user/$(id -u)}"
 MAINTENANCE_LOCK="${RUNTIME_ROOT}/bridge-ph-pimascor-demo-maintenance.lock"

@@ -1,11 +1,10 @@
 #!/usr/bin/env bash
 set -Eeuo pipefail
 
-# Removes only stale static-build directories created by the earlier, incorrect
-# updater path. The live demo web root remains ~/bridge-ph/pimascor-demo.
+# Removes stale static-build staging directories from the canonical demo root.
 
-APP_ROOT="${HOME}/pimascor-demo"
-WEB_ROOT="${HOME}/bridge-ph/pimascor-demo"
+APP_ROOT="${HOME}/bridge-ph/pimascor-demo"
+WEB_ROOT="${APP_ROOT}"
 CONTAINER_WEB_ROOT="/srv/bridge-ph-pimascor-demo"
 
 [[ "$(uname -s)" != "Darwin" ]] || {
@@ -28,10 +27,7 @@ actual_mounts="$(podman inspect caddy --format '{{range .Mounts}}{{println .Sour
   exit 1
 }
 
-find "${APP_ROOT}" -maxdepth 1 -mindepth 1 -type d \
-  \( -name 'web-dist' -o -name 'web-dist.next.*' -o -name 'web-dist.previous.*' \) \
-  -print -exec rm -rf -- {} +
 find "${WEB_ROOT}" -maxdepth 1 -mindepth 1 -type d \
   -name 'web-dist.next.*' -print -exec rm -rf -- {} +
 
-printf '%s\n' 'Removed only obsolete static-build directories and stale build staging directories.'
+printf '%s\n' 'Removed only stale build staging directories from the canonical demo root.'

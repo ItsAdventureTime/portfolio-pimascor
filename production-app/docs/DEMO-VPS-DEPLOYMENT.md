@@ -30,8 +30,7 @@ changed by this safeguard.
 The demo VPS uses these fixed locations:
 
 ```text
-/var/home/jk/pimascor-demo                    demo application files, data, and source
-/var/home/jk/bridge-ph/pimascor-demo/web-dist compiled demo PWA served by Caddy
+/var/home/jk/bridge-ph/pimascor-demo          demo application files, data, source, and web assets
 /var/home/jk/.config/containers/systemd/bridge-ph/pimascor-demo
                                                demo Quadlet definitions
 ```
@@ -50,7 +49,7 @@ From the local Terminal, run this exact command. It uses the confirmed
 
 It sends the current local source tree (excluding Git history, virtual
 environments, build output, and local test data) to
-`/var/home/jk/pimascor-demo/source`. It first extracts to a private staging
+`/var/home/jk/bridge-ph/pimascor-demo/source`. It first extracts to a private staging
 directory, then replaces only that source directory. It creates no previous
 source snapshot and does not remove demo data or B2 objects. The transfer
 requires a clean Git worktree and sends the exact committed `production-app`
@@ -58,11 +57,11 @@ tree plus a commit marker. Using Git's archive format excludes macOS metadata,
 ignored build output, virtual environments, and Git history. The updater refuses
 a source tree without a valid commit marker.
 
-The source/runtime tree and the Caddy-served PWA are intentionally separate:
-the updater builds the PWA only into
+The source, runtime data, and Caddy-served PWA share one canonical application
+root. The updater builds the PWA only into
 `/var/home/jk/bridge-ph/pimascor-demo/web-dist`. Caddy's rootless Quadlet must
 bind that exact host directory read-only to `/srv/bridge-ph-pimascor-demo`.
-It must not mount `~/pimascor-demo/web-dist`.
+The top-level `~/pimascor-demo` path is invalid and must not be mounted or used.
 
 Because Caddy bind-mounts the `web-dist` directory itself, the updater keeps
 that directory in place and replaces its validated contents. It does not rename
@@ -76,11 +75,10 @@ After the source transfer completes, log in:
 
 Then run this exact VPS command:
 
-    cd ~/pimascor-demo/source && ./infra/scripts/update-demo.sh --source ~/pimascor-demo/source && bash ./infra/scripts/reconcile-demo-web-root.sh
+    cd ~/bridge-ph/pimascor-demo/source && ./infra/scripts/update-demo.sh --source ~/bridge-ph/pimascor-demo/source && bash ./infra/scripts/reconcile-demo-web-root.sh
 
 The final reconciliation step runs only after the corrected updater has built
-and verified the Caddy-served PWA. It removes only obsolete static-build
-directories matching `~/pimascor-demo/web-dist*` and stale staging directories
+and verified the Caddy-served PWA. It removes only stale staging directories
 matching `~/bridge-ph/pimascor-demo/web-dist.next.*`; it does not alter source,
 database data, uploads, Quadlets, Caddy configuration, secrets, or the live
 `~/bridge-ph/pimascor-demo/web-dist` directory.
