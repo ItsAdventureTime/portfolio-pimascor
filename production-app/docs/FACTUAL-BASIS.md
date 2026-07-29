@@ -65,6 +65,14 @@ that the VPS has received the commit, that a migration completed, that a service
 is healthy, or that a CDN purge occurred. Those facts require current VPS or
 provider command output.
 
+## Git synchronization boundary
+
+**Confirmed in the local repository configuration.** The configured `origin` is
+the private GitHub repository `git@github.com:ItsAdventureTime/bridge-pimascor.git`.
+Every tracked change must be validated, committed locally, and pushed to that
+private remote. A successful push proves GitHub synchronization only; it does
+not prove VPS deployment.
+
 ## Required demo deployment handoff
 
 **Confirmed by owner on 30 July 2026.** Whenever a completed change affects the

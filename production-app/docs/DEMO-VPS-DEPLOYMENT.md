@@ -97,9 +97,9 @@ as evidence that the VPS has been updated.
 
 1. Keep the existing demo online until the new release has passed its health and
    browser checks. Do not purge Bunny yet.
-2. It transfers the reviewed source tree and this
-   runbook through the private SSH connection. This repository has no public
-   remote.
+2. It transfers the reviewed source tree and this runbook through the private
+   SSH connection. Git synchronization is handled separately through the
+   private remote documented in [Local and private Git workflow](GIT-WORKFLOW.md).
 3. The VPS updater confirms that migration `20260729_0011` and its required demo
    safeguards are present.
 4. The remote update runs as the confirmed non-root `jk` account; the update

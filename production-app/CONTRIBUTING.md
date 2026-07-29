@@ -26,6 +26,8 @@ invent a path, service state, provider configuration, or production decision.
 ## Commit and release policy
 
 - Never rewrite published `main` history or move a release tag.
+- This project uses the private GitHub remote `git@github.com:ItsAdventureTime/bridge-pimascor.git`.
+- Every change that modifies tracked files must be committed locally and pushed to that private remote after local validation. Never push to an unverified remote, and never use force-push.
 - Tag an accepted release only after the demo or production validation evidence is recorded.
 - Treat secrets, personal data, live finance records, and production exports as incident-sensitive: do not commit them. If one is committed, stop distribution, rotate the affected secret or access, and use an approved remediation process rather than casually rewriting history.
 - For every demo-relevant change handoff, provide the exact one-line local
@@ -35,6 +37,8 @@ invent a path, service state, provider configuration, or production decision.
 - Do not describe a release as production-ready until the role, responsive, and
   browser-engine checks in `docs/QUALITY-ASSURANCE.md` are recorded.
 
-## Future hosted-repository controls
+## Private hosted-repository controls
 
-When a remote repository and team identities are available, configure a `main` ruleset that blocks force-pushes, requires a pull request, passing checks, and a fresh approval. Add CODEOWNERS for `apps/api/`, `infra/`, and workflow/security configuration, then require its review.
+Keep the GitHub repository private. Where GitHub repository settings are used,
+configure a `main` ruleset that blocks force-pushes, requires passing checks and
+review, and protects workflow/security configuration with CODEOWNERS.
