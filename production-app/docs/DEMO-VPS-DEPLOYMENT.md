@@ -52,9 +52,10 @@ environments, build output, and local test data) to
 `/var/home/jk/pimascor-demo/source`. It first extracts to a private staging
 directory, then replaces only that source directory. It creates no previous
 source snapshot and does not remove demo data or B2 objects. The transfer
-strips macOS AppleDouble metadata and sidecar files before extraction, so Linux
-containers never receive those binary metadata files as possible Python
-migration candidates.
+requires a clean Git worktree and sends the exact committed `production-app`
+tree plus a commit marker. Using Git's archive format excludes macOS metadata,
+ignored build output, virtual environments, and Git history. The updater refuses
+a source tree without a valid commit marker.
 
 ## Activate from the VPS
 
@@ -97,7 +98,11 @@ baseline, which is the correct choice for a demo release. It builds the API and
 PWA, saves local rollback material, installs the
 reviewed Quadlets, runs the database forward migration through the API/reset
 entrypoint, restarts Caddy, and probes both the health endpoint and public demo
-route. Stop if it reports an error. Do not purge the CDN after a failed update.
+route. It prints the activated Git commit and expected CSS/JavaScript asset
+names, then verifies that Caddy's mounted `index.html` matches the newly built
+host file. A warning that the public route still returns an older index means
+the origin is updated but Bunny still needs the documented targeted purge. Stop
+if it reports an error. Do not purge the CDN after a failed update.
 Do not run `update-demo.sh` directly from macOS; it is intentionally VPS-only.
 
 ## Verify before any Bunny purge

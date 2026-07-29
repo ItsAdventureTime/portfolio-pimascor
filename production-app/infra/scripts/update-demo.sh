@@ -65,6 +65,7 @@ while (($#)); do
 done
 
 required_files=(
+  "${SOURCE_ROOT}/.deployment-source-commit"
   "${SOURCE_ROOT}/apps/api/Containerfile"
   "${SOURCE_ROOT}/apps/api/migrations/versions/20260723_0005_finance_controls.py"
   "${SOURCE_ROOT}/apps/api/migrations/versions/20260723_0006_document_storage.py"
@@ -87,6 +88,22 @@ required_files=(
 for required_file in "${required_files[@]}"; do
   [[ -f "${required_file}" ]] || { printf 'Missing required file: %s\n' "${required_file}" >&2; exit 1; }
 done
+
+release_commit="$(tr -d '\r\n' < "${SOURCE_ROOT}/.deployment-source-commit")"
+[[ "${release_commit}" =~ ^[0-9a-f]{40}$ ]] || {
+  printf 'Refusing to update: the transferred Git commit marker is missing or invalid.\n' >&2
+  exit 1
+}
+grep -Fq '.record-tabs, .tabbed-heading { display: flex; flex-wrap: wrap;' \
+  "${SOURCE_ROOT}/apps/web/src/styles.css" || {
+  printf 'Refusing to update: the transferred source does not contain the reviewed tab overflow fix.\n' >&2
+  exit 1
+}
+grep -Fq 'overflow: clip; color: #fff;' "${SOURCE_ROOT}/apps/web/src/styles.css" || {
+  printf 'Refusing to update: the transferred source does not contain the reviewed login overflow fix.\n' >&2
+  exit 1
+}
+printf 'Activating committed release: %s\n' "${release_commit}"
 
 db_quadlet="${SOURCE_ROOT}/infra/quadlet/demo/bridge-ph-pimascor-demo-db.container"
 api_quadlet="${SOURCE_ROOT}/infra/quadlet/demo/bridge-ph-pimascor-demo-api.container"
@@ -261,6 +278,19 @@ test -f "${web_stage}/index.html"
 test -f "${web_stage}/manifest.webmanifest"
 test -f "${web_stage}/sw.js"
 
+index_html="$(<"${web_stage}/index.html")"
+[[ "${index_html}" =~ assets/(index-[A-Za-z0-9_-]+\.css) ]] || {
+  printf 'Built index.html does not identify its fingerprinted CSS asset.\n' >&2
+  exit 1
+}
+expected_css="${BASH_REMATCH[1]}"
+[[ "${index_html}" =~ assets/(index-[A-Za-z0-9_-]+\.js) ]] || {
+  printf 'Built index.html does not identify its fingerprinted JavaScript asset.\n' >&2
+  exit 1
+}
+expected_js="${BASH_REMATCH[1]}"
+printf 'Built web assets: %s %s\n' "${expected_css}" "${expected_js}"
+
 previous_web="${APP_ROOT}/web-dist.previous.${release_stamp}"
 if [[ -d "${APP_ROOT}/web-dist" ]]; then
   mv "${APP_ROOT}/web-dist" "${previous_web}"
@@ -301,10 +331,26 @@ fi
 podman exec caddy caddy validate --config /etc/caddy/Caddyfile --adapter caddyfile
 systemctl --user restart caddy.service
 
+host_index_sha="$(sha256sum "${APP_ROOT}/web-dist/index.html" | awk '{print $1}')"
+caddy_index_sha="$(podman exec caddy cat /srv/bridge-ph-pimascor-demo/index.html | sha256sum | awk '{print $1}')"
+[[ "${host_index_sha}" == "${caddy_index_sha}" ]] || {
+  printf '%s\n' 'Caddy is still mounted to a previous web directory; refusing to report a successful update.' >&2
+  exit 1
+}
+
 curl --fail --show-error "${API_HEALTH_URL}"
 curl --fail --show-error --output /dev/null "${PUBLIC_URL}"
 
+public_index="$(curl --fail --show-error --header 'Cache-Control: no-cache' "${PUBLIC_URL}?release=${release_commit}")"
+if [[ "${public_index}" == *"assets/${expected_css}"* && "${public_index}" == *"assets/${expected_js}"* ]]; then
+  printf 'Public route serves the expected release assets.\n'
+else
+  printf '%s\n' 'WARNING: Caddy serves the new release, but the public route still returns an older index. Complete the documented targeted Bunny purge before browser verification.' >&2
+fi
+
 printf '\nUpdate completed.\n'
+printf 'Release commit: %s\n' "${release_commit}"
+printf 'Expected public assets: %s %s\n' "${expected_css}" "${expected_js}"
 if [[ "${rollback_image_created}" == true ]]; then
   printf 'Rollback API image: %s\n' "${rollback_image}"
 fi

@@ -56,11 +56,15 @@ WebKit or Gecko support from a Chromium run.
 After VPS activation and before any Bunny purge:
 
 1. Confirm the public health endpoint responds successfully.
-2. Confirm the current UI contains the deployed scrollbar and responsive fixes.
-3. Confirm Accounting Export shows separate Billing CSV and Collections CSV.
-4. Confirm the complete local-record archive message says the feature is disabled
+2. Record the release commit and expected fingerprinted CSS/JavaScript assets
+   printed by the VPS updater. Confirm the public `index.html` references those
+   exact assets after any required targeted Bunny purge.
+3. Confirm the current UI contains the deployed scrollbar and responsive fixes.
+4. Confirm Accounting Export shows separate Billing CSV and Collections CSV.
+5. Confirm the complete local-record archive message says the feature is disabled
    in the demo and does not send mail or create a download.
-5. Purge only the documented mutable URLs after the preceding checks pass.
+6. Purge only the documented mutable URLs when the updater reports an older
+   public index, then repeat every public-route check.
 
 ## Evidence classification
 
