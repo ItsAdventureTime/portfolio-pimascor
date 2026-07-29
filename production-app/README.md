@@ -17,6 +17,7 @@ This directory is the working root for the new PIMASCOR Operational Control Syst
 - `docs/UX-PHILIPPINE-CONTROLS.md`: current UX/accessibility and Philippine VAT/CWT design basis with primary references
 - `docs/INCIDENT-REPORTING.md`: shared error detection, recovery, privacy, notification, and audit contract
 - `docs/FACTUAL-BASIS.md`: evidence labels, confirmed VPS layout, and rules against presenting assumptions as facts
+- `docs/QUALITY-ASSURANCE.md`: required role, responsive, browser-engine, and deployment acceptance evidence
 - `docs/CODEX-OPERATIONAL-WORKFLOW-FOUNDATION-PROMPT.md`: downloadable Codex foundation prompt for adapting the system to another industry
 - `apps/web/`: React and Vite PWA with connected Shipment Profitability, GM-controlled Billing, professional A4 printing, view-only confidential documents, and the Admin-only Bridge PH Activity Monitor
 - `apps/api/`: FastAPI application with PostgreSQL migrations, password plus email-code sign-in, API-enforced roles, GM approval gates, privacy-minimized audit/incident events, controlled payment sources, and financial workflow controls
@@ -35,7 +36,7 @@ This directory is the working root for the new PIMASCOR Operational Control Syst
 
 The application currently uses two local processes. This is development setup, not VPS deployment.
 
-1. Follow `apps/api/README.md` to create the Python environment, migrate the database, seed the first administrator, and start the API on port 8000.
+1. Follow `apps/api/README.md` to create the pinned Python environment, migrate the database, seed the first administrator, and start the API on port 8000.
 2. Follow `apps/web/README.md` to start the browser application on port 5173.
 3. Sign in with the administrator you created. In development only, the email code appears in the API log and in the verification screen.
 

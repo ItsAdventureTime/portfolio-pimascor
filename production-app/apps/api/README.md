@@ -8,11 +8,9 @@ The default local database is SQLite so the application can run without installi
 
 ```bash
 cd apps/api
-python3 -m venv .venv
-source .venv/bin/activate
-python -m pip install -e '.[dev]'
-python -m pimascor_api.seed
-uvicorn pimascor_api.main:app --reload --port 8000
+uv sync --extra dev
+uv run python -m pimascor_api.seed
+uv run uvicorn pimascor_api.main:app --reload --port 8000
 ```
 
 Local development uses the safe defaults in the application. If a non-default,
@@ -107,8 +105,12 @@ health-check loop.
 ## Tests
 
 ```bash
-pytest
+uv run pytest
 ```
+
+When `uv sync` creates or changes `uv.lock`, commit the lock file with the
+dependency manifest. Do not substitute the globally installed Python for this
+project environment.
 
 Deployment and server installation are intentionally outside this directory.
 

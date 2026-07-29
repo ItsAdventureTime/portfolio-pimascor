@@ -119,8 +119,11 @@ Then use a private/incognito browser window to check the public demo:
 3. Confirm the local-record archive action explains that archives are disabled
    in the demo; it must not send an email or produce a download.
 4. Check one quotation print preview and one protected document viewer.
-5. Check at least one non-admin role to confirm its restricted navigation still
-   works.
+5. Complete the five-role, responsive, and browser-engine checks in
+   [Quality assurance release acceptance](QUALITY-ASSURANCE.md). Record the
+   account, browser engine, viewport, and result for each check. A role-preview
+   screen is not evidence that the server-side role gate accepts or rejects an
+   action correctly.
 
 If any check fails, use the rollback image/directory printed by the updater and
 review the relevant `journalctl --user -u bridge-ph-pimascor-demo-api.service`

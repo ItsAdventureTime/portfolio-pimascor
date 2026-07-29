@@ -15,7 +15,11 @@ invent a path, service state, provider configuration, or production decision.
 
 1. Start from `main` and create one short-lived branch per focused change, such as `feat/client-payment-filter` or `fix/demo-reset-health-check`.
 2. Keep commits small and use an imperative Conventional Commit-style subject, for example `fix(api): reject invalid payment allocation`.
-3. Before committing an API change, run `pytest` from `apps/api`; run Ruff when it is available.
+3. Before committing an API change, create or refresh the pinned development
+   environment with `uv sync --extra dev`, then run `uv run pytest` from
+   `apps/api`; run Ruff when it is available. Commit the generated `uv.lock`
+   whenever dependency resolution is available, rather than relying on an
+   unpinned local environment.
 4. Before committing a web change, run `npm run build` from `apps/web`.
 5. Before committing infrastructure or security changes, review the diff and the relevant deployment/runbook documentation together.
 
@@ -28,6 +32,8 @@ invent a path, service state, provider configuration, or production decision.
   transfer command and exact one-line VPS activation command from
   `docs/DEMO-VPS-DEPLOYMENT.md`, plus the checks that actually passed. Keep
   local validation distinct from VPS activation evidence.
+- Do not describe a release as production-ready until the role, responsive, and
+  browser-engine checks in `docs/QUALITY-ASSURANCE.md` are recorded.
 
 ## Future hosted-repository controls
 
