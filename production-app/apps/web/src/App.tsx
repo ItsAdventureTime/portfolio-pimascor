@@ -1161,7 +1161,7 @@ function BudgetRecord({ row, onSubmit, onEdit, onAdditional }: { row: BudgetRequ
         <div><Status>{row.kind === 'ADDITIONAL' ? 'Additional Budget' : row.approval}</Status><h3>{row.client}</h3><p>{row.shipment}</p></div>
         <OwnerBadge>Requester • {row.requester}</OwnerBadge>
       </div>
-      <div className="record-tabs" role="tablist">{tabs.map((item) => <button role="tab" aria-selected={tab === item} className={tab === item ? 'active' : ''} onClick={() => setTab(item)} key={item}>{item}</button>)}</div>
+      <div className="record-tabs" role="tablist" aria-label="Budget record sections">{tabs.map((item) => <button type="button" role="tab" aria-selected={tab === item} className={tab === item ? 'active' : ''} onClick={() => setTab(item)} key={item}>{item}</button>)}</div>
       {tab === 'Summary' ? (
         <>
           <div className="summary-grid">
@@ -1407,9 +1407,9 @@ function ReleasesPage({ role, notify }: { role: Role; notify: Notify }) {
       <Card>
         <SectionHeader eyebrow="DCS / CEO workspace" title="Payment Center" description="Review the approved obligation, then pay, hold, return, or annotate it." />
         {canPay && fundingSources.length === 0 ? <div className="callout callout--danger"><AlertCircle size={18} /><span>No active funding source is configured. An Administrator must add Bank of PIMASCOR, Advances to DCS, or another approved source before DCS can record payment.</span></div> : null}
-        <div className="tabbed-heading payment-tabs">{[
+        <div className="tabbed-heading payment-tabs" role="tablist" aria-label="Payment status">{[
           ['PENDING', 'Pending'], ['ON_HOLD', 'On hold'], ['PAID', 'Paid'], ['RETURNED', 'Returned'], ['ALL', 'All'],
-        ].map(([value, label]) => <button key={value} className={filter === value ? 'active' : ''} onClick={() => setFilter(value as typeof filter)}>{label}</button>)}</div>
+        ].map(([value, label]) => <button type="button" role="tab" aria-selected={filter === value} key={value} className={filter === value ? 'active' : ''} onClick={() => setFilter(value as typeof filter)}>{label}</button>)}</div>
         {error ? <div className="callout callout--danger"><AlertCircle size={18} /><span>{error}</span></div> : null}
         {items === null ? <EmptyState icon={RefreshCw} title="Loading approved payments" detail="Combining all authorized request types." /> : visibleItems.length === 0 ? <EmptyState icon={CheckCircle2} title="This queue is clear" detail="Choose another status to review payment history." /> : <div className="table-wrap"><table><thead><tr><th>Type / reference</th><th>Payee and purpose</th><th>Requested by</th><th>Approved</th><th>Amount due</th><th>Funding source</th><th>Status</th><th></th></tr></thead><tbody>
           {visibleItems.map((item) => <tr key={`${item.source_type}-${item.record_id}`}>
