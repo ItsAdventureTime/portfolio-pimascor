@@ -9,8 +9,8 @@ application. Do not mark a release production-ready when an entry is skipped.
 Run these from the repository before transfer:
 
 ```bash
-(cd apps/api && uv sync --extra dev && uv run pytest)
-(cd apps/web && npm run build)
+(cd apps/api && uv sync --extra dev && uv run pytest -q)
+(cd apps/web && pnpm build)
 ```
 
 `uv sync` resolves the exact pinned package versions from `pyproject.toml` and
@@ -71,3 +71,24 @@ After VPS activation and before any Bunny purge:
 Follow [Factual basis and evidence policy](FACTUAL-BASIS.md). Local build/test
 results prove local source only. VPS command output proves VPS activation.
 Browser observations prove only the tested route, account, viewport, and engine.
+
+## Audit evidence: 2026-08-01
+
+The local isolated audit used the development API with a disposable SQLite
+database and synthetic accounts. `uv run pytest -q` passed **65 tests** in both
+the normal test tier and `DEPLOYMENT_TIER=production`; `pnpm build` passed with
+Vite 8.1.5. Chromium/Blink was exercised at desktop 1440 × 900 and mobile
+390 × 844. Admin, GM, DCS, Mich, and Requester sign-in flows completed with
+email-code verification; each role displayed only its permitted navigation.
+The mobile check showed no horizontal overflow, and the browser console had no
+errors or warnings.
+
+The audit fixed canonical routing for restricted roles: Requester now lands on
+Sales Quotations and the URL is `#quotations`, rather than leaving `#dashboard`
+while silently rendering the fallback page. The same first-permitted-page rule
+is used for role preview and protected deep links.
+
+Firefox/Gecko, Safari/WebKit, the real VPS, production email delivery, Caddy,
+object storage, and external CDN cache behavior were not exercised in this
+isolated run. Treat those checks as required release evidence before production
+deployment; do not infer them from the Chromium result.

@@ -153,6 +153,10 @@ const navigation: { label: string; items: NavItem[] }[] = [
   },
 ]
 
+function defaultPageForRole(role: Role): PageId {
+  return navigation.flatMap((group) => group.items).find((item) => item.roles.includes(role))?.id ?? 'dashboard'
+}
+
 const validPages = new Set(Object.keys(pageMeta))
 
 function pageFromHash(): PageId {
@@ -2742,7 +2746,7 @@ function App() {
   useEffect(() => {
     if (!authUser) return
     const allowed = navigation.some((group) => group.items.some((item) => item.id === page && item.roles.includes(role)))
-    if (!allowed) navigate('dashboard')
+    if (!allowed) navigate(defaultPageForRole(role))
   }, [authUser, page, role])
 
   function navigate(nextPage: PageId) {
@@ -2770,7 +2774,7 @@ function App() {
   function previewRole(nextRole: Role) {
     if (signedInRole !== 'Admin') return
     setRole(nextRole)
-    navigate(nextRole === 'Admin' ? 'admin' : 'dashboard')
+    navigate(nextRole === 'Admin' ? 'admin' : defaultPageForRole(nextRole))
   }
 
   function returnToAdmin() {
@@ -2786,7 +2790,7 @@ function App() {
   if (!authUser || page === 'login') return <LoginPage onSignedIn={(user) => {
     setAuthUser(user)
     setRole(apiRoleToRole[user.role])
-    navigate('dashboard')
+    navigate(defaultPageForRole(apiRoleToRole[user.role]))
   }} />
 
   // Resolve access before rendering. The hash correction effect still makes the
