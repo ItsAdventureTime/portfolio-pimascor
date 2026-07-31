@@ -29,8 +29,9 @@ NoNewPrivileges=true
 DropCapability=all
 # The official PostgreSQL entrypoint must prepare /var/run/postgresql and
 # chown/chmod PGDATA before dropping to the postgres server process. Keep the
-# capability set minimal while allowing those required startup operations.
-AddCapability=CAP_CHOWN CAP_FOWNER CAP_DAC_OVERRIDE
+# capability set minimal while allowing those required startup and privilege
+# drop operations.
+AddCapability=CAP_CHOWN CAP_FOWNER CAP_DAC_OVERRIDE CAP_SETUID CAP_SETGID
 PidsLimit=256
 Memory=2g
 ShmSize=256m

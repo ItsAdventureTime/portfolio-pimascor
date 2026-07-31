@@ -107,8 +107,9 @@ The PostgreSQL data store intentionally remains a bind mount at
 relabeling. A named `.volume` would move the live database outside the required
 production data tree and outside the host-side recovery layout; database dumps
 are already captured separately. PostgreSQL 18 startup is allowed only the
-minimal `CHOWN`, `FOWNER`, and `DAC_OVERRIDE` capabilities needed by the official
-entrypoint to prepare that bind mount.
+minimal `CHOWN`, `FOWNER`, `DAC_OVERRIDE`, `SETUID`, and `SETGID` capabilities
+needed by the official entrypoint to prepare the bind mount and drop from its
+initialization user to the `postgres` server user.
 
 `bridge_ph_pimascor_restic_password` is the encryption key for the Restic
 repository stored in Backblaze B2. It is not the PostgreSQL password, a VPS
