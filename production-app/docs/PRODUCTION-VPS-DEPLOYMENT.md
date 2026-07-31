@@ -170,8 +170,16 @@ Run on the Mac:
 After SSH login, run on the VPS:
 
 ```bash
-cd /var/home/jk/bridge-ph/pimascor/source && ./infra/scripts/update-production.sh --source /var/home/jk/bridge-ph/pimascor/source
+cd /var/home/jk/bridge-ph/pimascor/source && ./infra/scripts/provision-production-secrets.sh && ./infra/scripts/update-production.sh --source /var/home/jk/bridge-ph/pimascor/source && ./infra/scripts/install-production-caddy.sh
 ```
+
+This is the complete VPS sequence. Secret provisioning preserves existing
+secrets and only prompts for missing values. The updater builds and activates
+the production API, web assets, migrations, account bootstrap, export worker,
+and backup timers. The final command must be invoked as
+`./infra/scripts/install-production-caddy.sh` from the deployed source
+directory; `install-production-caddy.sh` by itself is not a shell command
+unless that directory has been added to `PATH`.
 
 This runs forward migrations and starts an empty production database if the
 database is new. It does not delete or reset existing production records.

@@ -35,6 +35,7 @@ required_files=(
   "${SOURCE_ROOT}/infra/quadlet/production/bridge-ph-pimascor-account-bootstrap.container"
   "${SOURCE_ROOT}/infra/quadlet/production/bridge-ph-pimascor-db.container"
   "${SOURCE_ROOT}/infra/quadlet/production/bridge-ph-pimascor-export-worker.container"
+  "${SOURCE_ROOT}/infra/scripts/install-production-caddy.sh"
   "${SOURCE_ROOT}/infra/quadlet/production/bridge-ph-pimascor-data.network"
   "${SOURCE_ROOT}/infra/quadlet/production/bridge-ph-pimascor-egress.network"
   "${SOURCE_ROOT}/infra/quadlet/production/bridge-ph-pimascor-proxy.network"
@@ -42,6 +43,7 @@ required_files=(
 for required_file in "${required_files[@]}"; do
   [[ -f "$required_file" ]] || { printf 'Missing required file: %s\n' "$required_file" >&2; exit 1; }
 done
+[[ -x "${SOURCE_ROOT}/infra/scripts/install-production-caddy.sh" ]] || { printf '%s\n' 'Caddy installer is not executable in the deployed source.' >&2; exit 1; }
 release_commit="$(tr -d '\r\n' < "${SOURCE_ROOT}/.deployment-source-commit")"
 [[ "$release_commit" =~ ^[0-9a-f]{40}$ ]] || { printf '%s\n' 'Invalid Git commit marker.' >&2; exit 1; }
 grep -Fqx 'Environment=DEPLOYMENT_TIER=production' "${SOURCE_ROOT}/infra/quadlet/production/bridge-ph-pimascor-api.container"
@@ -94,6 +96,7 @@ systemctl --user restart bridge-ph-pimascor-export-worker.service
 systemctl --user is-active --quiet bridge-ph-pimascor-api.service
 systemctl --user is-active --quiet bridge-ph-pimascor-export-worker.service
 systemctl --user enable --now bridge-ph-pimascor-backup.timer bridge-ph-pimascor-backup-retention.timer
-printf 'Production release %s is active. Caddy remains unchanged; run install-production-caddy.sh after its preflight.\n' "$release_commit"
+printf 'Production release %s is active. Caddy remains unchanged; run the exact activation command printed below after its preflight.\n' "$release_commit"
 printf 'Expected public URL: %s\n' "$PUBLIC_URL"
 printf 'Health check: %s\n' "$API_HEALTH_URL"
+printf 'Caddy activation command: cd %q && ./infra/scripts/install-production-caddy.sh\n' "$SOURCE_ROOT"
