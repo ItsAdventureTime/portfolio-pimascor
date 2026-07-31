@@ -9,6 +9,15 @@ command -v podman >/dev/null || { printf '%s\n' 'Missing required command: podma
   exit 1
 }
 
+REPLACE_ACCOUNT_MANIFEST=false
+while (($#)); do
+  case "$1" in
+    --replace-account-manifest) REPLACE_ACCOUNT_MANIFEST=true; shift ;;
+    --help|-h) printf '%s\n' 'Usage: provision-production-secrets.sh [--replace-account-manifest]'; exit 0 ;;
+    *) printf 'Unknown option: %s\n' "$1" >&2; exit 2 ;;
+  esac
+done
+
 create_secret() {
   local name="$1"
   local prompt="$2"
@@ -50,7 +59,7 @@ prompt_account_field() {
 
 create_account_manifest() {
   local name=bridge_ph_pimascor_account_bootstrap
-  if podman secret exists "$name"; then
+  if podman secret exists "$name" && [[ "$REPLACE_ACCOUNT_MANIFEST" != true ]]; then
     printf 'Keeping existing secret: %s\n' "$name"
     return 0
   fi
@@ -78,7 +87,11 @@ create_account_manifest() {
   append_account 'Processor (Maker) - 3' REQUESTER processor3 processor3@pimascor.com 'Processor 3'
   append_account 'Bookkeeper (Mich)' MICH operations operations@pimascor.com 'Mich'
   manifest+=']'
-  printf '%s' "$manifest" | podman secret create "$name" - >/dev/null
+  if [[ "$REPLACE_ACCOUNT_MANIFEST" == true ]]; then
+    printf '%s' "$manifest" | podman secret create --replace "$name" - >/dev/null
+  else
+    printf '%s' "$manifest" | podman secret create "$name" - >/dev/null
+  fi
   unset manifest username email display_name business_role technical_role
   printf 'Created secret: %s\n' "$name"
 }

@@ -120,6 +120,13 @@ for the ten Section 1 accounts. The production account-bootstrap Quadlet consume
 that secret after migrations and creates or verifies the pending accounts
 idempotently. It never accepts or stores an initial password.
 
+If an older five-account manifest was already created, refresh only that
+manifest with:
+
+```bash
+cd /var/home/jk/bridge-ph/pimascor/source && ./infra/scripts/provision-production-secrets.sh --replace-account-manifest
+```
+
 ## Deployment
 
 Run on the Mac:
