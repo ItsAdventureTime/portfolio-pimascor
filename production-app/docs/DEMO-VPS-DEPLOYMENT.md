@@ -25,6 +25,14 @@ archives, email download notices, or retain archive objects in B2. Ordinary demo
 document viewing and the existing private document storage configuration are not
 changed by this safeguard.
 
+## Reset failure: quotation foreign key
+
+If a previous update reports a foreign-key violation from
+`sales_quotation_lines_quotation_id_fkey` while deleting `sales_quotations`,
+deploy the current source and run the normal VPS activation command below. The
+reset now deletes quotation-line rows before quotation rows. No migration,
+manual database deletion, or data-directory cleanup is required.
+
 ## Transfer from this Mac
 
 The demo VPS uses these fixed locations:
