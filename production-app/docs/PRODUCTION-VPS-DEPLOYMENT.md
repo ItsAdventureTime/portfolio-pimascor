@@ -28,6 +28,30 @@ The production policy from Section 1 of the owner correction document is:
 | Mich | Bookkeeper/reviewer; prepares accounting work, reviews/close Liquidations, and can export authorized records. |
 | Requester | Creates and submits assigned operational requests; no management profitability, export, or payment authority. |
 
+The same Section 1 document identifies these production accounts:
+
+| Document identity | Email | Technical role used by this build |
+| --- | --- | --- |
+| Admin (Team) | `team@bridge-ph.com` | `ADMIN` |
+| Admin (Alyssa) | `Alyssa.d@bridge-ph.com` | `ADMIN` |
+| GM (Carmel Urot) | `carmel.urot@pimascor.com` | `GM` |
+| DCS (Dan C. Subido) | `dan.c.subido@gmail.com` | `DCS` |
+| Sales (Leane Tejero) | `leane.tejero@pimascor.com` | `REQUESTER` compatibility role |
+| Sales (Romeo Reano) | `romeo.reano@pimascor.com` | `REQUESTER` compatibility role |
+| Processor 1 | `processor1@pimascor` | `REQUESTER` compatibility role; document address requires correction |
+| Processor 2 | `processor2@pimascor.com` | `REQUESTER` compatibility role |
+| Processor 3 | `processor3@pimascor.com` | `REQUESTER` compatibility role |
+| Bookkeeper (Mich) | `operations@pimascor.com` | `MICH` |
+
+The document supplies email identities but no separate usernames. The secret
+provisioner therefore proposes each email local-part as the username and lets
+the operator edit it before the secret is created. Sales and Processor are
+business labels in the document; this code maps them to the existing
+`REQUESTER` technical role because the current application does not define
+separate Sales or Processor permission enums. No new permission is inferred.
+The exact `processor1@pimascor` value is retained as supplied and must be
+corrected before production activation email can be delivered.
+
 The GM/DCS escalation policy is enabled only when `DEPLOYMENT_TIER=production`;
 the demo keeps its existing role policy.
 
@@ -92,7 +116,7 @@ database credentials. Podman secrets are mounted when containers are created;
 restart the production services after rotating one.
 
 The helper also creates `bridge_ph_pimascor_account_bootstrap` by prompting
-for the five role accounts. The production account-bootstrap Quadlet consumes
+for the ten Section 1 accounts. The production account-bootstrap Quadlet consumes
 that secret after migrations and creates or verifies the pending accounts
 idempotently. It never accepts or stores an initial password.
 

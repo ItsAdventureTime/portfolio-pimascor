@@ -55,19 +55,31 @@ create_account_manifest() {
     return 0
   fi
 
-  printf '%s\n' 'Define the five production role accounts. These fields contain metadata only; users choose passwords after email OTP activation.'
+  printf '%s\n' 'Define the Section 1 production accounts. These fields contain metadata only; users choose passwords after email OTP activation.'
   local manifest='['
-  local first=true role username email display_name
-  for role in ADMIN GM DCS MICH REQUESTER; do
-    username="$(prompt_account_field "${role} username" "$(printf '%s' "$role" | tr '[:upper:]' '[:lower:]')")"
-    email="$(prompt_account_field "${role} email" "$(printf '%s' "$role" | tr '[:upper:]' '[:lower:]')@delegateops.business")"
-    display_name="$(prompt_account_field "${role} display name" "$role")"
+  local first=true business_role technical_role username email display_name
+  append_account() {
+    business_role="$1"
+    technical_role="$2"
+    username="$(prompt_account_field "${business_role} username" "$3")"
+    email="$(prompt_account_field "${business_role} email" "$4")"
+    display_name="$(prompt_account_field "${business_role} display name" "$5")"
     if [[ "$first" == true ]]; then first=false; else manifest+=','; fi
-    manifest+="{\"username\":\"$(json_escape "$username")\",\"email\":\"$(json_escape "$email")\",\"display_name\":\"$(json_escape "$display_name")\",\"role\":\"$role\"}"
-  done
+    manifest+="{\"business_role\":\"$(json_escape "$business_role")\",\"username\":\"$(json_escape "$username")\",\"email\":\"$(json_escape "$email")\",\"display_name\":\"$(json_escape "$display_name")\",\"role\":\"$technical_role\"}"
+  }
+  append_account 'Admin (Team)' ADMIN admin-team team@bridge-ph.com 'Bridge PH Team'
+  append_account 'Admin (Alyssa)' ADMIN alyssa.d alyssa.d@bridge-ph.com 'Alyssa D.'
+  append_account 'GM' GM carmel.urot carmel.urot@pimascor.com 'Carmel Urot'
+  append_account 'DCS' DCS dan.c.subido dan.c.subido@gmail.com 'Dan C. Subido'
+  append_account 'Sales (Maker) - Leane' REQUESTER leane.tejero leane.tejero@pimascor.com 'Leane Tejero'
+  append_account 'Sales (Maker) - Romeo' REQUESTER romeo.reano romeo.reano@pimascor.com 'Romeo Reano'
+  append_account 'Processor (Maker) - 1' REQUESTER processor1 processor1@pimascor 'Processor 1'
+  append_account 'Processor (Maker) - 2' REQUESTER processor2 processor2@pimascor.com 'Processor 2'
+  append_account 'Processor (Maker) - 3' REQUESTER processor3 processor3@pimascor.com 'Processor 3'
+  append_account 'Bookkeeper (Mich)' MICH operations operations@pimascor.com 'Mich'
   manifest+=']'
   printf '%s' "$manifest" | podman secret create "$name" - >/dev/null
-  unset manifest username email display_name
+  unset manifest username email display_name business_role technical_role
   printf 'Created secret: %s\n' "$name"
 }
 
