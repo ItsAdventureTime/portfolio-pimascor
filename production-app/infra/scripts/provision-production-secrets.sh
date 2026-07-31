@@ -10,10 +10,12 @@ command -v podman >/dev/null || { printf '%s\n' 'Missing required command: podma
 }
 
 REPLACE_ACCOUNT_MANIFEST=false
+INTERACTIVE_ACCOUNT_MANIFEST=false
 while (($#)); do
   case "$1" in
     --replace-account-manifest) REPLACE_ACCOUNT_MANIFEST=true; shift ;;
-    --help|-h) printf '%s\n' 'Usage: provision-production-secrets.sh [--replace-account-manifest]'; exit 0 ;;
+    --interactive-account-manifest) INTERACTIVE_ACCOUNT_MANIFEST=true; shift ;;
+    --help|-h) printf '%s\n' 'Usage: provision-production-secrets.sh [--replace-account-manifest] [--interactive-account-manifest]'; exit 0 ;;
     *) printf 'Unknown option: %s\n' "$1" >&2; exit 2 ;;
   esac
 done
@@ -39,12 +41,48 @@ create_secret() {
   printf 'Created secret: %s\n' "$name"
 }
 
+read_secret_value() {
+  local name="$1"
+  podman secret inspect --showsecret --format '{{.SecretData}}' "$name" 2>/dev/null
+}
+
+create_derived_secret() {
+  local name="$1"
+  local value="$2"
+  if podman secret exists "$name"; then
+    printf 'Keeping existing secret: %s\n' "$name"
+    return 0
+  fi
+  printf '%s' "$value" | podman secret create "$name" - >/dev/null
+  printf 'Created derived secret: %s\n' "$name"
+}
+
 json_escape() {
   local value="$1"
   value=${value//\\/\\\\}
   value=${value//\"/\\\"}
   value=${value//$'\n'/\\n}
   value=${value//$'\r'/\\r}
+  printf '%s' "$value"
+}
+
+url_encode() {
+  local value="$1" output='' char encoded index
+  LC_ALL=C
+  for ((index = 0; index < ${#value}; index++)); do
+    char="${value:index:1}"
+    case "$char" in
+      [a-zA-Z0-9.~_-]) output+="$char" ;;
+      *) printf -v encoded '%%%02X' "'$char"; output+="$encoded" ;;
+    esac
+  done
+  printf '%s' "$output"
+}
+
+pgpass_escape() {
+  local value="$1"
+  value=${value//\\/\\\\}
+  value=${value//:/\\:}
   printf '%s' "$value"
 }
 
@@ -64,15 +102,33 @@ create_account_manifest() {
     return 0
   fi
 
-  printf '%s\n' 'Define the Section 1 production accounts. These fields contain metadata only; users choose passwords after email OTP activation.'
+  printf '%s\n' 'Preparing the Section 1 production accounts. Users choose passwords after email OTP activation.'
+  local processor1_email=''
+  if [[ "$INTERACTIVE_ACCOUNT_MANIFEST" == true ]]; then
+    printf '%s\n' 'Interactive account mode is enabled; press Enter to keep each documented default.'
+  else
+    printf '%s\n' 'Using the documented defaults; use --interactive-account-manifest only to customize them.'
+    printf '%s\n' 'Processor 1 has an incomplete email in the source document and must be corrected.'
+    read -r -p 'Processor 1 real email address: ' processor1_email
+  fi
+  if [[ "$INTERACTIVE_ACCOUNT_MANIFEST" != true ]]; then
+    [[ "$processor1_email" == *@*.* ]] || { printf '%s\n' 'A valid Processor 1 email address is required; the source value is incomplete.' >&2; exit 1; }
+  fi
+
   local manifest='['
   local first=true business_role technical_role username email display_name
   append_account() {
     business_role="$1"
     technical_role="$2"
-    username="$(prompt_account_field "${business_role} username" "$3")"
-    email="$(prompt_account_field "${business_role} email" "$4")"
-    display_name="$(prompt_account_field "${business_role} display name" "$5")"
+    if [[ "$INTERACTIVE_ACCOUNT_MANIFEST" == true ]]; then
+      username="$(prompt_account_field "${business_role} username" "$3")"
+      email="$(prompt_account_field "${business_role} email" "$4")"
+      display_name="$(prompt_account_field "${business_role} display name" "$5")"
+    else
+      username="$3"
+      email="$4"
+      display_name="$5"
+    fi
     if [[ "$first" == true ]]; then first=false; else manifest+=','; fi
     manifest+="{\"business_role\":\"$(json_escape "$business_role")\",\"username\":\"$(json_escape "$username")\",\"email\":\"$(json_escape "$email")\",\"display_name\":\"$(json_escape "$display_name")\",\"role\":\"$technical_role\"}"
   }
@@ -82,7 +138,8 @@ create_account_manifest() {
   append_account 'DCS' DCS dan.c.subido dan.c.subido@gmail.com 'Dan C. Subido'
   append_account 'Sales (Maker) - Leane' REQUESTER leane.tejero leane.tejero@pimascor.com 'Leane Tejero'
   append_account 'Sales (Maker) - Romeo' REQUESTER romeo.reano romeo.reano@pimascor.com 'Romeo Reano'
-  append_account 'Processor (Maker) - 1' REQUESTER processor1 processor1@pimascor 'Processor 1'
+  append_account 'Processor (Maker) - 1' REQUESTER processor1 "$processor1_email" 'Processor 1'
+  [[ "$email" == *@*.* ]] || { printf '%s\n' 'A valid Processor 1 email address is required; the source value is incomplete.' >&2; exit 1; }
   append_account 'Processor (Maker) - 2' REQUESTER processor2 processor2@pimascor.com 'Processor 2'
   append_account 'Processor (Maker) - 3' REQUESTER processor3 processor3@pimascor.com 'Processor 3'
   append_account 'Bookkeeper (Mich)' MICH operations operations@pimascor.com 'Mich'
@@ -98,14 +155,19 @@ create_account_manifest() {
 
 printf '%s\n' 'Creating missing production secrets as rootless Podman secrets.'
 printf '%s\n' 'Values are read interactively and are never written to this repository.'
-printf '%s\n' 'The database URL password must match the PostgreSQL password.'
+printf '%s\n' 'The database URL and pgpass secrets are derived automatically from the PostgreSQL secret.'
 
 create_secret bridge_ph_pimascor_postgres_password 'PostgreSQL password'
-create_secret bridge_ph_pimascor_database_url 'Database URL (for example postgresql+psycopg://pimascor:PASSWORD@database:5432/pimascor)'
+postgres_password="$(read_secret_value bridge_ph_pimascor_postgres_password)"
+[[ -n "$postgres_password" ]] || { printf '%s\n' 'Unable to read the PostgreSQL secret with Podman; recreate it or use a current Podman release.' >&2; exit 1; }
+encoded_postgres_password="$(url_encode "$postgres_password")"
+escaped_postgres_password="$(pgpass_escape "$postgres_password")"
+create_derived_secret bridge_ph_pimascor_database_url "postgresql+psycopg://pimascor:${encoded_postgres_password}@database:5432/pimascor"
 create_secret bridge_ph_pimascor_resend_api_key 'Resend API key'
 create_secret bridge_ph_pimascor_b2_key_id 'Backblaze B2 key ID'
 create_secret bridge_ph_pimascor_b2_application_key 'Backblaze B2 application key'
-create_secret bridge_ph_pimascor_pgpass 'PostgreSQL client password file line (database:5432:pimascor:pimascor:PASSWORD)'
+create_derived_secret bridge_ph_pimascor_pgpass "database:5432:pimascor:pimascor:${escaped_postgres_password}"
+unset postgres_password encoded_postgres_password escaped_postgres_password
 create_secret bridge_ph_pimascor_restic_password 'Restic repository password'
 create_account_manifest
 

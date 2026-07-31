@@ -102,23 +102,30 @@ The database URL must target the production database service
 production prefix `pimascor/production`; never reuse the demo key or prefix.
 Enable private-bucket server-side encryption in the B2 bucket configuration.
 
-After the source archive has been deployed, create only the missing secrets
-interactively as the rootless VPS user:
+After the source archive has been deployed, create only the missing secrets as
+the rootless VPS user:
 
 ```bash
 cd /var/home/jk/bridge-ph/pimascor/source && ./infra/scripts/provision-production-secrets.sh
 ```
 
 The helper preserves existing secrets, reads values without putting them in
-shell history or source files, and does not print secret contents. The
-PostgreSQL password, database URL, and `pgpass` line must refer to the same
-database credentials. Podman secrets are mounted when containers are created;
-restart the production services after rotating one.
+shell history or source files, and does not print secret contents. It asks for
+the PostgreSQL password once, then derives the matching database URL and
+`pgpass` secrets from it. If the PostgreSQL secret already exists (including a
+partially completed earlier run), the helper reads it through Podman's
+`--showsecret` interface and completes the derived secrets without asking you
+to type the password again. Podman secrets are mounted when containers are
+created; restart the production services after rotating one.
 
-The helper also creates `bridge_ph_pimascor_account_bootstrap` by prompting
-for the ten Section 1 accounts. The production account-bootstrap Quadlet consumes
-that secret after migrations and creates or verifies the pending accounts
-idempotently. It never accepts or stores an initial password.
+The helper also creates `bridge_ph_pimascor_account_bootstrap` from the ten
+documented Section 1 accounts without repeating ten sets of prompts. The
+source document has an incomplete email for Processor 1, so the helper asks
+only for that real address and refuses to continue until it is valid. The
+production account-bootstrap Quadlet consumes the secret after migrations and
+creates or verifies the pending accounts idempotently. It never accepts or
+stores an initial password. Use `--interactive-account-manifest` only when you
+intentionally need to override the documented defaults.
 
 If an older five-account manifest was already created, refresh only that
 manifest with:
@@ -126,6 +133,9 @@ manifest with:
 ```bash
 cd /var/home/jk/bridge-ph/pimascor/source && ./infra/scripts/provision-production-secrets.sh --replace-account-manifest
 ```
+
+To replace the manifest with custom usernames, emails, and display names, add
+`--interactive-account-manifest`; otherwise the documented defaults are used.
 
 ## Deployment
 
