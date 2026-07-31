@@ -59,6 +59,11 @@ def main() -> None:
                 raise SystemExit(f"Invalid username in manifest entry {index}")
             if "@" not in email or len(email) > 320:
                 raise SystemExit(f"Invalid email in manifest entry {index}")
+            domain = email.rsplit("@", 1)[1]
+            if "." not in domain or domain.startswith(".") or domain.endswith("."):
+                raise SystemExit(
+                    f"Email in manifest entry {index} needs a deliverable domain: {email}"
+                )
             if not display_name or len(display_name) > 160:
                 raise SystemExit(f"Invalid display name in manifest entry {index}")
             if username in seen_usernames or email in seen_emails:
