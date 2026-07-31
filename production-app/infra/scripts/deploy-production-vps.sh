@@ -46,4 +46,5 @@ ssh -o ConnectTimeout=15 -o ServerAliveInterval=30 -o ServerAliveCountMax=3 -p "
 '
 printf 'Transferred committed production release: %s\n' "$release_commit"
 printf '%s\n' 'Log in to the VPS, then run:'
+printf '%s\n' 'cd /var/home/jk/bridge-ph/pimascor/source && ./infra/scripts/provision-production-secrets.sh'
 printf '%s\n' 'cd /var/home/jk/bridge-ph/pimascor/source && ./infra/scripts/update-production.sh --source /var/home/jk/bridge-ph/pimascor/source'
