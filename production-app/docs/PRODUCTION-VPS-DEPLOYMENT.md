@@ -31,6 +31,28 @@ The production policy from Section 1 of the owner correction document is:
 The GM/DCS escalation policy is enabled only when `DEPLOYMENT_TIER=production`;
 the demo keeps its existing role policy.
 
+## Password lifecycle
+
+Production does not pre-create role accounts and does not generate passwords
+automatically. The Administrator, GM, DCS, Mich, and Requester accounts are
+created one at a time with `pimascor_api.seed`; the command prompts twice for
+an operator-chosen password of at least 12 characters. The database stores an
+Argon2 password hash, not the plaintext password, so an existing password
+cannot be retrieved.
+
+The current sign-in flow requires the password and then a one-time email code
+sent through the configured production email provider. It does not currently
+force a password change on first login. If an initial password was shared or
+exposed, reset it immediately from the VPS and revoke that account's active
+sessions:
+
+```bash
+podman exec -it bridge-ph-pimascor-api python -m pimascor_api.account_admin set-password USERNAME
+```
+
+This is a reset, not a retrieval operation. The command prompts for the new
+password and confirms it without placing it in shell history.
+
 ## One-time VPS secrets
 
 Create these as rootless Podman secrets while logged in as `jk`; use a secure
