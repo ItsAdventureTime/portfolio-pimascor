@@ -102,6 +102,14 @@ The database URL must target the production database service
 production prefix `pimascor/production`; never reuse the demo key or prefix.
 Enable private-bucket server-side encryption in the B2 bucket configuration.
 
+The PostgreSQL data store intentionally remains a bind mount at
+`~/bridge-ph/pimascor/data/postgres/18/docker`, with `:U,Z` ownership and SELinux
+relabeling. A named `.volume` would move the live database outside the required
+production data tree and outside the host-side recovery layout; database dumps
+are already captured separately. PostgreSQL 18 startup is allowed only the
+minimal `CHOWN`, `FOWNER`, and `DAC_OVERRIDE` capabilities needed by the official
+entrypoint to prepare that bind mount.
+
 `bridge_ph_pimascor_restic_password` is the encryption key for the Restic
 repository stored in Backblaze B2. It is not the PostgreSQL password, a VPS
 login password, or a B2 access key. Store it in the approved password manager;
