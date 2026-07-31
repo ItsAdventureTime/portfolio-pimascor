@@ -30,6 +30,47 @@ create_secret() {
   printf 'Created secret: %s\n' "$name"
 }
 
+json_escape() {
+  local value="$1"
+  value=${value//\\/\\\\}
+  value=${value//\"/\\\"}
+  value=${value//$'\n'/\\n}
+  value=${value//$'\r'/\\r}
+  printf '%s' "$value"
+}
+
+prompt_account_field() {
+  local label="$1"
+  local default_value="$2"
+  local value
+  read -r -p "$label [$default_value]: " value
+  value="${value:-$default_value}"
+  printf '%s' "$value"
+}
+
+create_account_manifest() {
+  local name=bridge_ph_pimascor_account_bootstrap
+  if podman secret exists "$name"; then
+    printf 'Keeping existing secret: %s\n' "$name"
+    return 0
+  fi
+
+  printf '%s\n' 'Define the five production role accounts. These fields contain metadata only; users choose passwords after email OTP activation.'
+  local manifest='['
+  local first=true role username email display_name
+  for role in ADMIN GM DCS MICH REQUESTER; do
+    username="$(prompt_account_field "${role} username" "$(printf '%s' "$role" | tr '[:upper:]' '[:lower:]')")"
+    email="$(prompt_account_field "${role} email" "$(printf '%s' "$role" | tr '[:upper:]' '[:lower:]')@delegateops.business")"
+    display_name="$(prompt_account_field "${role} display name" "$role")"
+    if [[ "$first" == true ]]; then first=false; else manifest+=','; fi
+    manifest+="{\"username\":\"$(json_escape "$username")\",\"email\":\"$(json_escape "$email")\",\"display_name\":\"$(json_escape "$display_name")\",\"role\":\"$role\"}"
+  done
+  manifest+=']'
+  printf '%s' "$manifest" | podman secret create "$name" - >/dev/null
+  unset manifest username email display_name
+  printf 'Created secret: %s\n' "$name"
+}
+
 printf '%s\n' 'Creating missing production secrets as rootless Podman secrets.'
 printf '%s\n' 'Values are read interactively and are never written to this repository.'
 printf '%s\n' 'The database URL password must match the PostgreSQL password.'
@@ -41,5 +82,6 @@ create_secret bridge_ph_pimascor_b2_key_id 'Backblaze B2 key ID'
 create_secret bridge_ph_pimascor_b2_application_key 'Backblaze B2 application key'
 create_secret bridge_ph_pimascor_pgpass 'PostgreSQL client password file line (database:5432:pimascor:pimascor:PASSWORD)'
 create_secret bridge_ph_pimascor_restic_password 'Restic repository password'
+create_account_manifest
 
 printf '%s\n' 'Production secret provisioning complete. Run update-production.sh next.'

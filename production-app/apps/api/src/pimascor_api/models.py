@@ -161,6 +161,7 @@ class User(Base):
     email: Mapped[str] = mapped_column(String(320), unique=True, index=True)
     display_name: Mapped[str] = mapped_column(String(160))
     password_hash: Mapped[str] = mapped_column(String(512))
+    must_set_password: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
     role: Mapped[Role] = mapped_column(Enum(Role), default=Role.REQUESTER)
     status: Mapped[UserStatus] = mapped_column(Enum(UserStatus), default=UserStatus.ACTIVE)
     email_verified_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))

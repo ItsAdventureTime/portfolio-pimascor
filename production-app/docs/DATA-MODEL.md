@@ -6,11 +6,16 @@ This is the current conceptual model. PostgreSQL migrations are the executable s
 
 ### users
 
-Username, unique email, display name, Argon2 password hash, role, account status, verification and timestamps. Historical users are disabled rather than deleted.
+Username, unique email, display name, Argon2 password hash, role, account status,
+first-login activation state, verification and timestamps. Historical users are
+disabled rather than deleted.
 
 ### auth_challenges and sessions
 
-Short-lived hashed email-code challenges and opaque server sessions. Session values are never stored in clear text. Password change, account disable, and demo reset revoke sessions.
+Short-lived hashed email-code challenges and opaque server sessions. Login and
+account-activation codes are single-use and expire after the configured TTL.
+Session values are never stored in clear text. Password change, account disable,
+and demo reset revoke sessions.
 
 ### audit_events
 

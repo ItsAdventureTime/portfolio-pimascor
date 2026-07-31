@@ -94,6 +94,57 @@ class EmailProvider(ABC):
             idempotency_key=f"login-code/{challenge_id}",
         )
 
+    def send_activation_code(
+        self,
+        destination: str,
+        display_name: str,
+        challenge_id: str,
+        code: str,
+        public_app_url: str,
+        expires_in_minutes: int,
+    ) -> None:
+        safe_name = escape(display_name)
+        safe_code = escape(code)
+        text = (
+            f"Hi {display_name},\n\n"
+            "Your PIMASCOR account is ready for activation. "
+            "Use this one-time code to choose your password:\n\n"
+            f"{code}\n\n"
+            f"This code works once and expires in {expires_in_minutes} minutes. "
+            "PIMASCOR will never email you a permanent password."
+        )
+        html = f"""<!doctype html>
+<html lang="en">
+<body style="margin:0;padding:0;background:#f4f6fb;color:#172033;font-family:Arial,'Helvetica Neue',sans-serif;">
+  <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="background:#f4f6fb;">
+    <tr><td align="center" style="padding:28px 14px;">
+      <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="max-width:560px;background:#ffffff;border:1px solid #dfe4ec;border-radius:18px;overflow:hidden;">
+        <tr><td style="padding:24px 28px;background:#14213d;color:#ffffff;">
+          <div style="font-size:12px;font-weight:700;letter-spacing:1.5px;color:#e9d887;">PIMASCOR</div>
+          <div style="margin-top:7px;font-size:23px;font-weight:700;line-height:1.25;">Activate your account</div>
+        </td></tr>
+        <tr><td style="padding:28px;">
+          <p style="margin:0 0 14px;font-size:16px;line-height:1.55;">Hi {safe_name},</p>
+          <p style="margin:0 0 22px;font-size:16px;line-height:1.55;color:#4d5a70;">Use this code to activate your PIMASCOR account, then choose a password in the app.</p>
+          <div style="padding:18px 12px;text-align:center;background:#f8f0d2;border:1px solid #ead889;border-radius:12px;">
+            <div style="margin-bottom:7px;font-size:11px;font-weight:700;letter-spacing:1.2px;color:#7a5a00;">YOUR ACTIVATION CODE</div>
+            <div style="font-size:34px;font-weight:800;line-height:1.15;letter-spacing:8px;color:#14213d;">{safe_code}</div>
+          </div>
+          <p style="margin:22px 0 0;font-size:14px;line-height:1.5;color:#647087;">This code works once and expires in {expires_in_minutes} minutes. PIMASCOR will never email you a permanent password.</p>
+        </td></tr>
+      </table>
+    </td></tr>
+  </table>
+</body>
+</html>"""
+        self.send_message(
+            destination,
+            "Activate your PIMASCOR account",
+            text,
+            html=html,
+            idempotency_key=f"account-activation/{challenge_id}",
+        )
+
 
 class DevelopmentEmailProvider(EmailProvider):
     def send_message(

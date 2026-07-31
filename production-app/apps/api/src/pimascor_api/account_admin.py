@@ -40,7 +40,7 @@ def revoke_sessions(db, user_id: str) -> int:
 
 def main() -> None:
     parser = argparse.ArgumentParser(
-        description="Safely administer PIMASCOR demo accounts without deleting audit history"
+        description="Safely administer PIMASCOR accounts without deleting audit history"
     )
     subparsers = parser.add_subparsers(dest="command", required=True)
     subparsers.add_parser("list", help="List accounts without password data")

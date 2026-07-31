@@ -34,17 +34,21 @@ the demo keeps its existing role policy.
 ## Password lifecycle
 
 Production does not pre-create role accounts and does not generate passwords
-automatically. The Administrator, GM, DCS, Mich, and Requester accounts are
-created one at a time with `pimascor_api.seed`; the command prompts twice for
-an operator-chosen password of at least 12 characters. The database stores an
-Argon2 password hash, not the plaintext password, so an existing password
-cannot be retrieved.
+automatically. The production bootstrap manifest creates the Administrator,
+GM, DCS, Mich, and Requester accounts from a rootless Podman secret. The
+manifest contains only usernames, email addresses, display names, and roles;
+it contains no passwords. New accounts are marked as pending activation.
 
-The current sign-in flow requires the password and then a one-time email code
-sent through the configured production email provider. It does not currently
-force a password change on first login. If an initial password was shared or
-exposed, reset it immediately from the VPS and revoke that account's active
-sessions:
+On the user's first access, PIMASCOR sends a one-time email code. After the
+code is verified, the user chooses a password of at least 12 characters in the
+application. PIMASCOR does not email a permanent or generated password. The
+database stores an Argon2 password hash, not the plaintext password, so an
+existing password cannot be retrieved.
+
+After activation, normal sign-in requires the password and then a one-time
+email code sent through the configured production email provider. If a
+password is suspected to be exposed, reset it immediately from the VPS and
+revoke that account's active sessions:
 
 ```bash
 podman exec -it bridge-ph-pimascor-api python -m pimascor_api.account_admin set-password USERNAME
@@ -66,6 +70,7 @@ bridge_ph_pimascor_b2_key_id
 bridge_ph_pimascor_b2_application_key
 bridge_ph_pimascor_pgpass
 bridge_ph_pimascor_restic_password
+bridge_ph_pimascor_account_bootstrap
 ```
 
 The database URL must target the production database service
@@ -86,6 +91,11 @@ PostgreSQL password, database URL, and `pgpass` line must refer to the same
 database credentials. Podman secrets are mounted when containers are created;
 restart the production services after rotating one.
 
+The helper also creates `bridge_ph_pimascor_account_bootstrap` by prompting
+for the five role accounts. The production account-bootstrap Quadlet consumes
+that secret after migrations and creates or verifies the pending accounts
+idempotently. It never accepts or stores an initial password.
+
 ## Deployment
 
 Run on the Mac:
@@ -103,14 +113,14 @@ cd /var/home/jk/bridge-ph/pimascor/source && ./infra/scripts/update-production.s
 This runs forward migrations and starts an empty production database if the
 database is new. It does not delete or reset existing production records.
 
-Create the first Administrator interactively:
+The account-bootstrap Quadlet creates all five role accounts during the
+production update. The Administrator can then review the accounts and their
+roles in the application. For an emergency manual account, the legacy helper
+`infra/scripts/provision-production-admin.sh` remains available and prompts
+for a password; it is not part of the automatic bootstrap path.
 
-```bash
-cd /var/home/jk/bridge-ph/pimascor/source && ./infra/scripts/provision-production-admin.sh admin admin@delegateops.business "PIMASCOR Administrator"
-```
-
-Create additional accounts only after the Administrator signs in and confirms
-the person’s role:
+Create additional manual accounts only after the Administrator confirms the
+person’s role:
 
 ```bash
 podman exec -it bridge-ph-pimascor-api python -m pimascor_api.seed --username USERNAME --email EMAIL --display-name "DISPLAY NAME" --role GM

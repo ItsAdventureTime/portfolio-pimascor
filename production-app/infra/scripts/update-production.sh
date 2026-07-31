@@ -29,8 +29,10 @@ required_files=(
   "${SOURCE_ROOT}/.deployment-source-commit"
   "${SOURCE_ROOT}/apps/api/Containerfile"
   "${SOURCE_ROOT}/apps/api/migrations/versions/20260729_0011_data_exports.py"
+  "${SOURCE_ROOT}/apps/api/migrations/versions/20260801_0012_account_activation.py"
   "${SOURCE_ROOT}/apps/web/Containerfile"
   "${SOURCE_ROOT}/infra/quadlet/production/bridge-ph-pimascor-api.container"
+  "${SOURCE_ROOT}/infra/quadlet/production/bridge-ph-pimascor-account-bootstrap.container"
   "${SOURCE_ROOT}/infra/quadlet/production/bridge-ph-pimascor-db.container"
   "${SOURCE_ROOT}/infra/quadlet/production/bridge-ph-pimascor-export-worker.container"
   "${SOURCE_ROOT}/infra/quadlet/production/bridge-ph-pimascor-data.network"
@@ -46,12 +48,12 @@ grep -Fqx 'Environment=DEPLOYMENT_TIER=production' "${SOURCE_ROOT}/infra/quadlet
 grep -Fqx 'Environment=DATA_EXPORT_ENABLED=true' "${SOURCE_ROOT}/infra/quadlet/production/bridge-ph-pimascor-api.container"
 [[ "$(podman info --format '{{.Host.Security.Rootless}}')" == 'true' ]] || { printf '%s\n' 'Rootless Podman is required.' >&2; exit 1; }
 
-for secret_name in bridge_ph_pimascor_postgres_password bridge_ph_pimascor_database_url bridge_ph_pimascor_resend_api_key bridge_ph_pimascor_b2_key_id bridge_ph_pimascor_b2_application_key bridge_ph_pimascor_pgpass bridge_ph_pimascor_restic_password; do
+for secret_name in bridge_ph_pimascor_postgres_password bridge_ph_pimascor_database_url bridge_ph_pimascor_resend_api_key bridge_ph_pimascor_b2_key_id bridge_ph_pimascor_b2_application_key bridge_ph_pimascor_pgpass bridge_ph_pimascor_restic_password bridge_ph_pimascor_account_bootstrap; do
   podman secret exists "$secret_name" || { printf 'Missing production Podman secret: %s\n' "$secret_name" >&2; exit 1; }
 done
 
 install -d -m 700 "$APP_ROOT" "$APP_ROOT/data/postgres/18/docker" "$APP_ROOT/data/uploads-tmp" "$APP_ROOT/backup-staging" "$APP_ROOT/restic-cache" "$QUADLET_ROOT" "$TIMER_ROOT"
-quadlet_files=(bridge-ph-pimascor-data.network bridge-ph-pimascor-egress.network bridge-ph-pimascor-proxy.network bridge-ph-pimascor-db.container bridge-ph-pimascor-api.container bridge-ph-pimascor-export-worker.container bridge-ph-pimascor-db-dump.container bridge-ph-pimascor-backup.container bridge-ph-pimascor-backup-retention.container)
+quadlet_files=(bridge-ph-pimascor-data.network bridge-ph-pimascor-egress.network bridge-ph-pimascor-proxy.network bridge-ph-pimascor-db.container bridge-ph-pimascor-api.container bridge-ph-pimascor-account-bootstrap.container bridge-ph-pimascor-export-worker.container bridge-ph-pimascor-db-dump.container bridge-ph-pimascor-backup.container bridge-ph-pimascor-backup-retention.container)
 for quadlet_file in "${quadlet_files[@]}"; do
   install -m 600 "${SOURCE_ROOT}/infra/quadlet/production/${quadlet_file}" "${QUADLET_ROOT}/${quadlet_file}"
 done
@@ -59,7 +61,7 @@ install -m 600 "${SOURCE_ROOT}/infra/systemd/bridge-ph-pimascor-backup.timer" "$
 install -m 600 "${SOURCE_ROOT}/infra/systemd/bridge-ph-pimascor-backup-retention.timer" "${TIMER_ROOT}/bridge-ph-pimascor-backup-retention.timer"
 
 systemctl --user daemon-reload
-systemd-analyze --user --generators=true verify bridge-ph-pimascor-db.service bridge-ph-pimascor-api.service bridge-ph-pimascor-export-worker.service bridge-ph-pimascor-db-dump.service bridge-ph-pimascor-backup.service
+systemd-analyze --user --generators=true verify bridge-ph-pimascor-db.service bridge-ph-pimascor-account-bootstrap.service bridge-ph-pimascor-api.service bridge-ph-pimascor-export-worker.service bridge-ph-pimascor-db-dump.service bridge-ph-pimascor-backup.service
 systemctl --user start bridge-ph-pimascor-data-network.service bridge-ph-pimascor-egress-network.service bridge-ph-pimascor-proxy-network.service bridge-ph-pimascor-db.service
 
 printf 'Building production API image for commit %s...\n' "$release_commit"
@@ -74,6 +76,7 @@ cp -a "${web_stage}/." "${WEB_ROOT}/web-dist/"
 rm -rf -- "${web_stage}"
 trap - EXIT
 
+systemctl --user restart bridge-ph-pimascor-account-bootstrap.service
 systemctl --user restart bridge-ph-pimascor-api.service
 systemctl --user restart bridge-ph-pimascor-export-worker.service
 systemctl --user is-active --quiet bridge-ph-pimascor-api.service

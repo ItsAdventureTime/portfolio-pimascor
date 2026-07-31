@@ -1,0 +1,33 @@
+[Unit]
+Description=PIMASCOR production account bootstrap
+After=bridge-ph-pimascor-db.service
+Requires=bridge-ph-pimascor-db.service
+
+[Container]
+Image=localhost/bridge-ph-pimascor-api:production
+Pull=never
+ContainerName=bridge-ph-pimascor-account-bootstrap
+Network=bridge-ph-pimascor-data.network
+Secret=bridge_ph_pimascor_database_url,uid=10001,gid=10001,mode=0400
+Secret=bridge_ph_pimascor_account_bootstrap,uid=10001,gid=10001,mode=0400
+Environment=APP_ENV=production
+Environment=DEPLOYMENT_TIER=production
+Environment=APP_NAME=PIMASCOR-account-bootstrap
+Environment=DATABASE_URL_FILE=/run/secrets/bridge_ph_pimascor_database_url
+Exec=python -m pimascor_api.bootstrap_accounts --manifest /run/secrets/bridge_ph_pimascor_account_bootstrap
+ReadOnly=true
+ReadOnlyTmpfs=true
+NoNewPrivileges=true
+DropCapability=all
+PidsLimit=64
+Memory=512m
+LogDriver=journald
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+Restart=no
+TimeoutStartSec=300
+
+[Install]
+WantedBy=default.target

@@ -148,10 +148,10 @@ def test_dashboard_calculates_profitability_from_budget_and_liquidation(client):
         json={"lines": [{"description": "Actual shipment spending", "amount": "48000.00"}]},
     )
     assert liquidation.status_code == 200, liquidation.text
-    denied_dashboard = client.get("/api/v1/dashboard/shipment-profitability")
+    denied_dashboard = client.get("/api/v1/dashboard/shipment-profitability?month=2026-07")
     assert denied_dashboard.status_code == 403, denied_dashboard.text
     sign_in(client, "mich")
-    dashboard = client.get("/api/v1/dashboard/shipment-profitability")
+    dashboard = client.get("/api/v1/dashboard/shipment-profitability?month=2026-07")
     assert dashboard.status_code == 200, dashboard.text
     row = next(item for item in dashboard.json()["rows"] if item["budget_request_id"] == budget["id"])
     assert row["selling_amount"] == "60000.00"

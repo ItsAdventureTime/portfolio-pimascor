@@ -1,5 +1,7 @@
-from .conftest import sign_in
+from .conftest import TestingSession, sign_in
 from pimascor_api.config import get_settings
+from pimascor_api.models import User
+from pimascor_api.security import verify_password
 
 
 def test_password_and_email_code_login(client):
@@ -53,3 +55,41 @@ def test_deployment_specific_cookie_names_are_honored(client):
     finally:
         settings.session_cookie_name = original_session_name
         settings.csrf_cookie_name = original_csrf_name
+
+
+def test_pending_account_activation_sets_password_after_email_code(client):
+    with TestingSession() as db:
+        user = db.query(User).filter(User.username == "requester").one()
+        user.must_set_password = True
+        db.commit()
+
+    started = client.post("/api/v1/auth/activation/start", json={"username": "requester"})
+    assert started.status_code == 200, started.text
+    body = started.json()
+    completed = client.post(
+        "/api/v1/auth/activation/complete",
+        json={
+            "challenge_id": body["challenge_id"],
+            "code": body["development_code"],
+            "password": "New-Activation-Password-2026!",
+        },
+    )
+    assert completed.status_code == 200, completed.text
+    with TestingSession() as db:
+        user = db.query(User).filter(User.username == "requester").one()
+        assert user.must_set_password is False
+        assert verify_password(user.password_hash, "New-Activation-Password-2026!")
+
+
+def test_activation_challenge_cannot_be_used_as_normal_login_code(client):
+    with TestingSession() as db:
+        user = db.query(User).filter(User.username == "requester").one()
+        user.must_set_password = True
+        db.commit()
+    started = client.post("/api/v1/auth/activation/start", json={"username": "requester"})
+    assert started.status_code == 200
+    response = client.post(
+        "/api/v1/auth/email-code/verify",
+        json={"challenge_id": started.json()["challenge_id"], "code": started.json()["development_code"]},
+    )
+    assert response.status_code == 400

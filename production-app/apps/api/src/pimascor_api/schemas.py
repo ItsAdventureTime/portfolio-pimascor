@@ -41,6 +41,16 @@ class PasswordStartResponse(BaseModel):
     development_code: str | None = None
 
 
+class ActivationStartRequest(BaseModel):
+    username: str = Field(min_length=2, max_length=320)
+
+
+class ActivationCompleteRequest(BaseModel):
+    challenge_id: str
+    code: str = Field(pattern=r"^\d{6}$")
+    password: str = Field(min_length=12, max_length=256)
+
+
 class EmailCodeVerifyRequest(BaseModel):
     challenge_id: str
     code: str = Field(pattern=r"^\d{6}$")

@@ -9,6 +9,8 @@ from ..db import get_db
 from ..dependencies import AuthContext, get_auth_context, require_csrf
 from ..models import EmailChallenge, LoginSession, User, UserStatus, utc_now
 from ..schemas import (
+    ActivationCompleteRequest,
+    ActivationStartRequest,
     AuthenticatedResponse,
     EmailCodeVerifyRequest,
     MeResponse,
@@ -29,6 +31,27 @@ from ..services.email import get_email_provider
 
 
 router = APIRouter(prefix="/auth", tags=["authentication"])
+
+
+def _set_session_cookies(response: Response, settings: Settings, session: LoginSession, raw_session: str, raw_csrf: str) -> None:
+    response.set_cookie(
+        settings.session_cookie_name,
+        f"{session.id}.{raw_session}",
+        httponly=True,
+        secure=settings.session_cookie_secure,
+        samesite="lax",
+        max_age=settings.session_ttl_hours * 3600,
+        path="/",
+    )
+    response.set_cookie(
+        settings.csrf_cookie_name,
+        raw_csrf,
+        httponly=False,
+        secure=settings.session_cookie_secure,
+        samesite="lax",
+        max_age=settings.session_ttl_hours * 3600,
+        path="/",
+    )
 
 
 def mask_email(email: str) -> str:
@@ -116,6 +139,118 @@ def password_start(
     )
 
 
+@router.post("/activation/start", response_model=PasswordStartResponse)
+def activation_start(
+    payload: ActivationStartRequest,
+    request: Request,
+    db: Session = Depends(get_db),
+    settings: Settings = Depends(get_settings),
+) -> PasswordStartResponse:
+    identifier = payload.username.strip().lower()
+    user = db.scalar(
+        select(User).where(or_(User.username == identifier, User.email == identifier))
+    )
+    if user is None or user.status != UserStatus.ACTIVE or not user.must_set_password:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Account activation is not available")
+
+    code = create_email_code()
+    challenge = EmailChallenge(
+        user_id=user.id,
+        purpose="ACTIVATION",
+        code_hash=hash_password(code),
+        expires_at=utc_now() + timedelta(minutes=settings.email_code_ttl_minutes),
+    )
+    db.add(challenge)
+    db.flush()
+    record_audit(
+        db,
+        actor_user_id=user.id,
+        action="AUTH_ACTIVATION_CHALLENGE_CREATED",
+        entity_type="email_challenge",
+        entity_id=challenge.id,
+        correlation_id=getattr(request.state, "correlation_id", None),
+    )
+    db.commit()
+
+    try:
+        get_email_provider(settings).send_activation_code(
+            user.email,
+            user.display_name,
+            challenge.id,
+            code,
+            settings.public_app_url,
+            settings.email_code_ttl_minutes,
+        )
+    except Exception as exc:
+        challenge.used_at = utc_now()
+        db.commit()
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="The activation email could not be sent. Please try again.",
+        ) from exc
+
+    return PasswordStartResponse(
+        challenge_id=challenge.id,
+        destination=mask_email(user.email),
+        expires_in_seconds=settings.email_code_ttl_minutes * 60,
+        development_code=code if settings.is_development else None,
+    )
+
+
+@router.post("/activation/complete", response_model=AuthenticatedResponse)
+def activation_complete(
+    payload: ActivationCompleteRequest,
+    response: Response,
+    request: Request,
+    db: Session = Depends(get_db),
+    settings: Settings = Depends(get_settings),
+) -> AuthenticatedResponse:
+    challenge = db.get(EmailChallenge, payload.challenge_id)
+    if challenge is None or challenge.purpose != "ACTIVATION" or challenge.used_at is not None:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Activation code is no longer valid")
+    challenge.attempts += 1
+    expires_at = challenge.expires_at
+    if expires_at.tzinfo is None:
+        expires_at = expires_at.replace(tzinfo=utc_now().tzinfo)
+    if expires_at <= utc_now() or challenge.attempts > 5:
+        challenge.used_at = utc_now()
+        db.commit()
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Activation code is no longer valid")
+    if not verify_password(challenge.code_hash, payload.code):
+        db.commit()
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Incorrect activation code")
+
+    user = db.get(User, challenge.user_id)
+    if user is None or user.status != UserStatus.ACTIVE or not user.must_set_password:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Account activation is not available")
+
+    user.password_hash = hash_password(payload.password)
+    user.must_set_password = False
+    user.email_verified_at = user.email_verified_at or utc_now()
+    challenge.used_at = utc_now()
+    raw_session = create_session_secret()
+    raw_csrf = create_csrf_secret()
+    login_session = LoginSession(
+        user_id=user.id,
+        token_hash=hash_secret(raw_session),
+        csrf_hash=hash_secret(raw_csrf),
+        expires_at=utc_now() + timedelta(hours=settings.session_ttl_hours),
+    )
+    db.add(login_session)
+    db.flush()
+    record_audit(
+        db,
+        actor_user_id=user.id,
+        action="AUTH_ACCOUNT_ACTIVATED",
+        entity_type="user",
+        entity_id=user.id,
+        correlation_id=getattr(request.state, "correlation_id", None),
+    )
+    db.commit()
+    _set_session_cookies(response, settings, login_session, raw_session, raw_csrf)
+    return AuthenticatedResponse(user=MeResponse.model_validate(user), csrf_token=raw_csrf)
+
+
 @router.post("/email-code/verify", response_model=AuthenticatedResponse)
 def verify_email_code(
     payload: EmailCodeVerifyRequest,
@@ -125,7 +260,7 @@ def verify_email_code(
     settings: Settings = Depends(get_settings),
 ) -> AuthenticatedResponse:
     challenge = db.get(EmailChallenge, payload.challenge_id)
-    if challenge is None or challenge.used_at is not None:
+    if challenge is None or challenge.purpose != "LOGIN" or challenge.used_at is not None:
         correlation_id = getattr(request.state, "correlation_id", None)
         record_audit(
             db,
@@ -194,24 +329,7 @@ def verify_email_code(
     )
     db.commit()
 
-    response.set_cookie(
-        settings.session_cookie_name,
-        f"{login_session.id}.{raw_session}",
-        httponly=True,
-        secure=settings.session_cookie_secure,
-        samesite="lax",
-        max_age=settings.session_ttl_hours * 3600,
-        path="/",
-    )
-    response.set_cookie(
-        settings.csrf_cookie_name,
-        raw_csrf,
-        httponly=False,
-        secure=settings.session_cookie_secure,
-        samesite="lax",
-        max_age=settings.session_ttl_hours * 3600,
-        path="/",
-    )
+    _set_session_cookies(response, settings, login_session, raw_session, raw_csrf)
     return AuthenticatedResponse(user=MeResponse.model_validate(user), csrf_token=raw_csrf)
 
 

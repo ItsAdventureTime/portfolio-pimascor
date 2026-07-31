@@ -156,6 +156,22 @@ export async function startPassword(username: string, password: string) {
   })
 }
 
+export async function startActivation(username: string) {
+  return request<PasswordStartResult>('/auth/activation/start', {
+    method: 'POST',
+    body: JSON.stringify({ username }),
+  })
+}
+
+export async function completeActivation(challengeId: string, code: string, password: string) {
+  const result = await request<{ user: ApiUser; csrf_token: string }>('/auth/activation/complete', {
+    method: 'POST',
+    body: JSON.stringify({ challenge_id: challengeId, code, password }),
+  })
+  csrfToken = result.csrf_token
+  return result.user
+}
+
 export async function verifyEmailCode(challengeId: string, code: string) {
   const result = await request<{ user: ApiUser; csrf_token: string }>('/auth/email-code/verify', {
     method: 'POST',

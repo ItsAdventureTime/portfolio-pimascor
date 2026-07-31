@@ -32,6 +32,12 @@ python -m pimascor_api.account_admin enable requester
 
 Password changes and account disabling revoke active sessions. Disable accounts instead of deleting them so historical audit actions retain their actor.
 
+Production role bootstrap uses `python -m pimascor_api.bootstrap_accounts` with
+an account manifest mounted from a rootless Podman secret. It creates pending
+accounts without passwords. The user receives an email OTP, then chooses a
+12-character minimum password through `/auth/activation/complete`; permanent
+passwords are never sent by email.
+
 In development, email verification codes are written to the API log and returned in
 the password-start response. Production mode refuses this delivery mechanism. Resend
 sends a personalized HTML and plain-text message with a large six-digit code and
