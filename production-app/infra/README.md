@@ -425,3 +425,11 @@ Enable them only after management approves recovery objectives and an isolated r
 - Backblaze S3-compatible API: https://www.backblaze.com/docs/en/cloud-storage-call-the-s3-compatible-api
 - S3 object keys and prefixes: https://docs.aws.amazon.com/AmazonS3/latest/userguide/object-keys.html
 - WCAG 2.2: https://www.w3.org/TR/WCAG22/
+# Production deployment
+
+The isolated production path is documented in `docs/PRODUCTION-VPS-DEPLOYMENT.md`.
+Use `infra/scripts/deploy-production-vps.sh` from the Mac, then run
+`infra/scripts/update-production.sh` under `/var/home/jk/bridge-ph/pimascor/source`
+on the VPS. Production Quadlets belong only in
+`~/.config/containers/systemd/bridge-ph/pimascor`; do not reuse demo units or
+the demo database/object prefix.

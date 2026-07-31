@@ -1,0 +1,10 @@
+[Unit]
+Description=PIMASCOR production private reverse-proxy network
+
+[Network]
+NetworkName=bridge-ph-pimascor-proxy
+Driver=bridge
+Internal=true
+
+[Install]
+WantedBy=default.target

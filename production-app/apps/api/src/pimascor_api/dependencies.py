@@ -67,12 +67,29 @@ def require_csrf(
     return context
 
 
+def _role_is_allowed(user_role: Role, roles: tuple[Role, ...], settings: Settings) -> bool:
+    if user_role == Role.ADMIN or user_role in roles:
+        return True
+    if settings.deployment_tier != "production":
+        return False
+    # Production Users & Roles policy: GM is the operational superuser but not
+    # the Administrator; DCS may override any GM-owned approval endpoint.
+    if user_role == Role.GM and Role.ADMIN not in roles:
+        return True
+    if user_role == Role.DCS and Role.GM in roles:
+        return True
+    return False
+
+
 def roles_allowed(*roles: Role):
-    def dependency(context: AuthContext = Depends(get_auth_context)) -> AuthContext:
+    def dependency(
+        context: AuthContext = Depends(get_auth_context),
+        settings: Settings = Depends(get_settings),
+    ) -> AuthContext:
         # Administrator is the explicit application superuser. It inherits every
         # protected role capability while remaining attributable as ADMIN in
         # audit records; endpoint state and validation rules still apply.
-        if context.user.role != Role.ADMIN and context.user.role not in roles:
+        if not _role_is_allowed(context.user.role, roles, settings):
             raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Permission denied")
         return context
 
@@ -80,8 +97,11 @@ def roles_allowed(*roles: Role):
 
 
 def csrf_roles_allowed(*roles: Role):
-    def dependency(context: AuthContext = Depends(require_csrf)) -> AuthContext:
-        if context.user.role != Role.ADMIN and context.user.role not in roles:
+    def dependency(
+        context: AuthContext = Depends(require_csrf),
+        settings: Settings = Depends(get_settings),
+    ) -> AuthContext:
+        if not _role_is_allowed(context.user.role, roles, settings):
             raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Permission denied")
         return context
 

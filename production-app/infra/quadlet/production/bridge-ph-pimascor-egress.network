@@ -1,0 +1,9 @@
+[Unit]
+Description=PIMASCOR production outbound application network
+
+[Network]
+NetworkName=bridge-ph-pimascor-egress
+Driver=bridge
+
+[Install]
+WantedBy=default.target

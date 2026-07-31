@@ -20,6 +20,11 @@ def main() -> None:
         default=Role.ADMIN.value,
         help="Permission role for the new account",
     )
+    parser.add_argument(
+        "--with-reference-clients",
+        action="store_true",
+        help="Create the two local reference clients used only by demos",
+    )
     args = parser.parse_args()
 
     password = getpass.getpass("Initial account password (12+ characters): ")
@@ -41,11 +46,13 @@ def main() -> None:
             role=Role(args.role),
         )
         db.add(user)
-        for code, name in (("DEMO", "Demo Client"), ("WALKIN", "Walk-in Client")):
-            if not db.scalar(select(Client).where(Client.code == code)):
-                db.add(Client(code=code, name=name))
+        if args.with_reference_clients:
+            for code, name in (("DEMO", "Demo Client"), ("WALKIN", "Walk-in Client")):
+                if not db.scalar(select(Client).where(Client.code == code)):
+                    db.add(Client(code=code, name=name))
         db.commit()
-    print(f"Created {args.role} account {args.username!r} and local reference clients.")
+    suffix = " and local reference clients" if args.with_reference_clients else ""
+    print(f"Created {args.role} account {args.username!r}{suffix}.")
 
 
 if __name__ == "__main__":

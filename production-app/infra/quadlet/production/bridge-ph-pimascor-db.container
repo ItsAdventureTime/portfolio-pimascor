@@ -1,0 +1,41 @@
+[Unit]
+Description=PIMASCOR production PostgreSQL database
+
+[Container]
+Image=docker.io/library/postgres:18-alpine
+Pull=missing
+AutoUpdate=registry
+ContainerName=bridge-ph-pimascor-db
+Network=bridge-ph-pimascor-data.network
+NetworkAlias=database
+Volume=%h/bridge-ph/pimascor/data/postgres/18/docker:/var/lib/postgresql/18/docker:U,Z
+Secret=bridge_ph_pimascor_postgres_password,uid=0,gid=0,mode=0400
+Environment=POSTGRES_DB=pimascor
+Environment=POSTGRES_USER=pimascor
+Environment=POSTGRES_PASSWORD_FILE=/run/secrets/bridge_ph_pimascor_postgres_password
+Environment=PGDATA=/var/lib/postgresql/18/docker
+HealthCmd=pg_isready -U pimascor -d pimascor
+HealthStartupCmd=pg_isready -U pimascor -d pimascor
+HealthStartupInterval=2s
+HealthStartupTimeout=2s
+HealthStartupRetries=60
+HealthStartupSuccess=1
+HealthInterval=30s
+HealthTimeout=5s
+HealthRetries=3
+HealthOnFailure=kill
+Notify=healthy
+NoNewPrivileges=true
+DropCapability=all
+PidsLimit=256
+Memory=2g
+ShmSize=256m
+LogDriver=journald
+
+[Service]
+Restart=on-failure
+RestartSec=5
+TimeoutStartSec=300
+
+[Install]
+WantedBy=default.target

@@ -1,0 +1,10 @@
+[Unit]
+Description=PIMASCOR production private database network
+
+[Network]
+NetworkName=bridge-ph-pimascor-data
+Driver=bridge
+Internal=true
+
+[Install]
+WantedBy=default.target
