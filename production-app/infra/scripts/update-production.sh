@@ -46,6 +46,11 @@ release_commit="$(tr -d '\r\n' < "${SOURCE_ROOT}/.deployment-source-commit")"
 [[ "$release_commit" =~ ^[0-9a-f]{40}$ ]] || { printf '%s\n' 'Invalid Git commit marker.' >&2; exit 1; }
 grep -Fqx 'Environment=DEPLOYMENT_TIER=production' "${SOURCE_ROOT}/infra/quadlet/production/bridge-ph-pimascor-api.container"
 grep -Fqx 'Environment=DATA_EXPORT_ENABLED=true' "${SOURCE_ROOT}/infra/quadlet/production/bridge-ph-pimascor-api.container"
+bootstrap_quadlet="${SOURCE_ROOT}/infra/quadlet/production/bridge-ph-pimascor-account-bootstrap.container"
+grep -Fqx 'Environment=PUBLIC_APP_URL=https://delegateops.business/pimascor/' "$bootstrap_quadlet" || { printf '%s\n' 'Account bootstrap must use the production HTTPS public URL.' >&2; exit 1; }
+grep -Fqx 'Environment=EMAIL_PROVIDER=resend' "$bootstrap_quadlet" || { printf '%s\n' 'Account bootstrap must use the production email provider.' >&2; exit 1; }
+grep -Fqx 'Environment=SESSION_COOKIE_SECURE=true' "$bootstrap_quadlet" || { printf '%s\n' 'Account bootstrap must require secure cookies in production.' >&2; exit 1; }
+grep -Fqx 'Secret=bridge_ph_pimascor_resend_api_key,uid=10001,gid=10001,mode=0400' "$bootstrap_quadlet" || { printf '%s\n' 'Account bootstrap is missing the production Resend secret.' >&2; exit 1; }
 [[ "$(podman info --format '{{.Host.Security.Rootless}}')" == 'true' ]] || { printf '%s\n' 'Rootless Podman is required.' >&2; exit 1; }
 
 for secret_name in bridge_ph_pimascor_postgres_password bridge_ph_pimascor_database_url bridge_ph_pimascor_resend_api_key bridge_ph_pimascor_b2_key_id bridge_ph_pimascor_b2_application_key bridge_ph_pimascor_pgpass bridge_ph_pimascor_restic_password bridge_ph_pimascor_account_bootstrap; do

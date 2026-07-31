@@ -10,10 +10,15 @@ ContainerName=bridge-ph-pimascor-account-bootstrap
 Network=bridge-ph-pimascor-data.network
 Secret=bridge_ph_pimascor_database_url,uid=10001,gid=10001,mode=0400
 Secret=bridge_ph_pimascor_account_bootstrap,uid=10001,gid=10001,mode=0400
+Secret=bridge_ph_pimascor_resend_api_key,uid=10001,gid=10001,mode=0400
 Environment=APP_ENV=production
 Environment=DEPLOYMENT_TIER=production
 Environment=APP_NAME=PIMASCOR-account-bootstrap
 Environment=DATABASE_URL_FILE=/run/secrets/bridge_ph_pimascor_database_url
+Environment=PUBLIC_APP_URL=https://delegateops.business/pimascor/
+Environment=SESSION_COOKIE_SECURE=true
+Environment=EMAIL_PROVIDER=resend
+Environment=RESEND_API_KEY_FILE=/run/secrets/bridge_ph_pimascor_resend_api_key
 Exec=python -m pimascor_api.bootstrap_accounts --manifest /run/secrets/bridge_ph_pimascor_account_bootstrap
 ReadOnly=true
 ReadOnlyTmpfs=true

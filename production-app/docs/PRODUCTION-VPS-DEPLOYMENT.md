@@ -142,6 +142,13 @@ creates or verifies the pending accounts idempotently. It never accepts or
 stores an initial password. Use `--interactive-account-manifest` only when you
 intentionally need to override the documented defaults.
 
+The bootstrap container imports the same production settings validation as the
+API. The deployment source therefore includes its HTTPS public URL,
+`EMAIL_PROVIDER=resend`, secure-cookie setting, and the
+`bridge_ph_pimascor_resend_api_key` Podman secret. `update-production.sh`
+preflights these values before changing services; a missing value is a source
+configuration error, not a reason to weaken production validation.
+
 If an older five-account manifest was already created, refresh only that
 manifest with:
 
