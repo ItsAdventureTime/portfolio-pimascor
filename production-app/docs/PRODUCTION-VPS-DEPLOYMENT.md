@@ -137,7 +137,7 @@ cd /var/home/jk/bridge-ph/pimascor/source && ./infra/scripts/update-production.s
 This runs forward migrations and starts an empty production database if the
 database is new. It does not delete or reset existing production records.
 
-The account-bootstrap Quadlet creates all five role accounts during the
+The account-bootstrap Quadlet creates all ten Section 1 accounts during the
 production update. The Administrator can then review the accounts and their
 roles in the application. For an emergency manual account, the legacy helper
 `infra/scripts/provision-production-admin.sh` remains available and prompts
