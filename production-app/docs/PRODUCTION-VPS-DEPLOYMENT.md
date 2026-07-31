@@ -51,6 +51,19 @@ The database URL must target the production database service
 production prefix `pimascor/production`; never reuse the demo key or prefix.
 Enable private-bucket server-side encryption in the B2 bucket configuration.
 
+After the source archive has been deployed, create only the missing secrets
+interactively as the rootless VPS user:
+
+```bash
+cd /var/home/jk/bridge-ph/pimascor/source && ./infra/scripts/provision-production-secrets.sh
+```
+
+The helper preserves existing secrets, reads values without putting them in
+shell history or source files, and does not print secret contents. The
+PostgreSQL password, database URL, and `pgpass` line must refer to the same
+database credentials. Podman secrets are mounted when containers are created;
+restart the production services after rotating one.
+
 ## Deployment
 
 Run on the Mac:
