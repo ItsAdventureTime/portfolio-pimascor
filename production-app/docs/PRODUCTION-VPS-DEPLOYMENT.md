@@ -102,6 +102,12 @@ The database URL must target the production database service
 production prefix `pimascor/production`; never reuse the demo key or prefix.
 Enable private-bucket server-side encryption in the B2 bucket configuration.
 
+`bridge_ph_pimascor_restic_password` is the encryption key for the Restic
+repository stored in Backblaze B2. It is not the PostgreSQL password, a VPS
+login password, or a B2 access key. Store it in the approved password manager;
+without it, encrypted backup snapshots cannot be restored. The updater enables
+the backup timers only after the production services are active.
+
 After the source archive has been deployed, create only the missing secrets as
 the rootless VPS user:
 

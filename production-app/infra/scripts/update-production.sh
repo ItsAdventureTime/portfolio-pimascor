@@ -62,7 +62,14 @@ install -m 600 "${SOURCE_ROOT}/infra/systemd/bridge-ph-pimascor-backup-retention
 
 systemctl --user daemon-reload
 systemd-analyze --user --generators=true verify bridge-ph-pimascor-db.service bridge-ph-pimascor-account-bootstrap.service bridge-ph-pimascor-api.service bridge-ph-pimascor-export-worker.service bridge-ph-pimascor-db-dump.service bridge-ph-pimascor-backup.service
-systemctl --user start bridge-ph-pimascor-data-network.service bridge-ph-pimascor-egress-network.service bridge-ph-pimascor-proxy-network.service bridge-ph-pimascor-db.service
+systemctl --user start bridge-ph-pimascor-data-network.service bridge-ph-pimascor-egress-network.service bridge-ph-pimascor-proxy-network.service
+if ! systemctl --user start bridge-ph-pimascor-db.service; then
+  printf '%s\n' 'PostgreSQL failed to start. Safe diagnostics follow; secret contents are not printed.' >&2
+  systemctl --user status --no-pager --full bridge-ph-pimascor-db.service >&2 || true
+  journalctl --user --unit=bridge-ph-pimascor-db.service --no-pager --lines=120 >&2 || true
+  podman logs --tail=120 bridge-ph-pimascor-db >&2 || true
+  exit 1
+fi
 
 printf 'Building production API image for commit %s...\n' "$release_commit"
 podman build --pull=always --tag localhost/bridge-ph-pimascor-api:production "${SOURCE_ROOT}/apps/api"
