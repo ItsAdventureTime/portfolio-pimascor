@@ -205,3 +205,21 @@ def test_requester_cannot_create_accounting_expense(client):
         },
     )
     assert response.status_code == 403
+
+
+def test_gm_payment_override_requires_a_reason_and_is_allowed_when_recorded(client):
+    budget = create_approved_budget(client)
+    gm_csrf = sign_in(client, "gm")
+    denied = client.post(
+        f"/api/v1/dcs-payments/budget/{budget['id']}/actions",
+        headers={"X-CSRF-Token": gm_csrf},
+        json={"action": "HOLD", "note": "short", "expected_version": budget["version"]},
+    )
+    assert denied.status_code == 422, denied.text
+    held = client.post(
+        f"/api/v1/dcs-payments/budget/{budget['id']}/actions",
+        headers={"X-CSRF-Token": gm_csrf},
+        json={"action": "HOLD", "note": "DCS is unavailable; bank verification is pending.", "expected_version": budget["version"]},
+    )
+    assert held.status_code == 200, held.text
+    assert held.json()["payment_status"] == "ON_HOLD"

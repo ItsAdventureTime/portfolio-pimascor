@@ -210,10 +210,10 @@ signatures and size, stores integrity metadata, authorizes every index/view, and
 views. The authenticated no-store viewer renders JPEG/PNG files as images and PDFs
 in a dedicated PDF frame; it shows loading, retry, and reportable failure states
 instead of an empty panel. The API supplies correct MIME, length, inline, and byte
-range headers. The application exposes no document download control and the old
-download endpoint returns `403`. Production must add the approved malware scanner
-and retention policy. Podman secrets supply credentials; no `.env` files or usable
-keys belong in source or Quadlets.
+range headers. Mich, GM, DCS, and Admin may request a separately authorized,
+audited attachment download; Requesters remain view-only. Production must add the
+approved malware scanner and retention policy. Podman secrets supply credentials;
+no `.env` files or usable keys belong in source or Quadlets.
 
 ## Demo behavior
 

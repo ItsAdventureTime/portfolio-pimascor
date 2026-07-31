@@ -43,7 +43,7 @@ def require_data_exports_enabled() -> None:
 
 @router.get("", response_model=list[DataExportResponse])
 def list_exports(
-    _: AuthContext = Depends(roles_allowed(Role.ADMIN)),
+    _: AuthContext = Depends(roles_allowed(Role.ADMIN, Role.MICH, Role.GM, Role.DCS)),
     db: Session = Depends(get_db),
 ):
     if not get_settings().data_export_enabled:
@@ -59,7 +59,7 @@ def list_exports(
 @router.post("", response_model=DataExportResponse, status_code=202)
 def request_export(
     request: Request,
-    context: AuthContext = Depends(csrf_roles_allowed(Role.ADMIN)),
+    context: AuthContext = Depends(csrf_roles_allowed(Role.ADMIN, Role.MICH, Role.GM, Role.DCS)),
     db: Session = Depends(get_db),
 ):
     require_data_exports_enabled()
@@ -83,7 +83,7 @@ def request_export(
         entity_type="data_export",
         entity_id=export.id,
         correlation_id=getattr(request.state, "correlation_id", None),
-        reason="Administrator requested a complete local records archive",
+        reason="Authorized user requested a complete local records archive",
     )
     db.commit()
     db.refresh(export)
@@ -98,7 +98,7 @@ def request_export(
 def download_export(
     export_id: str,
     request: Request,
-    context: AuthContext = Depends(roles_allowed(Role.ADMIN)),
+    context: AuthContext = Depends(roles_allowed(Role.ADMIN, Role.MICH, Role.GM, Role.DCS)),
     db: Session = Depends(get_db),
 ):
     require_data_exports_enabled()

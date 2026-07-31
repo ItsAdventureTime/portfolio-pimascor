@@ -197,7 +197,7 @@ def payment_action(
     record_id: str,
     payload: PaymentActionRequest,
     request: Request,
-    context: AuthContext = Depends(csrf_roles_allowed(Role.ADMIN, Role.DCS)),
+    context: AuthContext = Depends(csrf_roles_allowed(Role.ADMIN, Role.DCS, Role.GM)),
     db: Session = Depends(get_db),
 ) -> PaymentQueueItem:
     record = get_source(db, source_type, record_id)
@@ -225,6 +225,9 @@ def payment_action(
             else PaymentStatus.PENDING
         )
 
+    if context.user.role == Role.GM and len(payload.note.strip()) < 10:
+        raise HTTPException(status_code=422, detail="A General Manager payment override requires a reason of at least 10 characters")
+    action_prefix = "GM_PAYMENT_OVERRIDE" if context.user.role == Role.GM else "DCS_PAYMENT"
     annotation = PaymentAnnotation(
         actor_user_id=context.user.id,
         event_type=payload.action,
@@ -237,7 +240,7 @@ def payment_action(
     record_audit(
         db,
         actor_user_id=context.user.id,
-        action=f"DCS_PAYMENT_{payload.action}",
+        action=f"{action_prefix}_{payload.action}",
         entity_type="budget_request" if isinstance(record, BudgetRequest) else "expense_request",
         entity_id=record.id,
         reason=payload.note.strip(),
@@ -255,9 +258,11 @@ def record_payment(
     record_id: str,
     payload: PaymentCreate,
     request: Request,
-    context: AuthContext = Depends(csrf_roles_allowed(Role.ADMIN, Role.DCS)),
+    context: AuthContext = Depends(csrf_roles_allowed(Role.ADMIN, Role.DCS, Role.GM)),
     db: Session = Depends(get_db),
 ) -> PaymentQueueItem:
+    if context.user.role == Role.GM and (not payload.notes or len(payload.notes.strip()) < 10):
+        raise HTTPException(status_code=422, detail="A General Manager payment override requires a reason of at least 10 characters")
     record = get_source(db, source_type, record_id)
     if record.version != payload.expected_version:
         raise HTTPException(
@@ -367,7 +372,7 @@ def record_payment(
     record_audit(
         db,
         actor_user_id=context.user.id,
-        action="DCS_PAYMENT_RECORDED",
+        action="GM_PAYMENT_OVERRIDE_RECORDED" if context.user.role == Role.GM else "DCS_PAYMENT_RECORDED",
         entity_type="budget_request" if isinstance(record, BudgetRequest) else "expense_request",
         entity_id=record.id,
         reason=payload.notes,
@@ -386,7 +391,7 @@ async def upload_payment_proof(
     request: Request,
     expected_version: int = Form(gt=0),
     document: UploadFile = File(),
-    context: AuthContext = Depends(csrf_roles_allowed(Role.DCS)),
+    context: AuthContext = Depends(csrf_roles_allowed(Role.ADMIN, Role.DCS, Role.GM)),
     db: Session = Depends(get_db),
 ) -> PaymentQueueItem:
     record = get_source(db, source_type, record_id)
@@ -430,7 +435,7 @@ async def upload_payment_proof(
     record_audit(
         db,
         actor_user_id=context.user.id,
-        action="DCS_PAYMENT_PROOF_UPLOADED",
+        action="GM_PAYMENT_OVERRIDE_PROOF_UPLOADED" if context.user.role == Role.GM else "DCS_PAYMENT_PROOF_UPLOADED",
         entity_type="budget_request" if isinstance(record, BudgetRequest) else "expense_request",
         entity_id=record.id,
         correlation_id=getattr(request.state, "correlation_id", None),

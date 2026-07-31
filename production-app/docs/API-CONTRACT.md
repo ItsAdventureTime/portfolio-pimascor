@@ -123,7 +123,8 @@ size, and uses a managed multipart transfer to private B2 storage.
 `GET /documents` indexes signed quotations, payment proof, and Liquidation
 evidence for authorized staff. `GET /documents/{id}/view` audits access and
 streams the object inline with `no-store` and sandbox headers. Requesters cannot
-view DCS payment proof. `GET /documents/{id}/download` returns `403`.
+view DCS payment proof. `GET /documents/{id}/download` is available only to
+Mich, GM, DCS, and Admin, uses `attachment`, `no-store`, and an audit event.
 
 ## Billing
 

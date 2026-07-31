@@ -283,12 +283,48 @@ def view_document(
     )
 
 
-@router.get("/{document_id}/download", include_in_schema=False)
-def downloads_disabled(
+@router.get("/{document_id}/download")
+def download_document(
     document_id: str,
-    _: AuthContext = Depends(roles_allowed(*list(Role))),
+    request: Request,
+    context: AuthContext = Depends(roles_allowed(Role.ADMIN, Role.GM, Role.DCS, Role.MICH)),
+    db: Session = Depends(get_db),
 ):
-    raise HTTPException(
-        status_code=403,
-        detail="Downloading confidential documents is disabled. Use the protected viewer.",
+    item = next((row for row in stored_documents(db) if row.id == document_id), None)
+    if item is None and ":" not in document_id:
+        item = next((row for row in stored_documents(db) if row.id == f"liquidation:{document_id}"), None)
+    if item is None:
+        raise HTTPException(status_code=404, detail="Document not found")
+    if not item.size_bytes or not item.sha256:
+        raise HTTPException(status_code=409, detail="This demonstration metadata has no stored file")
+    stored = open_document(key=item.storage_key)
+    body = stored["Body"]
+    safe_name = re.sub(r"[^a-zA-Z0-9._-]", "-", Path(item.file_name).name)
+    record_audit(
+        db,
+        actor_user_id=context.user.id,
+        action="CONFIDENTIAL_DOCUMENT_DOWNLOADED",
+        entity_type=item.entity_type,
+        entity_id=item.entity_id,
+        correlation_id=getattr(request.state, "correlation_id", None),
+    )
+    db.commit()
+
+    def content():
+        try:
+            while chunk := body.read(64 * 1024):
+                yield chunk
+        finally:
+            body.close()
+
+    return StreamingResponse(
+        content(),
+        media_type=item.content_type or stored.get("ContentType") or "application/octet-stream",
+        headers={
+            "Cache-Control": "private, no-store, max-age=0",
+            "Content-Disposition": f'attachment; filename="{safe_name}"',
+            "Content-Length": str(stored.get("ContentLength") or item.size_bytes),
+            "X-Content-Type-Options": "nosniff",
+            "X-Robots-Tag": "noindex, nofollow, noarchive",
+        },
     )

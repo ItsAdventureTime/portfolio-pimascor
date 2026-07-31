@@ -59,7 +59,7 @@ import {
 } from './data'
 import type { BudgetRequest, PageId, Role, Tone } from './types'
 import type { ApiActivityCategory, ApiAdminActivity, ApiBilling, ApiBudgetRequest, ApiClient, ApiClientPayment, ApiCreditMemo, ApiDataExport, ApiDocument, ApiExpenseRequest, ApiExpenseType, ApiFundingSource, ApiLiquidation, ApiPaymentQueueItem, ApiQuotation, ApiQuotationLine, ApiShipmentProfitability, ApiTaxProfile, ApiUser } from './types'
-import { ApiError, closeLiquidation, createAdditionalBudget, createBillingDraft, createBillingReplacement, createBudgetRequest, createClientPayment, createCreditMemo, createExpenseRequest, createFundingSource, createQuotation, createTaxProfile, decideBilling, decideBudgetRequest, decideCreditMemo, decideExpenseRequest, decideQuotation, downloadDataExport, emitApiIncident, finalizeBilling, getAdminActivity, getBilling, getBudgetApprovalQueue, getBudgetRequests, getBudgetReviewQueue, getClientPayments, getClients, getCreditMemos, getDataExports, getDocumentBlob, getDocuments, getExpenseApprovalQueue, getExpenseRequests, getFundingSources, getLiquidations, getMe, getPayments, getQuotations, getReceivables, getShipmentProfitability, getTaxProfiles, overrideBudgetAsDcs, overrideQuotationAsDcs, recordPayment, recordQuotationAcceptance, requestDataExport, returnBudgetFromReview, reviewBudgetRequest, saveLiquidation, signOut, startPassword, submitBilling, submitBudgetRequest, submitExpenseRequest, submitLiquidation, submitQuotation, updateBillingDraft, updateBudgetRequest, updateFundingSource, updatePayment, uploadLiquidationEvidence, uploadPaymentProof, verifyEmailCode, voidBilling } from './api'
+import { ApiError, closeLiquidation, createAdditionalBudget, createBillingDraft, createBillingReplacement, createBudgetRequest, createClientPayment, createCreditMemo, createExpenseRequest, createFundingSource, createQuotation, createTaxProfile, decideBilling, decideBudgetRequest, decideCreditMemo, decideExpenseRequest, decideQuotation, downloadDataExport, downloadDocument, emitApiIncident, finalizeBilling, getAdminActivity, getBilling, getBudgetApprovalQueue, getBudgetRequests, getBudgetReviewQueue, getClientPayments, getClients, getCreditMemos, getDataExports, getDocumentBlob, getDocuments, getExpenseApprovalQueue, getExpenseRequests, getFundingSources, getLiquidations, getMe, getPayments, getQuotations, getReceivables, getShipmentProfitability, getTaxProfiles, overrideBudgetAsDcs, overrideQuotationAsDcs, recordPayment, recordQuotationAcceptance, requestDataExport, returnBudgetFromReview, reviewBudgetRequest, saveLiquidation, signOut, startPassword, submitBilling, submitBudgetRequest, submitExpenseRequest, submitLiquidation, submitQuotation, updateBillingDraft, updateBudgetRequest, updateFundingSource, updatePayment, uploadLiquidationEvidence, uploadPaymentProof, verifyEmailCode, voidBilling } from './api'
 import { IncidentCenter } from './IncidentCenter'
 import { ActionMessageDialog, type ActionMessage } from './ActionMessageDialog'
 
@@ -123,7 +123,7 @@ const brandIconUrl = `${import.meta.env.BASE_URL}pimascor-app-icon.jpg`
 const navigation: { label: string; items: NavItem[] }[] = [
   {
     label: 'Control room',
-    items: [{ id: 'dashboard', label: 'Shipment Profitability', icon: LayoutDashboard, roles: ['Admin', 'Requester', 'GM', 'DCS', 'Mich'] }],
+    items: [{ id: 'dashboard', label: 'Shipment Profitability', icon: LayoutDashboard, roles: ['Admin', 'GM', 'DCS', 'Mich'] }],
   },
   {
     label: 'Shipments',
@@ -489,7 +489,7 @@ type ConfidentialDocumentItem = {
   contentType: string | null
 }
 
-function ConfidentialDocumentViewer({ item, onClose }: { item: ConfidentialDocumentItem | null; onClose: () => void }) {
+function ConfidentialDocumentViewer({ item, onClose, canDownload = false }: { item: ConfidentialDocumentItem | null; onClose: () => void; canDownload?: boolean }) {
   const [objectUrl, setObjectUrl] = useState('')
   const [contentType, setContentType] = useState('')
   const [state, setState] = useState<'loading' | 'ready' | 'error'>('loading')
@@ -540,10 +540,20 @@ function ConfidentialDocumentViewer({ item, onClose }: { item: ConfidentialDocum
   }
   const isImage = contentType === 'image/jpeg' || contentType === 'image/png'
   const isPdf = contentType === 'application/pdf'
+  async function saveCopy() {
+    if (!item) return
+    const result = await downloadDocument(item.id)
+    const url = URL.createObjectURL(result.blob)
+    const anchor = document.createElement('a')
+    anchor.href = url
+    anchor.download = result.fileName
+    anchor.click()
+    URL.revokeObjectURL(url)
+  }
 
   return <Modal title={item?.name ?? 'Confidential document'} open={Boolean(item)} onClose={onClose}>
     {item ? <div className="secure-viewer">
-      <div className="callout callout--info"><ShieldCheck size={18} /><span>View-only confidential record. Download controls are disabled and the browser is instructed not to store this response.</span></div>
+      <div className="callout callout--info"><ShieldCheck size={18} /><span>{canDownload ? 'Protected record. Authorized downloads are recorded in the audit trail.' : 'View-only confidential record. Download permission is limited to authorized roles.'}</span>{canDownload ? <Button tone="secondary" onClick={() => void saveCopy()}>Download authorised copy</Button> : null}</div>
       <div className={`secure-viewer__stage secure-viewer__stage--${state}`} aria-live="polite" aria-busy={state === 'loading'}>
         {state === 'loading' ? <div className="secure-viewer__status"><RefreshCw className="spin" size={24} /><strong>Preparing protected preview…</strong><span>Keep this viewer open while the file is checked.</span></div> : null}
         {state === 'error' ? <div className="secure-viewer__status secure-viewer__status--error"><AlertCircle size={26} /><strong>This document did not load.</strong><span>Check your connection, then try the protected preview again. The original file has not been changed.</span><button className="button button--primary" type="button" onClick={() => setRetryKey((value) => value + 1)}><RefreshCw size={16} /> Try again</button></div> : null}
@@ -742,6 +752,12 @@ type QuotationLineDraft = {
   billed_by: 'PIMASCOR' | 'BOC'
 }
 
+const revisedQuotationTerms = `1. Duties and taxes are pass-through costs subject to the actual Bureau of Customs assessment.
+2. Storage, demurrage, detention, stripping, and similar charges are excluded unless agreed in writing; actual charges are for the client's account.
+3. Unreceipted expenses require client approval before disbursement.
+4. Duties and taxes are payable before BOC lodgment; service fees are payable upon delivery.
+Penalty interests: Any amount due and payable in favor of PIMASCOR is subject to a three percent (3%) monthly compounded penalty interest.`
+
 function QuotationPrintDocument({ quotation, printCopy = false }: { quotation: ApiQuotation; printCopy?: boolean }) {
   const originLines = quotation.lines.filter((line) => line.section === 'ORIGIN_FREIGHT')
   const destinationLines = quotation.lines.filter((line) => line.section === 'DESTINATION_CLEARANCE')
@@ -797,6 +813,7 @@ function QuotationsPage({ role, notify }: { role: Role; notify: Notify }) {
   const [note, setNote] = useState('')
   const [quotationLines, setQuotationLines] = useState<QuotationLineDraft[]>([])
   const [previewZoom, setPreviewZoom] = useState(() => window.innerWidth <= 760 ? 50 : 85)
+  const [viewingDocument, setViewingDocument] = useState<ConfidentialDocumentItem | null>(null)
 
   const load = useCallback(() => {
     Promise.all([getQuotations(), getClients()])
@@ -819,7 +836,7 @@ function QuotationsPage({ role, notify }: { role: Role; notify: Notify }) {
         shipment_reference: String(data.get('shipment_reference')),
         quoted_amount: (phpTotal || usdTotal).toFixed(2),
         currency: phpTotal ? 'PHP' : 'USD',
-        terms_and_conditions: String(data.get('terms_and_conditions')),
+        terms_and_conditions: revisedQuotationTerms,
         mode_of_transport: String(data.get('mode_of_transport') || ''), container_type: String(data.get('container_type') || ''), origin: String(data.get('origin') || ''), destination: String(data.get('destination') || ''), incoterms: String(data.get('incoterms') || ''), cargo_details: String(data.get('cargo_details') || ''), payment_terms: String(data.get('payment_terms') || ''), validity_hours: Number(data.get('validity_hours') || 48),
         lines: quotationLines.map((line) => ({ ...line, amount: Number(line.amount).toFixed(2) })),
       })
@@ -876,7 +893,8 @@ function QuotationsPage({ role, notify }: { role: Role; notify: Notify }) {
       <SectionHeader eyebrow="Contract-first control" title="Sales Quotations" description="Prepare the PHP and USD charge schedule, review it in the printable contract format, then send it to the GM." action={(role === 'Requester' || role === 'Admin') ? <Button icon={Plus} onClick={beginCreate}>Create Sales Quotation</Button> : undefined} />
       {rows === null ? <EmptyState icon={RefreshCw} title="Loading quotations" detail="Opening the quotation register." /> : <div className="table-wrap"><table><thead><tr><th>Quotation</th><th>Client / shipment</th><th>Currency totals</th><th>Prepared by</th><th>Status</th><th></th></tr></thead><tbody>{rows.map((item) => { const php = item.lines.filter((line) => line.currency === 'PHP').reduce((sum, line) => sum + Number(line.amount), 0); const usd = item.lines.filter((line) => line.currency === 'USD').reduce((sum, line) => sum + Number(line.amount), 0); return <tr key={item.id}><td data-label="Quotation"><strong>{item.reference}</strong><small>{new Date(item.created_at).toLocaleDateString('en-PH')}</small></td><td data-label="Client / shipment"><strong>{item.client.name}</strong><small>{item.shipment_reference}</small></td><td data-label="Currency totals" className="number"><strong>{moneyInCurrency(php, 'PHP')}</strong><small>{moneyInCurrency(usd, 'USD')}</small></td><td data-label="Prepared by">{item.created_by.display_name}</td><td data-label="Status"><Status>{item.status.replaceAll('_', ' ')}</Status></td><td><Button tone="ghost" onClick={() => openQuotation(item)}>Open</Button></td></tr> })}</tbody></table></div>}
     </Card>
-    <Drawer className="drawer--document" open={Boolean(selected)} onClose={() => setSelected(null)} eyebrow="Sales quotation / shipment contract" title={selected?.reference ?? ''}>{selected ? <div className="record-stack"><div className="billing-preview-toolbar" role="group" aria-label="Quotation print preview zoom controls"><strong>Print preview</strong><button type="button" onClick={() => setPreviewZoom((value) => Math.max(40, value - 10))} aria-label="Zoom out">−</button><label><span className="visually-hidden">Preview zoom</span><input type="range" min="40" max="160" step="10" value={previewZoom} onChange={(event) => setPreviewZoom(Number(event.target.value))} /></label><output aria-live="polite">{previewZoom}%</output><button type="button" onClick={() => setPreviewZoom((value) => Math.min(160, value + 10))} aria-label="Zoom in">+</button><button type="button" className="billing-preview-toolbar__reset" onClick={() => setPreviewZoom(window.innerWidth <= 760 ? 50 : 85)}>Fit</button></div><div className="billing-preview-stage" tabIndex={0} aria-label="Scrollable Sales Quotation print preview"><div className="billing-preview-stage__document" style={{ zoom: `${previewZoom}%` }}><QuotationPrintDocument quotation={selected} /></div></div>{selected.signed_file_name ? <DocumentItem name={selected.signed_file_name} meta={`Client accepted by ${selected.client_signatory} • ${selected.client_accepted_at}`} /> : null}{(role === 'Requester' || role === 'Admin') && (selected.status === 'DRAFT' || selected.status === 'REJECTED') ? <Button onClick={() => submit(selected)} disabled={busy}>Submit to GM</Button> : null}{(role === 'GM' || role === 'Admin' || role === 'DCS') && selected.status === 'PENDING_APPROVAL' ? <><label>Decision note<textarea rows={3} value={note} onChange={(event) => setNote(event.target.value)} placeholder={role === 'DCS' ? 'Required reason for exceptional override' : 'Required when returning'} /></label><div className="drawer-actions">{role !== 'DCS' ? <Button tone="danger" onClick={() => decide(selected, false)}>Return</Button> : null}<Button onClick={() => decide(selected, true)}>{role === 'DCS' ? 'Use DCS Override' : 'Approve Quotation'}</Button></div></> : null}{(role === 'Requester' || role === 'Admin') && selected.status === 'APPROVED' ? <form className="form-stack" onSubmit={accept}><SectionHeader title="Record client acceptance" description="Attach the signed or otherwise accepted quotation before creating the Budget Request." /><label>Acceptance date<input name="accepted_on" type="date" defaultValue={new Date().toISOString().slice(0, 10)} required /></label><label>Client signatory<input name="client_signatory" required /></label><label>Signed quotation<input name="document" type="file" accept=".pdf,.jpg,.jpeg,.png" required /></label><Button type="submit" disabled={busy}>Save Client-Accepted Contract</Button></form> : null}<div className="drawer-actions"><Button tone="secondary" icon={FileText} onClick={printQuotationDocument}>Print Quotation / Save PDF</Button></div></div> : null}</Drawer>
+    <Drawer className="drawer--document" open={Boolean(selected)} onClose={() => setSelected(null)} eyebrow="Sales quotation / shipment contract" title={selected?.reference ?? ''}>{selected ? <div className="record-stack"><div className="billing-preview-toolbar" role="group" aria-label="Quotation print preview zoom controls"><strong>Print preview</strong><button type="button" onClick={() => setPreviewZoom((value) => Math.max(40, value - 10))} aria-label="Zoom out">−</button><label><span className="visually-hidden">Preview zoom</span><input type="range" min="40" max="160" step="10" value={previewZoom} onChange={(event) => setPreviewZoom(Number(event.target.value))} /></label><output aria-live="polite">{previewZoom}%</output><button type="button" onClick={() => setPreviewZoom((value) => Math.min(160, value + 10))} aria-label="Zoom in">+</button><button type="button" className="billing-preview-toolbar__reset" onClick={() => setPreviewZoom(window.innerWidth <= 760 ? 50 : 85)}>Fit</button></div><div className="billing-preview-stage" tabIndex={0} aria-label="Scrollable Sales Quotation print preview"><div className="billing-preview-stage__document" style={{ zoom: `${previewZoom}%` }}><QuotationPrintDocument quotation={selected} /></div></div>{selected.signed_file_name ? <DocumentItem name={selected.signed_file_name} meta={`Client accepted by ${selected.client_signatory} • ${selected.client_accepted_at}`} available={Boolean(selected.signed_size_bytes && selected.signed_sha256)} onOpen={() => setViewingDocument({ id: `quotation:${selected.id}`, name: selected.signed_file_name!, contentType: selected.signed_content_type })} /> : null}{(role === 'Requester' || role === 'Admin') && (selected.status === 'DRAFT' || selected.status === 'REJECTED') ? <Button onClick={() => submit(selected)} disabled={busy}>Submit to GM</Button> : null}{(role === 'GM' || role === 'Admin' || role === 'DCS') && selected.status === 'PENDING_APPROVAL' ? <><label>Decision note<textarea rows={3} value={note} onChange={(event) => setNote(event.target.value)} placeholder={role === 'DCS' ? 'Required reason for exceptional override' : 'Required when returning'} /></label><div className="drawer-actions">{role !== 'DCS' ? <Button tone="danger" onClick={() => decide(selected, false)}>Return</Button> : null}<Button onClick={() => decide(selected, true)}>{role === 'DCS' ? 'Use DCS Override' : 'Approve Quotation'}</Button></div></> : null}{(role === 'Requester' || role === 'Admin') && selected.status === 'APPROVED' ? <form className="form-stack" onSubmit={accept}><SectionHeader title="Record client acceptance" description="Attach the signed or otherwise accepted quotation before creating the Budget Request." /><label>Acceptance date<input name="accepted_on" type="date" defaultValue={new Date().toISOString().slice(0, 10)} required /></label><label>Client signatory<input name="client_signatory" required /></label><label>Signed quotation<input name="document" type="file" accept=".pdf,.jpg,.jpeg,.png" required /></label><Button type="submit" disabled={busy}>Save Client-Accepted Contract</Button></form> : null}<div className="drawer-actions"><Button tone="secondary" icon={FileText} onClick={printQuotationDocument}>Print Quotation / Save PDF</Button></div></div> : null}</Drawer>
+    <ConfidentialDocumentViewer item={viewingDocument} onClose={() => setViewingDocument(null)} canDownload={['Admin', 'GM', 'DCS', 'Mich'].includes(role)} />
     {selected ? createPortal(<div className="print-quotation-host"><QuotationPrintDocument quotation={selected} printCopy /></div>, document.body) : null}
     <Modal open={creating} onClose={() => setCreating(false)} title="Create Sales Quotation"><form className="form-stack quotation-form" onSubmit={create}><label>Client<select name="client_id" required>{clients.map((client) => <option value={client.id} key={client.id}>{client.name}</option>)}</select></label><label>Shipment reference<input name="shipment_reference" placeholder="Example: ACT-172" required /></label><div className="form-grid form-grid--three"><label>Mode of transport<input name="mode_of_transport" placeholder="SEA / AIR" /></label><label>Container<input name="container_type" placeholder="FCL / LCL" /></label><label>Incoterms<input name="incoterms" placeholder="EXW / FOB / FCA" /></label><label>Origin<input name="origin" /></label><label>Destination<input name="destination" /></label><label>Cargo details<input name="cargo_details" placeholder="Weight / dimensions" /></label></div><SectionHeader title="Charge schedule" description="Use USD for origin/international freight and PHP for destination/customs items. Mark Bureau of Customs charges separately for the print summary." />{quotationLines.map((line, index) => <div className="quotation-line-editor" key={`${line.section}-${index}`}><label>Description<input value={line.description} onChange={(event) => setQuotationLines((current) => current.map((item, row) => row === index ? { ...item, description: event.target.value } : item))} required /></label><label>Section<select value={line.section} onChange={(event) => setQuotationLines((current) => current.map((item, row) => row === index ? { ...item, section: event.target.value as QuotationLineDraft['section'], currency: event.target.value === 'ORIGIN_FREIGHT' ? 'USD' : 'PHP' } : item))}><option value="ORIGIN_FREIGHT">Origin &amp; freight</option><option value="DESTINATION_CLEARANCE">Destination &amp; clearance</option></select></label><label>Currency<select value={line.currency} onChange={(event) => setQuotationLines((current) => current.map((item, row) => row === index ? { ...item, currency: event.target.value as 'PHP' | 'USD' } : item))}><option value="USD">USD</option><option value="PHP">PHP</option></select></label><label>Amount<input type="number" min="0.01" step="0.01" value={line.amount} onChange={(event) => setQuotationLines((current) => current.map((item, row) => row === index ? { ...item, amount: event.target.value } : item))} required /></label><label>Billing<select value={line.billed_by} onChange={(event) => setQuotationLines((current) => current.map((item, row) => row === index ? { ...item, billed_by: event.target.value as 'PIMASCOR' | 'BOC' } : item))}><option value="PIMASCOR">PIMASCOR</option><option value="BOC">BOC</option></select></label><button type="button" className="icon-button" aria-label="Remove quotation charge" onClick={() => setQuotationLines((current) => current.filter((_, row) => row !== index))}><X size={16} /></button></div>)}<div className="drawer-actions"><Button type="button" tone="secondary" onClick={() => setQuotationLines((current) => [...current, { section: 'ORIGIN_FREIGHT', description: '', currency: 'USD', amount: '', billed_by: 'PIMASCOR' }])}>Add USD origin charge</Button><Button type="button" tone="secondary" onClick={() => setQuotationLines((current) => [...current, { section: 'DESTINATION_CLEARANCE', description: '', currency: 'PHP', amount: '', billed_by: 'PIMASCOR' }])}>Add PHP local charge</Button></div><label>Terms and conditions<textarea name="terms_and_conditions" rows={5} minLength={10} required defaultValue="Duties and taxes are pass-through costs subject to actual assessment. Storage, demurrage, detention, and stripping charges are excluded unless agreed in writing." /></label><label>Payment terms<input name="payment_terms" defaultValue="Duties and taxes prior to BOC lodgment; service fees upon delivery." /></label><label>Quotation validity (hours)<input name="validity_hours" type="number" min="1" max="720" defaultValue="48" required /></label><div className="modal-actions"><Button tone="secondary" onClick={() => setCreating(false)}>Cancel</Button><button className="button button--secondary" type="submit">Save as Draft</button><button className="button button--primary" type="submit" data-action="submit">Submit to GM</button></div></form></Modal>
   </div>
@@ -1337,7 +1355,7 @@ function ReleasesPage({ role, notify }: { role: Role; notify: Notify }) {
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState('')
   const [fundingSources, setFundingSources] = useState<ApiFundingSource[]>([])
-  const canPay = role === 'DCS' || role === 'Admin'
+  const canPay = role === 'DCS' || role === 'Admin' || role === 'GM'
 
   const load = () => getPayments().then(setItems).catch((reason) => {
     setItems([])
@@ -1549,7 +1567,7 @@ function LiquidationPage({ role, notify, navigate }: { role: Role; notify: Notif
           {(role === 'Mich' || role === 'Admin') ? <form className="form-stack" onSubmit={addProofAndClose}><SectionHeader title="Mich review and variance closure" description="A variance stays open until the matching proof is recorded. The Liquidation status is derived automatically; users do not select it." />{selected.evidence.map((item) => <DocumentItem key={item.id} name={item.file_name} meta={`${item.kind.replaceAll('_', ' ')} • ${item.size_bytes ? formatBytes(item.size_bytes) : 'Demo metadata'}`} available={Boolean(item.size_bytes)} onOpen={() => setViewingDocument({ id: item.id, name: item.file_name, contentType: item.content_type })} />)}{Number(selected.released_total) !== Number(selected.actual_total) ? <label>{Number(selected.released_total) > Number(selected.actual_total) ? 'Requester proof of deposit / returned funds' : 'PIMASCOR proof of reimbursement'}<input type="file" accept=".pdf,.jpg,.jpeg,.png" required={!selected.evidence.some((item) => item.kind === (Number(selected.released_total) > Number(selected.actual_total) ? 'RETURN_PROOF' : 'REIMBURSEMENT_PROOF'))} onChange={(event) => setProofFile(event.target.files?.[0] ?? null)} /></label> : null}<div className="callout callout--warning"><ShieldCheck size={18} /><span>Before closing, compare the digital files with the original physical receipts, especially duties-and-taxes documents.</span></div><label className="checkbox-label"><input name="originals_received_confirmed" type="checkbox" required />I confirm that Mich received and checked the original physical supporting documents.</label><label>Optional photo of originals received<input name="originals_photo" type="file" accept=".pdf,.jpg,.jpeg,.png" /></label><label>Closure note<textarea name="note" rows={3} required placeholder="Record what Mich verified." /></label><div className="drawer-actions"><Button type="submit" icon={CheckCircle2} disabled={busy || selected.status === 'DRAFT' || selected.status === 'CLOSED'}>Close Variance and Liquidation</Button></div></form> : null}
         </div> : null}
       </Drawer>
-      <ConfidentialDocumentViewer item={viewingDocument} onClose={() => setViewingDocument(null)} />
+      <ConfidentialDocumentViewer item={viewingDocument} onClose={() => setViewingDocument(null)} canDownload={['Admin', 'GM', 'DCS', 'Mich'].includes(role)} />
     </div>
   )
 }
@@ -2291,7 +2309,7 @@ function AccountingPage() {
   </div>
 }
 
-function ClientsDocumentsPage() {
+function ClientsDocumentsPage({ role }: { role: Role }) {
   const [tab, setTab] = useState<'clients' | 'documents'>('clients')
   const [clients, setClients] = useState<ApiClient[]>([])
   const [documents, setDocuments] = useState<ApiDocument[] | null>(null)
@@ -2316,7 +2334,7 @@ function ClientsDocumentsPage() {
         </div>
       </Card> : <Card>
         <SectionHeader eyebrow="Private Backblaze B2" title="Document Library" description="Signed quotations, payment proofs, receipts, and variance evidence remain linked to their business reference and audit trail." />
-        <div className="callout callout--info"><ShieldCheck size={18} /><span>Confidential documents are view-only. The application provides no download action, streams each file through the authorized API, and instructs the browser not to store it.</span></div>
+        <div className="callout callout--info"><ShieldCheck size={18} /><span>All roles may open authorized supporting files. Downloads are restricted to Mich, GM, DCS, and Admin and each download is recorded.</span></div>
         <label className="search-field"><Search size={18} /><input value={documentSearch} onChange={(event) => setDocumentSearch(event.target.value)} aria-label="Search documents" placeholder="Search filename, client, reference, or document type" /></label>
         {documents === null ? <EmptyState icon={RefreshCw} title="Loading documents" detail="Opening the protected document index." /> : documents.length === 0 ? <EmptyState icon={FolderOpen} title="No documents uploaded" detail="Signed quotations, payment evidence, receipts, and variance proof will be indexed automatically." /> : (() => {
           const query = documentSearch.trim().toLowerCase()
@@ -2324,7 +2342,7 @@ function ClientsDocumentsPage() {
           return visible.length ? <div className="document-list">{visible.map((item) => <DocumentItem key={item.id} name={item.file_name} meta={`${item.kind.replaceAll('_', ' ')} • ${item.reference} • ${item.client_name} • ${item.size_bytes ? formatBytes(item.size_bytes) : 'Demo metadata only'}`} available={item.available} onOpen={() => setViewingDocument({ id: item.id, name: item.file_name, contentType: item.content_type })} />)}</div> : <EmptyState icon={Search} title="No matching documents" detail="Try a filename, client, shipment, payment, or transaction reference." />
         })()}
       </Card>}
-      <ConfidentialDocumentViewer item={viewingDocument} onClose={() => setViewingDocument(null)} />
+      <ConfidentialDocumentViewer item={viewingDocument} onClose={() => setViewingDocument(null)} canDownload={['Admin', 'GM', 'DCS', 'Mich'].includes(role)} />
     </div>
   )
 }
@@ -2462,7 +2480,7 @@ function AdminPage({
   notify: Notify
   onPreviewRole: (role: Role) => void
 }) {
-  const [tab, setTab] = useState<'activity' | 'controls'>('activity')
+  const [tab, setTab] = useState<'activity' | 'controls'>('controls')
   const [sources, setSources] = useState<ApiFundingSource[]>([])
   const [profiles, setProfiles] = useState<ApiTaxProfile[]>([])
   const [error, setError] = useState('')
@@ -2506,7 +2524,7 @@ function AdminPage({
     <div className="tabbed-heading" role="tablist" aria-label="Administration"><button type="button" role="tab" aria-selected="false" onClick={() => setTab('activity')}>Activity Monitor</button><button className="active" type="button" role="tab" aria-selected="true">Controls</button></div>
     {error ? <div className="callout callout--danger"><AlertCircle size={18} /><span>{error}</span></div> : null}
     <Card className="admin-role-control">
-      <SectionHeader eyebrow="Admin God mode" title="Choose a workspace to operate" description="Enter any staff workspace and perform its real workflow actions. Your authenticated Admin identity remains visible in every security and audit record." />
+      <SectionHeader eyebrow="Administrator workspace access" title="Choose a workspace to operate" description="Enter any staff workspace and perform its real workflow actions. Your authenticated Admin identity remains visible in every security and audit record." />
       <div className="role-picker">
         {documentedRoles.map((item) => {
           const RoleIcon = roleWorkspaceIcons[item]
@@ -2709,7 +2727,7 @@ function App() {
   // page from mounting and issuing requests during that redirect.
   const resolvedPage: PageId = navigation.some((group) => group.items.some((item) => item.id === page && item.roles.includes(role)))
     ? page
-    : 'dashboard'
+    : (visibleNavigation[0]?.items[0]?.id ?? 'dashboard')
 
   let content: ReactNode
   switch (resolvedPage) {
@@ -2725,7 +2743,7 @@ function App() {
     case 'marketing': content = <ExpensePage type="Marketing" role={role} notify={notify} />; break
     case 'loan-payments': content = <ExpensePage type="Loan Payment" role={role} notify={notify} />; break
     case 'accounting': content = <AccountingPage />; break
-    case 'clients-documents': content = <ClientsDocumentsPage />; break
+    case 'clients-documents': content = <ClientsDocumentsPage role={role} />; break
     case 'admin': content = <AdminPage role={role} notify={notify} onPreviewRole={previewRole} />; break
     default: content = <DashboardPage role={role} displayName={authUser.display_name} navigate={navigate} />
   }

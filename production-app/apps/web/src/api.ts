@@ -514,6 +514,13 @@ export async function getDocumentBlob(id: string, signal?: AbortSignal) {
   }
 }
 
+export async function downloadDocument(id: string) {
+  const response = await requestResponse(`/documents/${encodeURIComponent(id)}/download`, { cache: 'no-store' })
+  const disposition = response.headers.get('Content-Disposition') ?? ''
+  const fileName = /filename="?([^";]+)"?/i.exec(disposition)?.[1] ?? 'pimascor-document'
+  return { blob: await response.blob(), fileName }
+}
+
 export function getBilling() {
   return request<ApiBilling[]>('/billing')
 }

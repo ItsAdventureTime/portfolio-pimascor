@@ -25,12 +25,17 @@ def test_admin_can_queue_only_two_local_record_archives_per_ph_week(client, monk
     assert len(client.get("/api/v1/data-exports").json()) == 2
 
 
-def test_full_record_archives_are_admin_only(client):
+def test_full_record_archives_are_limited_to_authorized_finance_and_management_roles(client, monkeypatch):
+    monkeypatch.setattr("pimascor_api.routers.data_exports.get_settings", lambda: type("Settings", (), {"data_export_enabled": True})())
+    monkeypatch.setattr("pimascor_api.routers.data_exports.require_storage", lambda: None)
     csrf = sign_in(client, "requester")
     response = client.get("/api/v1/data-exports")
     assert response.status_code == 403, response.text
     response = client.post("/api/v1/data-exports", headers={"X-CSRF-Token": csrf})
     assert response.status_code == 403, response.text
+    csrf = sign_in(client, "mich")
+    response = client.post("/api/v1/data-exports", headers={"X-CSRF-Token": csrf})
+    assert response.status_code == 202, response.text
 
 
 def test_demo_explicitly_disables_complete_local_archives(client):

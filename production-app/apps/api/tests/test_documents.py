@@ -88,7 +88,13 @@ def test_document_library_lists_uploaded_file_and_uses_short_lived_inline_view(c
     assert unavailable_range.headers["content-range"] == f"bytes */{len(document_bytes)}"
 
     download = client.get(f"/api/v1/documents/{library.json()[0]['id']}/download")
-    assert download.status_code == 403
+    assert download.status_code == 200
+    assert download.headers["content-disposition"].startswith("attachment;")
+    assert download.content == document_bytes
+
+    sign_in(client, "requester")
+    denied = client.get(f"/api/v1/documents/{library.json()[0]['id']}/download")
+    assert denied.status_code == 403
 
 
 def test_document_upload_rejects_mismatched_file_contents(client, monkeypatch):

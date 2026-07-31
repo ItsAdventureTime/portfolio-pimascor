@@ -224,7 +224,7 @@ def calculate_billing_lines(db: Session, payload: BillingDraftCreate):
 @router.get("/dashboard/shipment-profitability", response_model=ShipmentProfitabilityDashboard)
 def shipment_profitability_dashboard(
     month: str | None = Query(default=None, pattern=r"^\d{4}-(0[1-9]|1[0-2])$"),
-    context: AuthContext = Depends(roles_allowed(*list(Role))),
+    context: AuthContext = Depends(roles_allowed(Role.ADMIN, Role.MICH, Role.GM, Role.DCS)),
     db: Session = Depends(get_db),
 ):
     month_value = month or date.today().strftime("%Y-%m")
