@@ -1,0 +1,20 @@
+BRIDGE / PIMASCOR CLIENT HANDOFF
+Generated: 2026-08-01
+
+This directory contains client-facing PDFs only. It intentionally excludes source code, Podman files, Caddyfiles, Bash scripts, secrets, and live production data.
+
+Files:
+- 00-bridge-pimascor-handoff-guide.pdf
+- 01-product-scope.pdf
+- 02-approved-requirements.pdf
+- 03-user-flows.pdf
+- 04-api-contract.pdf
+- 05-data-exports.pdf
+- 06-incident-reporting.pdf
+- 07-quality-assurance.pdf
+- 08-philippine-controls.pdf
+- 09-quotation-format-reference.pdf
+
+Source/IP note: the initial hosted-service handoff does not include the source code. If PIMASCOR or Bridge later requests the complete source/IP package, it requires a separate purchase and written transfer agreement.
+
+Brand reference: https://bridge-ph.com/about-us/

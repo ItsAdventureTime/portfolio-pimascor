@@ -18,7 +18,7 @@ The production runtime facts are:
 | Area | Location or service |
 | --- | --- |
 | Production data, PostgreSQL data, uploads, backup staging | `~/bridge-ph/pimascor` on the VPS |
-| Rootless Podman Quadlets | `~/.config/containers/systemd/bridge-ph/pimascor` |
+| Rootless service definitions | `~/.config/containers/systemd/bridge-ph/pimascor` |
 | Shared edge proxy | Rootless Caddy user service |
 | Public route | `delegateops.business/pimascor/` |
 | Object storage | Private Backblaze B2 bucket and production prefix configured in the VPS secrets |
@@ -27,18 +27,15 @@ The production runtime facts are:
 
 Routine users do not need the source tree, Python, Node.js, npm, PostgreSQL,
 Restic, AWS CLI, or B2 CLI on their computers. They use the HTTPS application.
-VPS operators use the production runbook and rootless `systemctl --user` and
-Podman commands.
+Authorized operators use the restricted technical runbook for host maintenance.
 
-## 2. Files for the operational handoff
+## 2. Files for the client handoff
 
 Send Bridge a read-only PDF or archive containing these documents and reference
 files. Confirm that the version/commit is recorded on the handoff cover sheet.
 
 ### Required
 
-- `docs/PRODUCTION-VPS-DEPLOYMENT.md` — production paths, roles, secrets,
-  deployment sequence, Caddy activation, backup, export, and recovery notes.
 - `docs/PRODUCT-SPEC.md` — product scope and supported capabilities.
 - `docs/REQUIREMENTS-V2.md` — approved requirements and business rules.
 - `docs/USER-FLOWS.md` — role-based workflows for acceptance testing.
@@ -49,12 +46,15 @@ files. Confirm that the version/commit is recorded on the handoff cover sheet.
 - `docs/UX-PHILIPPINE-CONTROLS.md` — language, currency, and PH-context controls.
 - `docs/reference/AAA_FORMAT_QUOTATION_revised.pdf` — quotation/contract layout
   reference used for dynamic print output.
-- `infra/caddy/pimascor-production.handlers.Caddyfile` — production-only Caddy
-  handlers, if Bridge will maintain the existing Caddy instance.
 
-The demo runbook and demo Quadlets are not production operating instructions.
-Do not include `docs/DEMO-VPS-DEPLOYMENT.md` in the production operator packet
-unless it is clearly labelled as a separate non-production environment.
+The client packet intentionally excludes Podman Quadlets, Caddyfiles, Bash
+scripts, deployment scripts, and source code. Those are operator/developer
+materials, not user-facing handoff documents. The restricted technical
+runbook, `docs/PRODUCTION-VPS-DEPLOYMENT.md`, remains with the VPS operator and
+can be disclosed later under an agreed support scope.
+
+The demo runbook and demo Quadlets are not production operating instructions and
+must not be included in this client packet.
 
 ## 3. Access and ownership transfer
 
@@ -152,9 +152,13 @@ review.
 
 ## 8. Source and intellectual-property transfer
 
-The source code is intentionally excluded from the operational packet because
-the service is hosted on the existing VPS. If Bridge's contract transfers the
-source/IP, perform a separate recorded transfer:
+The initial client handoff does not include source code. The hosted service can
+be used without a local source checkout, compiler, or build environment. If
+PIMASCOR or Bridge later wants the complete source/IP package, it requires a
+separate purchase and written transfer agreement with you; it is not included
+automatically in this operational handoff.
+
+If that separate source/IP purchase is approved, perform a recorded transfer:
 
 - grant Bridge access to the private GitHub repository or deliver an encrypted
   repository archive;

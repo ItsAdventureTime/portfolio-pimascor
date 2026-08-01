@@ -1,0 +1,18 @@
+BRIDGE / PIMASCOR PDF BUILD NOTES
+
+Generated: 2026-08-01
+Python: 3.14.6
+ReportLab: 5.0.0
+pypdf: 6.13.3
+pdfplumber: 0.11.9
+Rendering QA: pypdfium2 5.12.1
+
+The PDFs were generated from the reviewed Markdown documents with an A4
+layout, Bridge palette sampled from https://bridge-ph.com/about-us/, branded
+cover pages, consistent headers/footers, readable tables, page numbering, and
+rendered visual QA. The revised quotation PDF is preserved as the supplied
+reference artifact rather than re-typeset.
+
+Client packet scope intentionally excludes source code, infrastructure files,
+Podman Quadlets, Caddyfiles, Bash scripts, credentials, and live production
+records.
