@@ -3,6 +3,11 @@
 This is the isolated production track. It does not use the demo runtime, demo
 database, demo object prefix, demo containers, or demo web root.
 
+For a client/operator transfer of the hosted service, use
+`docs/HANDOFF-BRIDGE-PIMASCOR.md`. This deployment runbook is the technical
+reference behind that handoff; it is not a substitute for the access-transfer,
+acceptance, privacy, or support records.
+
 Runtime paths:
 
 - `~/bridge-ph/pimascor`: production source, web assets, PostgreSQL data,
