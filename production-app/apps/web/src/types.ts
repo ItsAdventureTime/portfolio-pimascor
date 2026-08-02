@@ -63,6 +63,20 @@ export interface ApiUser {
   role: 'ADMIN' | 'REQUESTER' | 'GM' | 'DCS' | 'MICH'
 }
 
+export interface ApiReleaseChange {
+  kind: 'new' | 'improved' | 'changed' | 'removed'
+  title: string
+  description: string
+}
+
+export interface ApiReleaseUpdate {
+  id: string
+  released_on: string
+  title: string
+  summary: string
+  changes: ApiReleaseChange[]
+}
+
 export interface ApiClient {
   id: string
   code: string

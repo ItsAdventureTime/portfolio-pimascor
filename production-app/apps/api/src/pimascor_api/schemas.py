@@ -1,6 +1,8 @@
 from datetime import date, datetime
 from decimal import Decimal
 
+from typing import Literal
+
 from pydantic import BaseModel, ConfigDict, EmailStr, Field, field_validator, model_validator
 
 from .models import (
@@ -82,6 +84,20 @@ class PasswordResetCompleteRequest(BaseModel):
 
 class PasswordResetCompleteResponse(BaseModel):
     message: str
+
+
+class ReleaseChangeResponse(BaseModel):
+    kind: Literal["new", "improved", "changed", "removed"]
+    title: str
+    description: str
+
+
+class ReleaseUpdateResponse(BaseModel):
+    id: str
+    released_on: date
+    title: str
+    summary: str
+    changes: list[ReleaseChangeResponse]
 
 
 class MeResponse(ApiModel):

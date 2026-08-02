@@ -21,6 +21,7 @@ from ..schemas import (
     PasswordResetCompleteResponse,
     PasswordResetStartRequest,
     PasswordResetStartResponse,
+    ReleaseUpdateResponse,
     SessionResponse,
 )
 from ..security import (
@@ -33,6 +34,7 @@ from ..security import (
 )
 from ..services.audit import record_audit
 from ..services.email import get_email_provider
+from ..services.release_updates import current_release_update
 
 
 router = APIRouter(prefix="/auth", tags=["authentication"])
@@ -321,6 +323,38 @@ def password_reset_complete(
     return PasswordResetCompleteResponse(
         message="Your password has been reset. Sign in again with the new password."
     )
+
+
+@router.get("/release-updates", response_model=ReleaseUpdateResponse | None)
+def release_updates(
+    context: AuthContext = Depends(get_auth_context),
+) -> ReleaseUpdateResponse | None:
+    current = current_release_update()
+    return current if context.user.last_seen_release_id != current.id else None
+
+
+@router.post("/release-updates/ack", status_code=status.HTTP_204_NO_CONTENT)
+def acknowledge_release_update(
+    request: Request,
+    response: Response,
+    context: AuthContext = Depends(require_csrf),
+    db: Session = Depends(get_db),
+) -> Response:
+    current = current_release_update()
+    if context.user.last_seen_release_id != current.id:
+        context.user.last_seen_release_id = current.id
+        record_audit(
+            db,
+            actor_user_id=context.user.id,
+            action="AUTH_RELEASE_UPDATE_ACKNOWLEDGED",
+            entity_type="release_update",
+            entity_id=current.id,
+            correlation_id=getattr(request.state, "correlation_id", None),
+            reason="User viewed the latest product update",
+        )
+        db.commit()
+    response.status_code = status.HTTP_204_NO_CONTENT
+    return response
 
 
 @router.post("/activation/start", response_model=PasswordStartResponse)

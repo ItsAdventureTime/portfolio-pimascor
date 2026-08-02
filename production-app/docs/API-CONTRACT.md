@@ -23,12 +23,22 @@ POST /auth/logout
 GET  /auth/me
 GET  /auth/sessions
 DELETE /auth/sessions/{session_id}
+GET  /auth/release-updates
+POST /auth/release-updates/ack
 ```
 
 The password-start response exposes a development code only outside hosted production
 mode. Hosted delivery uses Resend. A challenge lasts five minutes, works once, and can
 be completed by entering the six-digit code or opening the email link. `PUBLIC_APP_URL`
 is a trusted deployment setting; the API never builds this link from the request Host.
+
+`GET /auth/release-updates` returns the latest user-facing release summary only
+when the authenticated user has not acknowledged its release ID; otherwise it
+returns `null`. The response includes the release date, plain-language summary,
+and changes labelled New, Improved, Updated, or Removed. `POST
+/auth/release-updates/ack` records acknowledgement and is CSRF-protected. The
+announcement is intentionally separate from technical logs and does not expose
+implementation details.
 
 Password recovery accepts a username or email and always returns the same generic
 message, whether the account exists, is disabled, is pending activation, or is

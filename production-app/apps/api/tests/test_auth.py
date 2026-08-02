@@ -166,3 +166,28 @@ def test_password_reset_token_is_single_use_and_wrong_tokens_are_generic(client)
         },
     )
     assert reused.status_code == 400
+
+
+def test_release_update_is_shown_once_per_user_after_acknowledgement(client):
+    csrf = sign_in(client)
+    first = client.get("/api/v1/auth/release-updates")
+    assert first.status_code == 200, first.text
+    body = first.json()
+    assert body["id"] == "2026-08-03-workspace-refresh"
+    assert body["released_on"] == "2026-08-03"
+    assert any(change["kind"] == "new" for change in body["changes"])
+
+    acknowledged = client.post(
+        "/api/v1/auth/release-updates/ack",
+        headers={"X-CSRF-Token": csrf},
+    )
+    assert acknowledged.status_code == 204, acknowledged.text
+    second = client.get("/api/v1/auth/release-updates")
+    assert second.status_code == 200
+    assert second.json() is None
+
+
+def test_release_update_ack_requires_csrf(client):
+    sign_in(client)
+    response = client.post("/api/v1/auth/release-updates/ack")
+    assert response.status_code == 403

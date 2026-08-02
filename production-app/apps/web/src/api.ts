@@ -1,4 +1,4 @@
-import type { ApiActivityCategory, ApiAdminActivity, ApiBilling, ApiBudgetRequest, ApiClient, ApiClientPayment, ApiCreditMemo, ApiDataExport, ApiDocument, ApiExpenseRequest, ApiExpenseType, ApiFundingSource, ApiIncident, ApiIncidentReport, ApiLiquidation, ApiPaymentQueueItem, ApiQuotation, ApiShipmentProfitability, ApiTaxProfile, ApiUser } from './types'
+import type { ApiActivityCategory, ApiAdminActivity, ApiBilling, ApiBudgetRequest, ApiClient, ApiClientPayment, ApiCreditMemo, ApiDataExport, ApiDocument, ApiExpenseRequest, ApiExpenseType, ApiFundingSource, ApiIncident, ApiIncidentReport, ApiLiquidation, ApiPaymentQueueItem, ApiQuotation, ApiReleaseUpdate, ApiShipmentProfitability, ApiTaxProfile, ApiUser } from './types'
 
 const API_BASE = import.meta.env.VITE_API_URL ?? 'http://127.0.0.1:8000/api/v1'
 const CSRF_COOKIE_NAME = import.meta.env.VITE_CSRF_COOKIE_NAME ?? 'pimascor_csrf'
@@ -209,6 +209,14 @@ export async function verifyEmailCode(challengeId: string, code: string) {
 
 export function getMe() {
   return request<ApiUser>('/auth/me')
+}
+
+export function getReleaseUpdate() {
+  return request<ApiReleaseUpdate | null>('/auth/release-updates')
+}
+
+export function acknowledgeReleaseUpdate() {
+  return request<void>('/auth/release-updates/ack', { method: 'POST' })
 }
 
 export async function signOut() {

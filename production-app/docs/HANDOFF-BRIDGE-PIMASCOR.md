@@ -118,6 +118,8 @@ the account used. Do not record passwords or full document contents.
 - Resend operational and technical incident notifications reach the agreed
   recipients without exposing confidential payloads.
 - Desktop and mobile acceptance is completed in Chromium, WebKit, and Gecko.
+- A dated **What's new in PIMASCOR** announcement appears once for a user after
+  a release, records acknowledgement, and does not repeat on the next login.
 
 Acceptance is incomplete until Bridge signs the operational checklist and names
 the person responsible for incident response and backup restoration.

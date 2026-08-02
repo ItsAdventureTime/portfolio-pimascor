@@ -165,6 +165,7 @@ class User(Base):
     role: Mapped[Role] = mapped_column(Enum(Role), default=Role.REQUESTER)
     status: Mapped[UserStatus] = mapped_column(Enum(UserStatus), default=UserStatus.ACTIVE)
     email_verified_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    last_seen_release_id: Mapped[str | None] = mapped_column(String(80), index=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now)
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now, onupdate=utc_now)
 

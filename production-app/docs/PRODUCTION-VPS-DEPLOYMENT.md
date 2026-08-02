@@ -28,6 +28,12 @@ Chrome on Android, and compatible desktop Chromium browsers. See
 does not change authentication, role permissions, session expiry, or document
 privacy.
 
+After a user-facing release, the latest plain-language update appears once per
+user after authentication. The acknowledgement is stored with the production
+user record, so the update does not repeat on every login or on another device.
+Maintain the release entry and date in `docs/RELEASE-NOTES.md` together with
+the matching application release record.
+
 ## Production roles
 
 The production policy from Section 1 of the owner correction document is:

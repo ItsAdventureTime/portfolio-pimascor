@@ -58,8 +58,8 @@ import {
   toneForStatus,
 } from './data'
 import type { BudgetRequest, PageId, Role, Tone } from './types'
-import type { ApiActivityCategory, ApiAdminActivity, ApiBilling, ApiBudgetRequest, ApiClient, ApiClientPayment, ApiCreditMemo, ApiDataExport, ApiDocument, ApiExpenseRequest, ApiExpenseType, ApiFundingSource, ApiLiquidation, ApiPaymentQueueItem, ApiQuotation, ApiQuotationLine, ApiShipmentProfitability, ApiTaxProfile, ApiUser } from './types'
-import { ApiError, closeLiquidation, completeActivation, completePasswordReset, createAdditionalBudget, createBillingDraft, createBillingReplacement, createBudgetRequest, createClientPayment, createCreditMemo, createExpenseRequest, createFundingSource, createQuotation, createTaxProfile, decideBilling, decideBudgetRequest, decideCreditMemo, decideExpenseRequest, decideQuotation, downloadDataExport, downloadDocument, emitApiIncident, finalizeBilling, getAdminActivity, getBilling, getBudgetApprovalQueue, getBudgetRequests, getBudgetReviewQueue, getClientPayments, getClients, getCreditMemos, getDataExports, getDocumentBlob, getDocuments, getExpenseApprovalQueue, getExpenseRequests, getFundingSources, getLiquidations, getMe, getPayments, getQuotations, getReceivables, getShipmentProfitability, getTaxProfiles, overrideBudgetAsDcs, overrideQuotationAsDcs, recordPayment, recordQuotationAcceptance, requestDataExport, returnBudgetFromReview, reviewBudgetRequest, saveLiquidation, signOut, startActivation, startPassword, startPasswordReset, submitBilling, submitBudgetRequest, submitExpenseRequest, submitLiquidation, submitQuotation, updateBillingDraft, updateBudgetRequest, updateFundingSource, updatePayment, uploadLiquidationEvidence, uploadPaymentProof, verifyEmailCode, voidBilling } from './api'
+import type { ApiActivityCategory, ApiAdminActivity, ApiBilling, ApiBudgetRequest, ApiClient, ApiClientPayment, ApiCreditMemo, ApiDataExport, ApiDocument, ApiExpenseRequest, ApiExpenseType, ApiFundingSource, ApiLiquidation, ApiPaymentQueueItem, ApiQuotation, ApiQuotationLine, ApiReleaseUpdate, ApiShipmentProfitability, ApiTaxProfile, ApiUser } from './types'
+import { ApiError, acknowledgeReleaseUpdate, closeLiquidation, completeActivation, completePasswordReset, createAdditionalBudget, createBillingDraft, createBillingReplacement, createBudgetRequest, createClientPayment, createCreditMemo, createExpenseRequest, createFundingSource, createQuotation, createTaxProfile, decideBilling, decideBudgetRequest, decideCreditMemo, decideExpenseRequest, decideQuotation, downloadDataExport, downloadDocument, emitApiIncident, finalizeBilling, getAdminActivity, getBilling, getBudgetApprovalQueue, getBudgetRequests, getBudgetReviewQueue, getClientPayments, getClients, getCreditMemos, getDataExports, getDocumentBlob, getDocuments, getExpenseApprovalQueue, getExpenseRequests, getFundingSources, getLiquidations, getMe, getPayments, getQuotations, getReceivables, getReleaseUpdate, getShipmentProfitability, getTaxProfiles, overrideBudgetAsDcs, overrideQuotationAsDcs, recordPayment, recordQuotationAcceptance, requestDataExport, returnBudgetFromReview, reviewBudgetRequest, saveLiquidation, signOut, startActivation, startPassword, startPasswordReset, submitBilling, submitBudgetRequest, submitExpenseRequest, submitLiquidation, submitQuotation, updateBillingDraft, updateBudgetRequest, updateFundingSource, updatePayment, uploadLiquidationEvidence, uploadPaymentProof, verifyEmailCode, voidBilling } from './api'
 import { IncidentCenter } from './IncidentCenter'
 import { ActionMessageDialog, type ActionMessage } from './ActionMessageDialog'
 
@@ -494,6 +494,57 @@ type PwaInstallPromptEvent = Event & {
 
 const PWA_INSTALL_DISMISSAL_KEY = 'pimascor:pwa-install-dismissed-until'
 const PWA_INSTALL_DISMISSAL_MS = 14 * 24 * 60 * 60 * 1000
+
+function ReleaseUpdateModal({ update, open, onAcknowledged }: { update: ApiReleaseUpdate | null; open: boolean; onAcknowledged: () => void }) {
+  const [busy, setBusy] = useState(false)
+  const [error, setError] = useState('')
+
+  if (!update) return null
+
+  async function acknowledge() {
+    if (busy) return
+    setBusy(true)
+    setError('')
+    try {
+      await acknowledgeReleaseUpdate()
+      onAcknowledged()
+    } catch {
+      setError('We could not save this update as read yet. Please try again.')
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  const kindLabel: Record<ApiReleaseUpdate['changes'][number]['kind'], string> = {
+    new: 'New',
+    improved: 'Improved',
+    changed: 'Updated',
+    removed: 'Removed',
+  }
+  const releasedOn = new Date(`${update.released_on}T00:00:00`).toLocaleDateString('en-PH', {
+    month: 'long',
+    day: 'numeric',
+    year: 'numeric',
+  })
+
+  return <Modal title="What's new in PIMASCOR" open={open} onClose={() => void acknowledge()}>
+    <div className="release-update">
+      <div className="release-update__heading">
+        <p className="eyebrow">Released {releasedOn}</p>
+        <h3>{update.title}</h3>
+        <p>{update.summary}</p>
+      </div>
+      <div className="release-update__list" role="list" aria-label="Latest PIMASCOR updates">
+        {update.changes.map((change) => <article className="release-update__item" key={`${change.kind}-${change.title}`} role="listitem">
+          <span className={`release-update__tag release-update__tag--${change.kind}`}>{kindLabel[change.kind]}</span>
+          <div><strong>{change.title}</strong><p>{change.description}</p></div>
+        </article>)}
+      </div>
+      {error ? <div className="callout callout--danger" role="alert"><AlertCircle size={18} /><span>{error}</span></div> : null}
+      <Button type="button" onClick={() => void acknowledge()} disabled={busy}>{busy ? 'Saving…' : 'Continue to workspace'}</Button>
+    </div>
+  </Modal>
+}
 
 function PwaInstallPrompt() {
   const [deferredPrompt, setDeferredPrompt] = useState<PwaInstallPromptEvent | null>(null)
@@ -2907,6 +2958,8 @@ function App() {
   const [notificationsOpen, setNotificationsOpen] = useState(false)
   const [notificationsRead, setNotificationsRead] = useState(false)
   const [actionMessage, setActionMessage] = useState<ActionMessage>(null)
+  const [releaseUpdate, setReleaseUpdate] = useState<ApiReleaseUpdate | null>(null)
+  const [releaseUpdateOpen, setReleaseUpdateOpen] = useState(false)
 
   useEffect(() => {
     const sync = () => setPage(pageFromHash())
@@ -2922,6 +2975,25 @@ function App() {
       })
       .catch(() => setAuthUser(null))
   }, [])
+
+  useEffect(() => {
+    if (!authUser) {
+      setReleaseUpdate(null)
+      setReleaseUpdateOpen(false)
+      return
+    }
+    let cancelled = false
+    getReleaseUpdate()
+      .then((update) => {
+        if (cancelled || !update) return
+        setReleaseUpdate(update)
+        setReleaseUpdateOpen(true)
+      })
+      .catch(() => undefined)
+    return () => {
+      cancelled = true
+    }
+  }, [authUser])
 
   useEffect(() => {
     if (!authUser) return
@@ -3005,6 +3077,14 @@ function App() {
       <ActionMessageDialog
         notice={actionMessage}
         onDismiss={dismissActionMessage}
+      />
+      <ReleaseUpdateModal
+        update={releaseUpdate}
+        open={releaseUpdateOpen}
+        onAcknowledged={() => {
+          setReleaseUpdateOpen(false)
+          setReleaseUpdate(null)
+        }}
       />
       <aside className={`sidebar ${mobileNav ? 'sidebar--mobile-open' : ''}`}>
         <div className="sidebar__brand"><img src={brandIconUrl} alt="" /><div><strong>PIMASCOR</strong><span>Operational Control</span></div><button className="icon-button sidebar__mobile-close" onClick={() => setMobileNav(false)} aria-label="Close navigation"><X size={20} /></button></div>

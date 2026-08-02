@@ -1,0 +1,40 @@
+# PIMASCOR user-facing release notes
+
+This is the user-facing record of production changes. It explains what users
+can do now and how the change helps their work; it intentionally leaves out
+implementation details.
+
+## 2026-08-03 — A smoother way to stay on top of every shipment
+
+PIMASCOR is easier to keep close, easier to recover, and clearer to use when
+work moves from one team to the next.
+
+- **New — Install PIMASCOR as an app.** Add it to a phone or computer Home
+  Screen for one-tap access and a focused workspace.
+- **New — Reset your password yourself.** Use **Forgot password?** to receive
+  a secure email link and get back to work without waiting for an
+  administrator.
+- **Improved — Move through work with more confidence.** Important workflow
+  decisions, document access, and security messages are presented more clearly
+  so the next step is easier to find.
+
+Each production release has a date and release ID. The latest update appears
+once after a user signs in following that release. Selecting **Continue to
+workspace** records that the user has seen it; the same update does not return
+on later logins.
+
+## Release-writing standard
+
+Future entries should:
+
+- lead with the user benefit and workflow impact;
+- use plain, conversational language and short paragraphs;
+- label items **New**, **Improved**, **Updated**, or **Removed**;
+- include the release date and avoid internal ticket, code, infrastructure,
+  or deployment terminology;
+- describe any action the user needs to take, without making the announcement
+  a technical manual.
+
+The in-app announcement uses the same release entry and is presented as an
+accessible, keyboard-friendly dialog. It does not interrupt the sign-in form;
+it appears after authentication and can be acknowledged before continuing.
