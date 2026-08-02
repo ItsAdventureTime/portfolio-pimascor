@@ -93,3 +93,76 @@ def test_activation_challenge_cannot_be_used_as_normal_login_code(client):
         json={"challenge_id": started.json()["challenge_id"], "code": started.json()["development_code"]},
     )
     assert response.status_code == 400
+
+
+def test_password_reset_response_does_not_disclose_account_existence(client):
+    known = client.post("/api/v1/auth/password-reset/start", json={"identifier": "admin"})
+    unknown = client.post("/api/v1/auth/password-reset/start", json={"identifier": "missing@example.com"})
+    assert known.status_code == unknown.status_code == 200
+    assert known.json()["message"] == unknown.json()["message"]
+    assert known.json()["expires_in_seconds"] == 900
+    assert known.json()["development_code"]
+    assert unknown.json()["development_code"] is None
+
+
+def test_password_reset_consumes_token_and_revokes_existing_sessions(client):
+    sign_in(client)
+    started = client.post("/api/v1/auth/password-reset/start", json={"identifier": "admin"})
+    assert started.status_code == 200, started.text
+    body = started.json()
+    completed = client.post(
+        "/api/v1/auth/password-reset/complete",
+        json={
+            "challenge_id": body["development_challenge_id"],
+            "token": body["development_code"],
+            "password": "New-Recovery-Password-2026!",
+            "confirmation": "New-Recovery-Password-2026!",
+        },
+    )
+    assert completed.status_code == 200, completed.text
+    assert client.get("/api/v1/auth/me").status_code == 401
+
+    next_start = client.post(
+        "/api/v1/auth/password/start",
+        json={"username": "admin", "password": "New-Recovery-Password-2026!"},
+    )
+    assert next_start.status_code == 200, next_start.text
+
+
+def test_password_reset_token_is_single_use_and_wrong_tokens_are_generic(client):
+    started = client.post("/api/v1/auth/password-reset/start", json={"identifier": "admin"})
+    body = started.json()
+    wrong = client.post(
+        "/api/v1/auth/password-reset/complete",
+        json={
+            "challenge_id": body["development_challenge_id"],
+            "token": "x" * 43,
+            "password": "New-Recovery-Password-2026!",
+            "confirmation": "New-Recovery-Password-2026!",
+        },
+    )
+    assert wrong.status_code == 400
+    wrong_body = wrong.json()
+    assert (wrong_body.get("detail") or wrong_body["error"]["message"]) == (
+        "This password reset link is no longer valid."
+    )
+    valid = client.post(
+        "/api/v1/auth/password-reset/complete",
+        json={
+            "challenge_id": body["development_challenge_id"],
+            "token": body["development_code"],
+            "password": "New-Recovery-Password-2026!",
+            "confirmation": "New-Recovery-Password-2026!",
+        },
+    )
+    assert valid.status_code == 200
+    reused = client.post(
+        "/api/v1/auth/password-reset/complete",
+        json={
+            "challenge_id": body["development_challenge_id"],
+            "token": body["development_code"],
+            "password": "Another-Recovery-Password-2026!",
+            "confirmation": "Another-Recovery-Password-2026!",
+        },
+    )
+    assert reused.status_code == 400

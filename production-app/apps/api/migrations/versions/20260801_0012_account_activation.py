@@ -20,7 +20,11 @@ def upgrade() -> None:
         "users",
         sa.Column("must_set_password", sa.Boolean(), nullable=False, server_default=sa.false()),
     )
-    op.alter_column("users", "must_set_password", server_default=None)
+    # SQLite cannot execute ALTER COLUMN ... DROP DEFAULT. Its metadata
+    # default is harmless for tests and fresh local databases; PostgreSQL
+    # removes the migration-only default after backfilling the column.
+    if op.get_bind().dialect.name != "sqlite":
+        op.alter_column("users", "must_set_password", server_default=None)
 
 
 def downgrade() -> None:

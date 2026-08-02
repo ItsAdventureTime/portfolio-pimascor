@@ -12,10 +12,13 @@ disabled rather than deleted.
 
 ### auth_challenges and sessions
 
-Short-lived hashed email-code challenges and opaque server sessions. Login and
-account-activation codes are single-use and expire after the configured TTL.
-Session values are never stored in clear text. Password change, account disable,
-and demo reset revoke sessions.
+Short-lived hashed email-code challenges, password-reset request ledgers, and
+opaque server sessions. Login and account-activation codes are single-use and
+expire after the configured TTL. Reset rows retain only hashed identifier/source
+values, a hashed random token, expiry, attempt count, and consumption time; rows
+also exist for unknown identifiers so the response cannot disclose account
+existence. Session values are never stored in clear text. Password reset,
+password change, account disable, and demo reset revoke sessions.
 
 ### audit_events
 

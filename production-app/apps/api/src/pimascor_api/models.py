@@ -199,6 +199,28 @@ class EmailChallenge(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now)
 
 
+class PasswordResetRequest(Base):
+    """One-time reset link request, including non-matching requests for throttling.
+
+    Identifier and source values are hashed so the rate-limit ledger does not
+    retain raw email addresses or client IP addresses. Unknown accounts still
+    create a ledger row, keeping the response shape independent of account
+    existence.
+    """
+
+    __tablename__ = "password_reset_requests"
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=uuid_string)
+    user_id: Mapped[str | None] = mapped_column(ForeignKey("users.id"), index=True)
+    identifier_hash: Mapped[str] = mapped_column(String(64), index=True)
+    source_hash: Mapped[str] = mapped_column(String(64), index=True)
+    token_hash: Mapped[str | None] = mapped_column(String(64), unique=True)
+    expires_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), index=True)
+    attempts: Mapped[int] = mapped_column(Integer, default=0)
+    used_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now)
+
+
 class Client(Base):
     __tablename__ = "clients"
 

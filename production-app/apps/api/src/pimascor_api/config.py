@@ -23,6 +23,10 @@ class Settings(BaseSettings):
     session_cookie_secure: bool = False
     session_ttl_hours: int = 12
     email_code_ttl_minutes: int = 5
+    password_reset_ttl_minutes: int = 15
+    password_reset_window_minutes: int = 60
+    password_reset_identifier_limit: int = 3
+    password_reset_source_limit: int = 20
     email_provider: Literal["development", "resend", "azure"] = "development"
     resend_api_key_file: Path | None = None
     email_from_address: str = "PIMASCOR <no-reply@example.com>"

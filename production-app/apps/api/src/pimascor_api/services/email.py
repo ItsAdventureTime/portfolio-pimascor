@@ -145,6 +145,59 @@ class EmailProvider(ABC):
             idempotency_key=f"account-activation/{challenge_id}",
         )
 
+    def send_password_reset(
+        self,
+        destination: str,
+        display_name: str,
+        challenge_id: str,
+        token: str,
+        public_app_url: str,
+        expires_in_minutes: int,
+    ) -> None:
+        base_url = public_app_url.rstrip("/") + "/"
+        fragment = urlencode({"challenge": challenge_id, "token": token})
+        reset_url = f"{base_url}#password-reset?{fragment}"
+        safe_name = escape(display_name)
+        safe_url = escape(reset_url, quote=True)
+        text = (
+            f"Hi {display_name},\n\n"
+            "We received a request to choose a new PIMASCOR password. "
+            "Use the secure link below to continue.\n\n"
+            f"Reset your password: {reset_url}\n\n"
+            f"This link works once and expires in {expires_in_minutes} minutes. "
+            "If you did not request this, you can ignore this email."
+        )
+        html = f"""<!doctype html>
+<html lang="en">
+<body style="margin:0;padding:0;background:#f4f6fb;color:#172033;font-family:Arial,'Helvetica Neue',sans-serif;">
+  <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="background:#f4f6fb;">
+    <tr><td align="center" style="padding:28px 14px;">
+      <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="max-width:560px;background:#ffffff;border:1px solid #dfe4ec;border-radius:18px;overflow:hidden;">
+        <tr><td style="padding:24px 28px;background:#14213d;color:#ffffff;">
+          <div style="font-size:12px;font-weight:700;letter-spacing:1.5px;color:#e9d887;">PIMASCOR</div>
+          <div style="margin-top:7px;font-size:23px;font-weight:700;line-height:1.25;">Reset your password</div>
+        </td></tr>
+        <tr><td style="padding:28px;">
+          <p style="margin:0 0 14px;font-size:16px;line-height:1.55;">Hi {safe_name},</p>
+          <p style="margin:0 0 22px;font-size:16px;line-height:1.55;color:#4d5a70;">Use the button below to choose a new password for your PIMASCOR account.</p>
+          <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0"><tr><td align="center" style="padding:4px 0 20px;">
+            <a href="{safe_url}" style="display:inline-block;padding:14px 22px;background:#1c2a4a;color:#ffffff;text-decoration:none;font-size:16px;font-weight:700;border-radius:10px;">Choose a new password</a>
+          </td></tr></table>
+          <p style="margin:0;font-size:14px;line-height:1.5;color:#647087;">This link works once and expires in {expires_in_minutes} minutes. If you did not request this, you can ignore this email.</p>
+        </td></tr>
+      </table>
+    </td></tr>
+  </table>
+</body>
+</html>"""
+        self.send_message(
+            destination,
+            "Reset your PIMASCOR password",
+            text,
+            html=html,
+            idempotency_key=f"password-reset/{challenge_id}",
+        )
+
 
 class DevelopmentEmailProvider(EmailProvider):
     def send_message(
@@ -156,12 +209,13 @@ class DevelopmentEmailProvider(EmailProvider):
         html: str | None = None,
         idempotency_key: str | None = None,
     ) -> None:
+        safe_text = "[password reset email content redacted]" if (idempotency_key or "").startswith("password-reset/") else text
         logger.warning(
             "Development email to %s | subject=%s | idempotency=%s | %s",
             destination,
             subject,
             idempotency_key or "none",
-            text,
+            safe_text,
         )
 
 

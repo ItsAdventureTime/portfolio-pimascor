@@ -182,7 +182,11 @@ The distinct Bridge Accounting role is deferred until its exact duties are appro
   Liquidation receipts, physical-original handover photos, and variance proof.
   Authorized staff can search by filename, document type, client/payee, or
   business reference. Requesters cannot open DCS payment evidence.
-- Hosted identity management remains operator-controlled CLI for this revision. Self-service invitation, password recovery, and passkey/Pocket ID integration are future work.
+- Hosted identity provisioning remains operator-controlled through the production
+  account manifest. First-login activation and self-service password recovery are
+  implemented; passkey/Pocket ID integration remains future work. Recovery uses a
+  generic response, a single-use expiring fragment link, persistent identifier/source
+  throttling, five-attempt protection, and session revocation after success.
 - Demo accounts and business records are synthetic. The daily 03:00 Asia/Manila reset restores the approved baseline and revokes sessions.
 
 ## UX and accessibility acceptance rules
@@ -230,7 +234,9 @@ The distinct Bridge Accounting role is deferred until its exact duties are appro
 - Automated QuickBooks transfer, native App Store/Play Store applications, and
   an on-premises NAS mirror are follow-up deployment projects. The current
   deliverable is a responsive installable PWA with private object storage.
-- Client/user administration and password recovery remain incomplete.
+- Client/user administration remains an operator-controlled production workflow;
+  password recovery is implemented for activated users. Pending accounts continue
+  through first-login activation.
 - The current PostgreSQL audit table is suitable for the isolated demo. Production requires centralized tamper-resistant retention, alerting, and a documented review cadence.
 - Search suggestions are navigational demonstration data rather than a complete indexed global search.
 

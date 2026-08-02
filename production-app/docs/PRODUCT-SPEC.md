@@ -224,7 +224,8 @@ The demo contains realistic but fictional data. Users may create and modify make
 - Bridge Accounting role and posting/tax rules.
 - Approved malware scanning and document-retention enforcement.
 - Archival PDF requirements.
-- Complete identity/user lifecycle and password recovery.
+- Complete identity/user lifecycle and self-service password recovery for activated
+  users, with first-login activation retained for pending accounts.
 - Persistent notification and global search services.
 - Centralized tamper-resistant audit retention/alerting, rate limits, restore rehearsal, accessibility/privacy review, and owner acceptance.
 

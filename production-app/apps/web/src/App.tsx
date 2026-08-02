@@ -59,7 +59,7 @@ import {
 } from './data'
 import type { BudgetRequest, PageId, Role, Tone } from './types'
 import type { ApiActivityCategory, ApiAdminActivity, ApiBilling, ApiBudgetRequest, ApiClient, ApiClientPayment, ApiCreditMemo, ApiDataExport, ApiDocument, ApiExpenseRequest, ApiExpenseType, ApiFundingSource, ApiLiquidation, ApiPaymentQueueItem, ApiQuotation, ApiQuotationLine, ApiShipmentProfitability, ApiTaxProfile, ApiUser } from './types'
-import { ApiError, closeLiquidation, completeActivation, createAdditionalBudget, createBillingDraft, createBillingReplacement, createBudgetRequest, createClientPayment, createCreditMemo, createExpenseRequest, createFundingSource, createQuotation, createTaxProfile, decideBilling, decideBudgetRequest, decideCreditMemo, decideExpenseRequest, decideQuotation, downloadDataExport, downloadDocument, emitApiIncident, finalizeBilling, getAdminActivity, getBilling, getBudgetApprovalQueue, getBudgetRequests, getBudgetReviewQueue, getClientPayments, getClients, getCreditMemos, getDataExports, getDocumentBlob, getDocuments, getExpenseApprovalQueue, getExpenseRequests, getFundingSources, getLiquidations, getMe, getPayments, getQuotations, getReceivables, getShipmentProfitability, getTaxProfiles, overrideBudgetAsDcs, overrideQuotationAsDcs, recordPayment, recordQuotationAcceptance, requestDataExport, returnBudgetFromReview, reviewBudgetRequest, saveLiquidation, signOut, startActivation, startPassword, submitBilling, submitBudgetRequest, submitExpenseRequest, submitLiquidation, submitQuotation, updateBillingDraft, updateBudgetRequest, updateFundingSource, updatePayment, uploadLiquidationEvidence, uploadPaymentProof, verifyEmailCode, voidBilling } from './api'
+import { ApiError, closeLiquidation, completeActivation, completePasswordReset, createAdditionalBudget, createBillingDraft, createBillingReplacement, createBudgetRequest, createClientPayment, createCreditMemo, createExpenseRequest, createFundingSource, createQuotation, createTaxProfile, decideBilling, decideBudgetRequest, decideCreditMemo, decideExpenseRequest, decideQuotation, downloadDataExport, downloadDocument, emitApiIncident, finalizeBilling, getAdminActivity, getBilling, getBudgetApprovalQueue, getBudgetRequests, getBudgetReviewQueue, getClientPayments, getClients, getCreditMemos, getDataExports, getDocumentBlob, getDocuments, getExpenseApprovalQueue, getExpenseRequests, getFundingSources, getLiquidations, getMe, getPayments, getQuotations, getReceivables, getShipmentProfitability, getTaxProfiles, overrideBudgetAsDcs, overrideQuotationAsDcs, recordPayment, recordQuotationAcceptance, requestDataExport, returnBudgetFromReview, reviewBudgetRequest, saveLiquidation, signOut, startActivation, startPassword, startPasswordReset, submitBilling, submitBudgetRequest, submitExpenseRequest, submitLiquidation, submitQuotation, updateBillingDraft, updateBudgetRequest, updateFundingSource, updatePayment, uploadLiquidationEvidence, uploadPaymentProof, verifyEmailCode, voidBilling } from './api'
 import { IncidentCenter } from './IncidentCenter'
 import { ActionMessageDialog, type ActionMessage } from './ActionMessageDialog'
 
@@ -2554,23 +2554,41 @@ function AdminPage({
 }
 
 function LoginPage({ onSignedIn }: { onSignedIn: (user: ApiUser) => void }) {
-  const [mode, setMode] = useState<'sign-in' | 'activate'>('sign-in')
-  const [stage, setStage] = useState<'password' | 'code' | 'activation-code' | 'activation-password'>('password')
+  const [mode, setMode] = useState<'sign-in' | 'activate' | 'reset'>('sign-in')
+  const [stage, setStage] = useState<'password' | 'code' | 'activation-code' | 'activation-password' | 'reset-start' | 'reset-sent' | 'reset-password'>('password')
   const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
   const [activationCode, setActivationCode] = useState('')
-  const [challenge, setChallenge] = useState<{ id: string; destination: string; developmentCode?: string | null } | null>(null)
+  const [challenge, setChallenge] = useState<{ id: string; destination: string; token?: string; developmentCode?: string | null } | null>(null)
   const [error, setError] = useState('')
+  const [notice, setNotice] = useState('')
   const [busy, setBusy] = useState(false)
   const emailLinkHandled = useRef(false)
 
   useEffect(() => {
-    if (emailLinkHandled.current || !window.location.hash.startsWith('#email-sign-in?')) return
+    if (emailLinkHandled.current) return
+    const hash = window.location.hash
+    if (!hash.startsWith('#email-sign-in?') && !hash.startsWith('#password-reset?')) return
     emailLinkHandled.current = true
-    const parameters = new URLSearchParams(window.location.hash.slice('#email-sign-in?'.length))
+    const isReset = hash.startsWith('#password-reset?')
+    const prefix = isReset ? '#password-reset?'.length : '#email-sign-in?'.length
+    const parameters = new URLSearchParams(hash.slice(prefix))
     const challengeId = parameters.get('challenge') ?? ''
     const code = parameters.get('code') ?? ''
+    const token = parameters.get('token') ?? ''
     window.history.replaceState(null, '', `${window.location.pathname}${window.location.search}#login`)
+    if (isReset) {
+      if (!challengeId || token.length < 32) {
+        setMode('reset')
+        setStage('reset-start')
+        setError('This password reset link is incomplete. Request a new reset email and try again.')
+        return
+      }
+      setMode('reset')
+      setStage('reset-password')
+      setChallenge({ id: challengeId, destination: 'your email', token })
+      return
+    }
     if (!challengeId || !/^\d{6}$/.test(code)) {
       setError('This sign-in link is incomplete. Enter your username and password to request a new email.')
       return
@@ -2592,12 +2610,14 @@ function LoginPage({ onSignedIn }: { onSignedIn: (user: ApiUser) => void }) {
     setChallenge(null)
     setActivationCode('')
     setError('')
+    setNotice('')
   }
 
   async function continueWithPassword(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
     setBusy(true)
     setError('')
+    setNotice('')
     try {
       const result = await startPassword(username, password)
       setChallenge({ id: result.challenge_id, destination: result.destination, developmentCode: result.development_code })
@@ -2613,12 +2633,30 @@ function LoginPage({ onSignedIn }: { onSignedIn: (user: ApiUser) => void }) {
     event.preventDefault()
     setBusy(true)
     setError('')
+    setNotice('')
     try {
       const result = await startActivation(username)
       setChallenge({ id: result.challenge_id, destination: result.destination, developmentCode: result.development_code })
       setStage('activation-code')
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : 'Account activation could not be started.')
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  async function requestPasswordReset(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault()
+    setBusy(true)
+    setError('')
+    setNotice('')
+    try {
+      const result = await startPasswordReset(username)
+      setChallenge(null)
+      setNotice(result.message)
+      setStage('reset-sent')
+    } catch (caught) {
+      setError(caught instanceof Error ? caught.message : 'Password recovery could not be started.')
     } finally {
       setBusy(false)
     }
@@ -2675,7 +2713,35 @@ function LoginPage({ onSignedIn }: { onSignedIn: (user: ApiUser) => void }) {
     }
   }
 
+  async function finishPasswordReset(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault()
+    if (!challenge?.token) return
+    const data = new FormData(event.currentTarget)
+    const newPassword = String(data.get('password') ?? '')
+    const confirmation = String(data.get('confirmation') ?? '')
+    if (newPassword !== confirmation) {
+      setError('Passwords do not match.')
+      return
+    }
+    setBusy(true)
+    setError('')
+    setNotice('')
+    try {
+      const result = await completePasswordReset(challenge.id, challenge.token, newPassword, confirmation)
+      setMode('sign-in')
+      setStage('password')
+      setChallenge(null)
+      setPassword('')
+      setNotice(result.message)
+    } catch (caught) {
+      setError(caught instanceof Error ? caught.message : 'Password reset could not be completed.')
+    } finally {
+      setBusy(false)
+    }
+  }
+
   const sharedError = error ? <div className="callout callout--danger"><AlertCircle size={18} /><span>{error}</span></div> : null
+  const sharedNotice = notice ? <div className="callout callout--info"><CheckCircle2 size={18} /><span>{notice}</span></div> : null
   const activationCodeCallout = challenge?.developmentCode ? <div className="callout callout--info"><AlertCircle size={18} /><span>Local development code: <strong>{challenge.developmentCode}</strong></span></div> : null
 
   return (
@@ -2696,11 +2762,14 @@ function LoginPage({ onSignedIn }: { onSignedIn: (user: ApiUser) => void }) {
       </section>
       <main className="login-main">
         <div className="login-card">
-          {stage === 'password' && mode === 'sign-in' ? <form key="password-step" onSubmit={continueWithPassword} className="form-stack"><div><p className="eyebrow">Welcome back</p><h2>Sign in to PIMASCOR</h2><p>Use your assigned company account.</p></div>{sharedError}<label>Username or email<input autoComplete="username" value={username} onChange={(event) => setUsername(event.target.value)} required autoFocus /></label><label>Password<input autoComplete="current-password" type="password" value={password} onChange={(event) => setPassword(event.target.value)} required minLength={8} /></label><Button type="submit" disabled={busy}>{busy ? 'Checking account…' : 'Continue securely'}</Button><button type="button" className="text-button" onClick={() => setError('Password recovery is handled by the PIMASCOR administrator. Use account activation only for a new pending account.')}>Forgot password?</button><button type="button" className="text-button" onClick={() => { setMode('activate'); setError('') }}>First-time access? Activate your account</button><div className="login-step"><span className="active">1</span><i /><span>2</span><small>Password</small><small>Email verification</small></div></form> : null}
+          {stage === 'password' && mode === 'sign-in' ? <form key="password-step" onSubmit={continueWithPassword} className="form-stack"><div><p className="eyebrow">Welcome back</p><h2>Sign in to PIMASCOR</h2><p>Use your assigned company account.</p></div>{sharedError}{sharedNotice}<label>Username or email<input autoComplete="username" value={username} onChange={(event) => setUsername(event.target.value)} required autoFocus /></label><label>Password<input autoComplete="current-password" type="password" value={password} onChange={(event) => setPassword(event.target.value)} required minLength={8} /></label><Button type="submit" disabled={busy}>{busy ? 'Checking account…' : 'Continue securely'}</Button><button type="button" className="text-button" onClick={() => { setMode('reset'); setStage('reset-start'); setError(''); setNotice('') }}>Forgot password?</button><button type="button" className="text-button" onClick={() => { setMode('activate'); setError(''); setNotice('') }}>First-time access? Activate your account</button><div className="login-step"><span className="active">1</span><i /><span>2</span><small>Password</small><small>Email verification</small></div></form> : null}
           {stage === 'password' && mode === 'activate' ? <form key="activation-start-step" onSubmit={startAccountActivation} className="form-stack"><div><p className="eyebrow">First-time access</p><h2>Activate your account</h2><p>Enter the assigned username or email. We will send a one-time code before you choose a password.</p></div>{sharedError}<label>Username or email<input autoComplete="username" value={username} onChange={(event) => setUsername(event.target.value)} required autoFocus /></label><Button type="submit" disabled={busy}>{busy ? 'Sending code…' : 'Send activation code'}</Button><button type="button" className="text-button" onClick={resetToSignIn}>Already activated? Sign in</button></form> : null}
           {stage === 'code' ? <form key="email-code-step" onSubmit={finishSignIn} className="form-stack"><div><p className="eyebrow">One more check</p><h2>{busy ? 'Checking your secure link' : 'Verify your email'}</h2><p>{busy ? 'Please wait while we finish signing you in.' : <>We sent a six-digit code to {challenge?.destination}.</>}</p></div>{sharedError}{challenge?.developmentCode ? <div className="callout callout--info"><AlertCircle size={18} /><span>Local development code: <strong>{challenge.developmentCode}</strong></span></div> : null}<label>Verification code<input name="code" className="code-input" inputMode="numeric" autoComplete="one-time-code" maxLength={6} pattern="[0-9]{6}" placeholder="000000" required autoFocus disabled={busy} /></label><div className="code-expiry"><Clock3 size={16} />Code works once and expires in 5 minutes</div><Button type="submit" disabled={busy}>{busy ? 'Verifying…' : 'Verify and sign in'}</Button><button type="button" className="text-button" onClick={resetToSignIn}>Return to sign in</button><div className="login-step"><span className="done"><Check size={13} /></span><i className="done" /><span className="active">2</span><small>Password checked</small><small>Email verification</small></div></form> : null}
           {stage === 'activation-code' ? <form key="activation-code-step" onSubmit={continueActivation} className="form-stack"><div><p className="eyebrow">First-time access</p><h2>Verify your email</h2><p>We sent a six-digit activation code to {challenge?.destination}.</p></div>{sharedError}{activationCodeCallout}<label>Activation code<input name="code" className="code-input" inputMode="numeric" autoComplete="one-time-code" maxLength={6} pattern="[0-9]{6}" placeholder="000000" required autoFocus /></label><div className="code-expiry"><Clock3 size={16} />Code works once and expires in 5 minutes</div><Button type="submit" disabled={busy}>Continue to password</Button><button type="button" className="text-button" onClick={resetToSignIn}>Return to sign in</button></form> : null}
           {stage === 'activation-password' ? <form key="activation-password-step" onSubmit={finishActivation} className="form-stack"><div><p className="eyebrow">Choose your password</p><h2>Secure your account</h2><p>Create a password of at least 12 characters. PIMASCOR will not email a permanent password.</p></div>{sharedError}<label>New password<input name="password" autoComplete="new-password" type="password" required minLength={12} /></label><label>Confirm password<input name="confirmation" autoComplete="new-password" type="password" required minLength={12} /></label><Button type="submit" disabled={busy}>{busy ? 'Activating account…' : 'Activate and sign in'}</Button><button type="button" className="text-button" onClick={resetToSignIn}>Cancel activation</button></form> : null}
+          {stage === 'reset-start' && mode === 'reset' ? <form key="reset-start-step" onSubmit={requestPasswordReset} className="form-stack"><div><p className="eyebrow">Account recovery</p><h2>Reset your password</h2><p>Enter your username or email. If the account is eligible, we will send a one-time reset link.</p></div>{sharedError}{sharedNotice}<label>Username or email<input autoComplete="username" value={username} onChange={(event) => setUsername(event.target.value)} required autoFocus /></label><Button type="submit" disabled={busy}>{busy ? 'Sending reset email…' : 'Send reset email'}</Button><button type="button" className="text-button" onClick={resetToSignIn}>Back to sign in</button></form> : null}
+          {stage === 'reset-sent' && mode === 'reset' ? <div key="reset-sent-step" className="form-stack"><div><p className="eyebrow">Check your inbox</p><h2>Reset email requested</h2><p>For your security, this message is the same whether or not the account exists. Follow the one-time link in the email, then choose a new password.</p></div>{sharedError}{sharedNotice}<div className="code-expiry"><Clock3 size={16} />The reset link works once and expires in 15 minutes</div><button type="button" className="text-button" onClick={resetToSignIn}>Back to sign in</button></div> : null}
+          {stage === 'reset-password' && mode === 'reset' ? <form key="reset-password-step" onSubmit={finishPasswordReset} className="form-stack"><div><p className="eyebrow">Account recovery</p><h2>Choose a new password</h2><p>Use at least 12 characters. After resetting, sign in again with the new password.</p></div>{sharedError}{sharedNotice}<label>New password<input name="password" autoComplete="new-password" type="password" required minLength={12} autoFocus /></label><label>Confirm password<input name="confirmation" autoComplete="new-password" type="password" required minLength={12} /></label><Button type="submit" disabled={busy}>{busy ? 'Resetting password…' : 'Reset password'}</Button><button type="button" className="text-button" onClick={resetToSignIn}>Cancel reset</button></form> : null}
           <p className="prototype-note">Passwords are checked by the API and stored only as secure hashes. The browser keeps only a protected session cookie.</p>
         </div>
       </main>

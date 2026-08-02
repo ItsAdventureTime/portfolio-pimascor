@@ -52,6 +52,24 @@ before verification so it is not sent in the initial Caddy/CDN request. The Requ
 dashboard is limited to owned shipments. A password change, account disable, or demo
 reset revokes affected sessions.
 
+### Self-service password recovery
+
+```text
+User selects Forgot password? and submits username/email
+  -> API applies persistent identifier/source throttles
+  -> API returns the same generic confirmation for every identifier
+  -> eligible activated account receives a single-use fragment reset link
+  -> browser removes the token from the address bar before submitting it
+  -> user enters and confirms a password of at least 12 characters
+  -> API consumes the token, revokes every existing session, and records an audit event
+  -> user returns to sign-in and completes the normal email-code step
+```
+
+Reset links expire after 15 minutes, permit five token attempts, and never
+auto-sign-in or email a password. Unknown, disabled, pending, malformed,
+expired, reused, and exhausted requests receive non-disclosing responses.
+Pending first-login accounts use the activation flow instead.
+
 ## Shipment funding
 
 ```text

@@ -102,6 +102,10 @@ the account used. Do not record passwords or full document contents.
 - HTTPS route and API health endpoint respond successfully.
 - Admin can see and manage the documented accounts, including Mich.
 - First-login email OTP and password activation work for a test account.
+- Activated users can request a password reset, receive a single-use expiring
+  link, choose a new password, and sign in again; old sessions are revoked.
+- Unknown, disabled, pending, expired, reused, and rate-limited reset requests
+  do not disclose account existence or expose reset tokens in logs.
 - GM and DCS payment authority/override rules match the approved policy.
 - Quotation print preview and generated PDF dynamically populate client,
   shipment, currency, amount, terms, and dates using the revised reference.

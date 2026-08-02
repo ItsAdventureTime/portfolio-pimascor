@@ -17,6 +17,8 @@ Contract baseline: `REQUIREMENTS-V2.md`
 ```text
 POST /auth/password/start
 POST /auth/email-code/verify
+POST /auth/password-reset/start
+POST /auth/password-reset/complete
 POST /auth/logout
 GET  /auth/me
 GET  /auth/sessions
@@ -27,6 +29,18 @@ The password-start response exposes a development code only outside hosted produ
 mode. Hosted delivery uses Resend. A challenge lasts five minutes, works once, and can
 be completed by entering the six-digit code or opening the email link. `PUBLIC_APP_URL`
 is a trusted deployment setting; the API never builds this link from the request Host.
+
+Password recovery accepts a username or email and always returns the same generic
+message, whether the account exists, is disabled, is pending activation, or is
+rate-limited. Eligible activated users receive a cryptographically random, single-use
+reset link in an email. The link is a URL fragment (`#password-reset?...`) and is
+removed from the browser address bar before use. It expires after 15 minutes, allows
+five token attempts, and is never returned in hosted production responses. The
+completion request requires a new password and confirmation of at least 12 characters;
+it does not sign the user in, revokes all existing sessions, and records a
+privacy-minimized audit event. Requests are limited to three per identifier and twenty
+per source in a rolling 60-minute window. Pending first-login accounts use activation,
+not password recovery.
 
 ## Clients and reference data
 

@@ -163,6 +163,32 @@ export async function startActivation(username: string) {
   })
 }
 
+export type PasswordResetStartResult = {
+  message: string
+  expires_in_seconds: number
+  development_code?: string | null
+  development_challenge_id?: string | null
+}
+
+export async function startPasswordReset(identifier: string) {
+  return request<PasswordResetStartResult>('/auth/password-reset/start', {
+    method: 'POST',
+    body: JSON.stringify({ identifier }),
+  })
+}
+
+export async function completePasswordReset(
+  challengeId: string,
+  token: string,
+  password: string,
+  confirmation: string,
+) {
+  return request<{ message: string }>('/auth/password-reset/complete', {
+    method: 'POST',
+    body: JSON.stringify({ challenge_id: challengeId, token, password, confirmation }),
+  })
+}
+
 export async function completeActivation(challengeId: string, code: string, password: string) {
   const result = await request<{ user: ApiUser; csrf_token: string }>('/auth/activation/complete', {
     method: 'POST',

@@ -70,6 +70,20 @@ After VPS activation and before any Bunny purge:
 
 Follow [Factual basis and evidence policy](FACTUAL-BASIS.md). Local build/test
 results prove local source only. VPS command output proves VPS activation.
+
+### Password recovery acceptance
+
+- Submit reset for active, disabled, pending, and unknown identifiers; verify the
+  same response shape/message and no account disclosure.
+- Confirm the eligible account receives a reset email whose fragment link contains
+  no query-string token, expires in 15 minutes, works once, and is not logged.
+- Verify wrong tokens increment the attempt counter and the fifth wrong attempt
+  invalidates the request; expired and reused links fail generically.
+- Require a 12-character password and matching confirmation; confirm the old
+  password fails, the new password works through normal password-plus-email-code
+  sign-in, every prior session is revoked, and audit events contain no secrets.
+- Repeat on Chromium/Blink, Firefox/Gecko, and Safari/WebKit desktop and mobile
+  viewports; verify keyboard focus, screen-reader labels, and no horizontal scroll.
 Browser observations prove only the tested route, account, viewport, and engine.
 
 ## Audit evidence: 2026-08-01

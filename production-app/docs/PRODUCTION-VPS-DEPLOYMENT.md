@@ -75,9 +75,19 @@ database stores an Argon2 password hash, not the plaintext password, so an
 existing password cannot be retrieved.
 
 After activation, normal sign-in requires the password and then a one-time
-email code sent through the configured production email provider. If a
-password is suspected to be exposed, reset it immediately from the VPS and
-revoke that account's active sessions:
+email code sent through the configured production email provider. If a user
+forgets a password, select **Forgot password?** on the sign-in screen and
+submit the username or email. The API always returns the same message for
+known, unknown, disabled, pending, and rate-limited accounts. An eligible
+activated user receives a single-use reset link that expires in 15 minutes;
+the link is kept in the URL fragment so it is not sent in HTTP requests or
+referrer headers. The user chooses a new password of at least 12 characters,
+then signs in again. Every existing session is revoked after a successful
+reset. Pending first-login accounts must use account activation instead.
+
+If a password is suspected to be exposed and email recovery is unavailable,
+an Administrator can reset it from the VPS and revoke that account's active
+sessions:
 
 ```bash
 podman exec -it bridge-ph-pimascor-api python -m pimascor_api.account_admin set-password USERNAME
@@ -85,6 +95,11 @@ podman exec -it bridge-ph-pimascor-api python -m pimascor_api.account_admin set-
 
 This is a reset, not a retrieval operation. The command prompts for the new
 password and confirms it without placing it in shell history.
+
+Reset requests are persisted with hashed identifier/source values and limited
+to three per identifier and twenty per source in a rolling 60-minute window.
+Reset tokens are cryptographically random, stored only as SHA-256 hashes,
+single-use, attempt-limited, and never written to logs or audit reasons.
 
 ## One-time VPS secrets
 
@@ -241,6 +256,9 @@ Do not enable production traffic until:
 5. a test quotation, approval, payment, document view, and authorized export
    are verified with the appropriate accounts;
 6. backup and restore evidence is recorded separately from the demo.
+7. password recovery is tested with a real mailbox, including an expired link,
+   a reused link, a wrong-token attempt, and confirmation that old sessions are
+   revoked.
 
 The architecture follows the official Podman Quadlet user-unit model and
 SQLAlchemy's explicit child-before-parent deletion requirement for bulk

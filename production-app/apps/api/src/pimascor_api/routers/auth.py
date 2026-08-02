@@ -1,13 +1,14 @@
+import hmac
 from datetime import timedelta
 
 from fastapi import APIRouter, Depends, HTTPException, Request, Response, status
-from sqlalchemy import or_, select
+from sqlalchemy import func, or_, select, update
 from sqlalchemy.orm import Session
 
 from ..config import Settings, get_settings
 from ..db import get_db
 from ..dependencies import AuthContext, get_auth_context, require_csrf
-from ..models import EmailChallenge, LoginSession, User, UserStatus, utc_now
+from ..models import EmailChallenge, LoginSession, PasswordResetRequest, User, UserStatus, utc_now
 from ..schemas import (
     ActivationCompleteRequest,
     ActivationStartRequest,
@@ -16,6 +17,10 @@ from ..schemas import (
     MeResponse,
     PasswordStartRequest,
     PasswordStartResponse,
+    PasswordResetCompleteRequest,
+    PasswordResetCompleteResponse,
+    PasswordResetStartRequest,
+    PasswordResetStartResponse,
     SessionResponse,
 )
 from ..security import (
@@ -31,6 +36,12 @@ from ..services.email import get_email_provider
 
 
 router = APIRouter(prefix="/auth", tags=["authentication"])
+
+PASSWORD_RESET_MESSAGE = (
+    "If that account exists, we will send an email with instructions to reset "
+    "the password."
+)
+PASSWORD_RESET_INVALID = "This password reset link is no longer valid."
 
 
 def _set_session_cookies(response: Response, settings: Settings, session: LoginSession, raw_session: str, raw_csrf: str) -> None:
@@ -136,6 +147,179 @@ def password_start(
         destination=mask_email(user.email),
         expires_in_seconds=settings.email_code_ttl_minutes * 60,
         development_code=code if settings.is_development else None,
+    )
+
+
+@router.post("/password-reset/start", response_model=PasswordResetStartResponse)
+def password_reset_start(
+    payload: PasswordResetStartRequest,
+    request: Request,
+    db: Session = Depends(get_db),
+    settings: Settings = Depends(get_settings),
+) -> PasswordResetStartResponse:
+    """Create a generic, rate-limited reset request.
+
+    Every request creates a ledger row, including unknown identifiers. Only an
+    active, already-activated account receives a one-time link by email.
+    """
+    identifier = payload.identifier.strip().lower()
+    source = request.client.host if request.client else "unknown"
+    identifier_hash = hash_secret(identifier)
+    source_hash = hash_secret(source or "unknown")
+    now = utc_now()
+    window_start = now - timedelta(minutes=settings.password_reset_window_minutes)
+
+    identifier_count = db.scalar(
+        select(func.count(PasswordResetRequest.id)).where(
+            PasswordResetRequest.identifier_hash == identifier_hash,
+            PasswordResetRequest.created_at >= window_start,
+        )
+    ) or 0
+    source_count = db.scalar(
+        select(func.count(PasswordResetRequest.id)).where(
+            PasswordResetRequest.source_hash == source_hash,
+            PasswordResetRequest.created_at >= window_start,
+        )
+    ) or 0
+    limited = (
+        identifier_count >= settings.password_reset_identifier_limit
+        or source_count >= settings.password_reset_source_limit
+    )
+    user = db.scalar(
+        select(User).where(or_(User.username == identifier, User.email == identifier))
+    )
+    eligible_user = (
+        user is not None
+        and user.status == UserStatus.ACTIVE
+        and not user.must_set_password
+    )
+    token = create_session_secret() if eligible_user and not limited else None
+    reset_request = PasswordResetRequest(
+        user_id=user.id if eligible_user else None,
+        identifier_hash=identifier_hash,
+        source_hash=source_hash,
+        token_hash=hash_secret(token) if token else None,
+        expires_at=now + timedelta(minutes=settings.password_reset_ttl_minutes),
+    )
+    db.add(reset_request)
+    db.flush()
+    record_audit(
+        db,
+        actor_user_id=user.id if eligible_user else None,
+        action="AUTH_PASSWORD_RESET_REQUESTED",
+        entity_type="password_reset_request",
+        entity_id=reset_request.id,
+        correlation_id=getattr(request.state, "correlation_id", None),
+        reason="Rate limited" if limited else None,
+    )
+    db.commit()
+
+    if token and user is not None:
+        try:
+            get_email_provider(settings).send_password_reset(
+                user.email,
+                user.display_name,
+                reset_request.id,
+                token,
+                settings.public_app_url,
+                settings.password_reset_ttl_minutes,
+            )
+        except Exception:
+            reset_request.used_at = utc_now()
+            record_audit(
+                db,
+                actor_user_id=user.id,
+                action="AUTH_PASSWORD_RESET_EMAIL_FAILED",
+                entity_type="password_reset_request",
+                entity_id=reset_request.id,
+                correlation_id=getattr(request.state, "correlation_id", None),
+                reason="Email provider rejected the reset message",
+            )
+            db.commit()
+            # Preserve the non-disclosing response even when the provider is
+            # unavailable. The audit event gives operators a safe failure
+            # signal without turning account existence into a status oracle.
+
+    return PasswordResetStartResponse(
+        message=PASSWORD_RESET_MESSAGE,
+        expires_in_seconds=settings.password_reset_ttl_minutes * 60,
+        development_code=token if token and settings.is_development else None,
+        development_challenge_id=reset_request.id if token and settings.is_development else None,
+    )
+
+
+@router.post("/password-reset/complete", response_model=PasswordResetCompleteResponse)
+def password_reset_complete(
+    payload: PasswordResetCompleteRequest,
+    request: Request,
+    db: Session = Depends(get_db),
+) -> PasswordResetCompleteResponse:
+    challenge = db.scalar(
+        select(PasswordResetRequest)
+        .where(PasswordResetRequest.id == payload.challenge_id)
+        .with_for_update()
+    )
+    now = utc_now()
+    if challenge is None or challenge.used_at is not None or challenge.token_hash is None:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=PASSWORD_RESET_INVALID)
+
+    expires_at = challenge.expires_at
+    if expires_at.tzinfo is None:
+        expires_at = expires_at.replace(tzinfo=now.tzinfo)
+    if expires_at <= now or challenge.attempts >= 5:
+        challenge.used_at = now
+        db.commit()
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=PASSWORD_RESET_INVALID)
+
+    challenge.attempts += 1
+    token_hash = hash_secret(payload.token)
+    if not hmac.compare_digest(challenge.token_hash, token_hash):
+        if challenge.attempts >= 5:
+            challenge.used_at = now
+        record_audit(
+            db,
+            actor_user_id=challenge.user_id,
+            action="AUTH_PASSWORD_RESET_REJECTED",
+            entity_type="password_reset_request",
+            entity_id=challenge.id,
+            correlation_id=getattr(request.state, "correlation_id", None),
+            reason="Incorrect or expired reset token",
+        )
+        db.commit()
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=PASSWORD_RESET_INVALID)
+
+    user = db.get(User, challenge.user_id)
+    if user is None or user.status != UserStatus.ACTIVE:
+        challenge.used_at = now
+        db.commit()
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=PASSWORD_RESET_INVALID)
+
+    user.password_hash = hash_password(payload.password)
+    user.must_set_password = False
+    user.email_verified_at = user.email_verified_at or now
+    challenge.used_at = now
+    db.execute(
+        update(LoginSession)
+        .where(LoginSession.user_id == user.id, LoginSession.revoked_at.is_(None))
+        .values(revoked_at=now)
+    )
+    db.execute(
+        update(EmailChallenge)
+        .where(EmailChallenge.user_id == user.id, EmailChallenge.used_at.is_(None))
+        .values(used_at=now)
+    )
+    record_audit(
+        db,
+        actor_user_id=user.id,
+        action="AUTH_PASSWORD_RESET_COMPLETED",
+        entity_type="user",
+        entity_id=user.id,
+        correlation_id=getattr(request.state, "correlation_id", None),
+        reason="All existing sessions revoked",
+    )
+    db.commit()
+    return PasswordResetCompleteResponse(
+        message="Your password has been reset. Sign in again with the new password."
     )
 
 

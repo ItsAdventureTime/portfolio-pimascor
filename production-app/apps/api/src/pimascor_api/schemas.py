@@ -56,6 +56,34 @@ class EmailCodeVerifyRequest(BaseModel):
     code: str = Field(pattern=r"^\d{6}$")
 
 
+class PasswordResetStartRequest(BaseModel):
+    identifier: str = Field(min_length=2, max_length=320)
+
+
+class PasswordResetStartResponse(BaseModel):
+    message: str
+    expires_in_seconds: int
+    development_code: str | None = None
+    development_challenge_id: str | None = None
+
+
+class PasswordResetCompleteRequest(BaseModel):
+    challenge_id: str
+    token: str = Field(min_length=32, max_length=256)
+    password: str = Field(min_length=12, max_length=256)
+    confirmation: str = Field(min_length=12, max_length=256)
+
+    @model_validator(mode="after")
+    def passwords_match(self) -> "PasswordResetCompleteRequest":
+        if self.password != self.confirmation:
+            raise ValueError("Passwords do not match")
+        return self
+
+
+class PasswordResetCompleteResponse(BaseModel):
+    message: str
+
+
 class MeResponse(ApiModel):
     id: str
     username: str
