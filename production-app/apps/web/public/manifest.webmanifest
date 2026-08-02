@@ -1,4 +1,5 @@
 {
+  "id": "./",
   "name": "PIMASCOR Operational Control",
   "short_name": "PIMASCOR",
   "description": "Budget, shipment, liquidation, billing, and collections control system",
@@ -7,6 +8,8 @@
   "display": "standalone",
   "background_color": "#ffffff",
   "theme_color": "#1c2a4a",
+  "lang": "en-PH",
+  "categories": ["business", "productivity"],
   "icons": [
     {
       "src": "./pimascor-icon-192.png",

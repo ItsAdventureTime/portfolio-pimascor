@@ -150,6 +150,25 @@ small { color: var(--muted); }
 .status--brand { color: var(--navy-800); background: var(--gold-100); }
 .status--neutral { color: #505d73; background: #eef1f5; }
 
+.pwa-install { width: min(100%, 1600px); display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; margin: 0 auto 18px; padding: 16px 18px; gap: 14px; background: linear-gradient(120deg, #fff, #fffdf5); border: 1px solid #ead889; border-radius: 16px; box-shadow: var(--shadow-sm); }
+.login-main .pwa-install { width: min(440px, 100%); margin-top: 16px; }
+.pwa-install__icon { width: 42px; height: 42px; display: grid; place-items: center; color: var(--navy-900); background: var(--gold-100); border: 1px solid #ead889; border-radius: 12px; }
+.pwa-install__copy { min-width: 0; }
+.pwa-install__copy .eyebrow { margin-bottom: 3px; }
+.pwa-install__copy strong { display: block; color: var(--navy-900); font-size: .85rem; }
+.pwa-install__copy p:last-child { margin: 3px 0 0; font-size: .73rem; line-height: 1.4; }
+.pwa-install__actions { display: flex; align-items: center; justify-content: flex-end; gap: 10px; }
+.pwa-install__actions .button { min-height: 40px; padding-inline: 12px; font-size: .72rem; }
+.pwa-install__actions .text-button { white-space: nowrap; }
+.pwa-guide { display: flex; flex-direction: column; gap: 12px; }
+.pwa-guide__intro { margin: 0 0 2px; font-size: .82rem; }
+.pwa-guide__step { padding: 13px 14px; background: var(--canvas); border: 1px solid var(--border); border-radius: 12px; }
+.pwa-guide__step--active { background: #fffdf5; border-color: #ead889; box-shadow: inset 3px 0 var(--gold-500); }
+.pwa-guide__step > div { display: flex; align-items: center; gap: 9px; }
+.pwa-guide__step h3 { margin: 0; font-size: .87rem; }
+.pwa-guide__number { width: 24px; height: 24px; display: grid; place-items: center; color: #fff; background: var(--navy-800); border-radius: 50%; font-size: .67rem; font-weight: 800; }
+.pwa-guide__step p { margin: 7px 0 0 33px; font-size: .75rem; line-height: 1.5; }
+
 .hero-panel { position: relative; min-height: 150px; display: flex; align-items: center; justify-content: space-between; padding: 26px 30px; overflow: hidden; color: #fff; background: radial-gradient(circle at 80% 20%, rgba(201,162,39,.22), transparent 34%), linear-gradient(125deg, var(--navy-800), var(--navy-950)); border-radius: 18px; box-shadow: 0 12px 32px rgba(28,42,74,.18); }
 .hero-panel::after { content: ""; position: absolute; right: 65px; bottom: -95px; width: 250px; height: 250px; border: 1px solid rgba(255,255,255,.08); border-radius: 50%; box-shadow: 0 0 0 35px rgba(255,255,255,.03), 0 0 0 70px rgba(255,255,255,.025); }
 .hero-panel h2 { margin-bottom: 7px; color: #fff; font-size: clamp(1.45rem, 3vw, 2rem); }
@@ -995,6 +1014,10 @@ td small { font-size: .72rem; }
   .login-proof strong { font-size: .78rem; }
   .login-proof small { font-size: .66rem; }
   .login-card { border-radius: 18px; padding: 24px 20px; }
+  .pwa-install { grid-template-columns: auto minmax(0, 1fr); align-items: start; padding: 14px; gap: 11px; }
+  .pwa-install__actions { grid-column: 1 / -1; justify-content: stretch; }
+  .pwa-install__actions .button { flex: 1; }
+  .pwa-guide__step p { margin-left: 0; }
 }
 
 @media (min-width: 390px) and (max-width: 760px) {

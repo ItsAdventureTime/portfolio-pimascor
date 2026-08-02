@@ -84,6 +84,10 @@ results prove local source only. VPS command output proves VPS activation.
   sign-in, every prior session is revoked, and audit events contain no secrets.
 - Repeat on Chromium/Blink, Firefox/Gecko, and Safari/WebKit desktop and mobile
   viewports; verify keyboard focus, screen-reader labels, and no horizontal scroll.
+- On Android Chrome, verify the native install action when available. On iPhone/iPad
+  Safari, verify the manual Share → Add to Home Screen instructions. Confirm the
+  reminder is dismissible for 14 days, disappears in standalone mode, and never
+  blocks sign-in or workflow use.
 Browser observations prove only the tested route, account, viewport, and engine.
 
 ## Audit evidence: 2026-08-01

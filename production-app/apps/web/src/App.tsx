@@ -487,6 +487,116 @@ function Modal({ title, open, onClose, children }: { title: string; open: boolea
   )
 }
 
+type PwaInstallPromptEvent = Event & {
+  prompt: () => Promise<void>
+  userChoice: Promise<{ outcome: 'accepted' | 'dismissed'; platform: string }>
+}
+
+const PWA_INSTALL_DISMISSAL_KEY = 'pimascor:pwa-install-dismissed-until'
+const PWA_INSTALL_DISMISSAL_MS = 14 * 24 * 60 * 60 * 1000
+
+function PwaInstallPrompt() {
+  const [deferredPrompt, setDeferredPrompt] = useState<PwaInstallPromptEvent | null>(null)
+  const [installed, setInstalled] = useState(false)
+  const [dismissed, setDismissed] = useState(false)
+  const [guideOpen, setGuideOpen] = useState(false)
+  const [installBusy, setInstallBusy] = useState(false)
+  const [platform, setPlatform] = useState<'ios' | 'android' | 'desktop'>('desktop')
+
+  useEffect(() => {
+    const standalone = window.matchMedia('(display-mode: standalone)').matches
+      || Boolean((navigator as Navigator & { standalone?: boolean }).standalone)
+    setInstalled(standalone)
+    try {
+      setDismissed(Number(window.localStorage.getItem(PWA_INSTALL_DISMISSAL_KEY) ?? 0) > Date.now())
+    } catch {
+      // Storage may be unavailable in private browsing; keep the reminder visible.
+    }
+    const userAgent = navigator.userAgent
+    const isIos = /iPad|iPhone|iPod/.test(userAgent)
+      || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1)
+    setPlatform(isIos ? 'ios' : /Android/.test(userAgent) ? 'android' : 'desktop')
+
+    const capturePrompt = (event: Event) => {
+      event.preventDefault()
+      setDeferredPrompt(event as PwaInstallPromptEvent)
+    }
+    const markInstalled = () => {
+      setInstalled(true)
+      setDeferredPrompt(null)
+    }
+    window.addEventListener('beforeinstallprompt', capturePrompt)
+    window.addEventListener('appinstalled', markInstalled)
+    return () => {
+      window.removeEventListener('beforeinstallprompt', capturePrompt)
+      window.removeEventListener('appinstalled', markInstalled)
+    }
+  }, [])
+
+  function dismissReminder() {
+    setDismissed(true)
+    try {
+      window.localStorage.setItem(PWA_INSTALL_DISMISSAL_KEY, String(Date.now() + PWA_INSTALL_DISMISSAL_MS))
+    } catch {
+      // The reminder remains dismissed for this render even without storage.
+    }
+  }
+
+  async function installNow() {
+    if (!deferredPrompt) {
+      setGuideOpen(true)
+      return
+    }
+    setInstallBusy(true)
+    try {
+      await deferredPrompt.prompt()
+      const choice = await deferredPrompt.userChoice
+      if (choice.outcome === 'accepted') setInstalled(true)
+    } finally {
+      setDeferredPrompt(null)
+      setInstallBusy(false)
+    }
+  }
+
+  if (installed || dismissed) return null
+
+  const platformLabel = platform === 'ios' ? 'iPhone or iPad' : platform === 'android' ? 'Android phone' : 'your device'
+  return <>
+    <section className="pwa-install" aria-label="Install PIMASCOR">
+      <span className="pwa-install__icon"><Download size={20} aria-hidden="true" /></span>
+      <div className="pwa-install__copy">
+        <p className="eyebrow">A better way to work</p>
+        <strong>Install PIMASCOR on {platformLabel}</strong>
+        <p>Open your protected workspace from the Home Screen with a focused, app-like layout.</p>
+      </div>
+      <div className="pwa-install__actions">
+        <Button tone="secondary" icon={Download} onClick={() => void installNow()} disabled={installBusy}>
+          {installBusy ? 'Opening…' : deferredPrompt ? 'Install app' : 'How to install'}
+        </Button>
+        <button type="button" className="text-button" onClick={dismissReminder}>Maybe later</button>
+      </div>
+    </section>
+    <Modal title="Install PIMASCOR as an app" open={guideOpen} onClose={() => setGuideOpen(false)}>
+      <div className="pwa-guide">
+        <p className="pwa-guide__intro">Installing PIMASCOR keeps it one tap away and opens it in a focused workspace. Your sign-in and security controls remain the same.</p>
+        <section className={platform === 'ios' ? 'pwa-guide__step pwa-guide__step--active' : 'pwa-guide__step'}>
+          <div><span className="pwa-guide__number">1</span><h3>iPhone or iPad</h3></div>
+          <p>Open this page in <strong>Safari</strong>, tap <strong>Share</strong>, choose <strong>Add to Home Screen</strong>, enable <strong>Open as Web App</strong> if shown, then tap <strong>Add</strong>.</p>
+        </section>
+        <section className={platform === 'android' ? 'pwa-guide__step pwa-guide__step--active' : 'pwa-guide__step'}>
+          <div><span className="pwa-guide__number">2</span><h3>Android</h3></div>
+          <p>Open this page in <strong>Chrome</strong>, tap the <strong>⋮</strong> menu, choose <strong>Add to home screen</strong> or <strong>Install app</strong>, then confirm <strong>Install</strong>.</p>
+        </section>
+        <section className={platform === 'desktop' ? 'pwa-guide__step pwa-guide__step--active' : 'pwa-guide__step'}>
+          <div><span className="pwa-guide__number">3</span><h3>Desktop browser</h3></div>
+          <p>In a compatible Chromium browser, use the install icon in the address bar or the browser menu. If no install option appears, keep using PIMASCOR in the browser.</p>
+        </section>
+        <div className="callout callout--info"><CircleHelp size={18} /><span>Only install from the official HTTPS address: <strong>delegateops.business/pimascor</strong>.</span></div>
+      </div>
+    </Modal>
+  </>
+}
+
 type ConfidentialDocumentItem = {
   id: string
   name: string
@@ -2772,6 +2882,7 @@ function LoginPage({ onSignedIn }: { onSignedIn: (user: ApiUser) => void }) {
           {stage === 'reset-password' && mode === 'reset' ? <form key="reset-password-step" onSubmit={finishPasswordReset} className="form-stack"><div><p className="eyebrow">Account recovery</p><h2>Choose a new password</h2><p>Use at least 12 characters. After resetting, sign in again with the new password.</p></div>{sharedError}{sharedNotice}<label>New password<input name="password" autoComplete="new-password" type="password" required minLength={12} autoFocus /></label><label>Confirm password<input name="confirmation" autoComplete="new-password" type="password" required minLength={12} /></label><Button type="submit" disabled={busy}>{busy ? 'Resetting password…' : 'Reset password'}</Button><button type="button" className="text-button" onClick={resetToSignIn}>Cancel reset</button></form> : null}
           <p className="prototype-note">Passwords are checked by the API and stored only as secure hashes. The browser keeps only a protected session cookie.</p>
         </div>
+        <PwaInstallPrompt />
       </main>
     </div>
   )
@@ -2918,6 +3029,7 @@ function App() {
         </header>
 
         <main className="content">
+          <PwaInstallPrompt />
           {isRolePreview ? <section className="role-preview-banner" role="status"><span><ShieldCheck size={19} /><span><strong>Admin operating in the {role} workspace</strong><small>Role actions are enabled. Security checks and audit records continue to use your Admin identity.</small></span></span><Button tone="secondary" onClick={returnToAdmin}>Return to Admin</Button></section> : null}
           <div className="page-heading"><div><p className="eyebrow">PIMASCOR workspace</p><h1>{pageMeta[resolvedPage].title}</h1><p>{pageMeta[resolvedPage].description}</p></div><div className="page-heading__actions"><Button tone="ghost" icon={RefreshCw} onClick={() => window.location.reload()}>Refresh</Button></div></div>{content}
         </main>

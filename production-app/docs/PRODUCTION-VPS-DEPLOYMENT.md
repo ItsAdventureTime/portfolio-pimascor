@@ -21,6 +21,13 @@ The production API uses `DEPLOYMENT_TIER=production`,
 and the durable export worker. It never runs `demo_reset` and does not seed
 fictional clients or transactions.
 
+The web app also provides a compact, dismissible PWA installation reminder.
+It gives users platform-specific instructions for Safari on iPhone/iPad,
+Chrome on Android, and compatible desktop Chromium browsers. See
+`docs/PWA-INSTALLATION.md` for the user-facing handout. Installing the PWA
+does not change authentication, role permissions, session expiry, or document
+privacy.
+
 ## Production roles
 
 The production policy from Section 1 of the owner correction document is:
