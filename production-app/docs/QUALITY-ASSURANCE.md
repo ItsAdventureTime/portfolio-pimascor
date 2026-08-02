@@ -96,16 +96,20 @@ results prove local source only. VPS command output proves VPS activation.
   the announcement should return on the next login.
 Browser observations prove only the tested route, account, viewport, and engine.
 
-## Audit evidence: 2026-08-01
+## Audit evidence: 2026-08-03
 
 The local isolated audit used the development API with a disposable SQLite
-database and synthetic accounts. `uv run pytest -q` passed **65 tests** in both
-the normal test tier and `DEPLOYMENT_TIER=production`; `pnpm build` passed with
-Vite 8.1.5. Chromium/Blink was exercised at desktop 1440 × 900 and mobile
-390 × 844. Admin, GM, DCS, Mich, and Requester sign-in flows completed with
-email-code verification; each role displayed only its permitted navigation.
-The mobile check showed no horizontal overflow, and the browser console had no
-errors or warnings.
+database and synthetic accounts. The API suite passed **70 tests**; Python
+compilation and the full Alembic chain through `20260803_0014` also passed.
+The web TypeScript/Vite build passed with Vite 8.1.5. Chromium/Blink was
+exercised at desktop 1280 × 720 and mobile 390 × 844. Both viewports had no
+horizontal overflow, the installation guide opened in a bounded mobile dialog,
+and the browser console had no errors or warnings.
+
+The API test run still reports Starlette's upstream deprecation warning for its
+legacy `httpx` TestClient import. It is test-tooling-only and does not affect
+the deployed API; keep it visible until the upstream-compatible client path is
+available in the pinned dependency set.
 
 The audit fixed canonical routing for restricted roles: Requester now lands on
 Sales Quotations and the URL is `#quotations`, rather than leaving `#dashboard`
