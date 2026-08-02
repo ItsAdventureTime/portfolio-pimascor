@@ -58,14 +58,14 @@ reset revokes affected sessions.
 User completes sign-in after a new production release
   -> PIMASCOR checks the user's latest acknowledged release
   -> dated What's new dialog explains New, Improved, Updated, or Removed items
-  -> user selects Continue to workspace
+  -> user selects Continue to workspace (or closes the dialog)
   -> acknowledgement is recorded and the same dialog stays hidden on later logins
 ```
 
 The announcement uses plain workflow language, does not expose technical details,
 and remains keyboard- and screen-reader-friendly. A user who has not acknowledged
 the current release sees it again on the next login if acknowledgement could not
-be saved.
+be saved. A temporary save failure never blocks access to the workspace.
 
 ### Self-service password recovery
 

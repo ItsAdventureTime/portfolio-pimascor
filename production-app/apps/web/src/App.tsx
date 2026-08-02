@@ -497,19 +497,20 @@ const PWA_INSTALL_DISMISSAL_MS = 14 * 24 * 60 * 60 * 1000
 
 function ReleaseUpdateModal({ update, open, onAcknowledged }: { update: ApiReleaseUpdate | null; open: boolean; onAcknowledged: () => void }) {
   const [busy, setBusy] = useState(false)
-  const [error, setError] = useState('')
 
   if (!update) return null
 
   async function acknowledge() {
     if (busy) return
     setBusy(true)
-    setError('')
+    // Close immediately so a temporary acknowledgement failure never blocks
+    // access to the workspace. The API will show the update again next login
+    // if the acknowledgement could not be saved.
+    onAcknowledged()
     try {
       await acknowledgeReleaseUpdate()
-      onAcknowledged()
     } catch {
-      setError('We could not save this update as read yet. Please try again.')
+      // Keep the next-login retry behaviour without interrupting the workflow.
     } finally {
       setBusy(false)
     }
@@ -540,7 +541,6 @@ function ReleaseUpdateModal({ update, open, onAcknowledged }: { update: ApiRelea
           <div><strong>{change.title}</strong><p>{change.description}</p></div>
         </article>)}
       </div>
-      {error ? <div className="callout callout--danger" role="alert"><AlertCircle size={18} /><span>{error}</span></div> : null}
       <Button type="button" onClick={() => void acknowledge()} disabled={busy}>{busy ? 'Saving…' : 'Continue to workspace'}</Button>
     </div>
   </Modal>
@@ -603,6 +603,11 @@ function PwaInstallPrompt() {
       await deferredPrompt.prompt()
       const choice = await deferredPrompt.userChoice
       if (choice.outcome === 'accepted') setInstalled(true)
+    } catch {
+      // Browser install prompts can reject when the browser closes or changes
+      // state; keep the manual instructions available instead of trapping the
+      // button in a busy state.
+      setGuideOpen(true)
     } finally {
       setDeferredPrompt(null)
       setInstallBusy(false)

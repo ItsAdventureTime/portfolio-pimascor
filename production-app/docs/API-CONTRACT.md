@@ -37,6 +37,9 @@ when the authenticated user has not acknowledged its release ID; otherwise it
 returns `null`. The response includes the release date, plain-language summary,
 and changes labelled New, Improved, Updated, or Removed. `POST
 /auth/release-updates/ack` records acknowledgement and is CSRF-protected. The
+client closes the announcement before waiting for the acknowledgement response
+so a transient network failure cannot block work; the API then returns the
+announcement again on a later login when the write did not succeed. The
 announcement is intentionally separate from technical logs and does not expose
 implementation details.
 

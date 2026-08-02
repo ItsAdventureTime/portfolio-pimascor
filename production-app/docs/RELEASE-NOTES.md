@@ -20,8 +20,10 @@ work moves from one team to the next.
 
 Each production release has a date and release ID. The latest update appears
 once after a user signs in following that release. Selecting **Continue to
-workspace** records that the user has seen it; the same update does not return
-on later logins.
+workspace** or closing the dialog records that the user has seen it; the same
+update does not return on later logins when the acknowledgement is saved. A
+temporary save failure never blocks the workspace and the update returns on a
+later login so it can be acknowledged again.
 
 ## Release-writing standard
 
@@ -37,4 +39,6 @@ Future entries should:
 
 The in-app announcement uses the same release entry and is presented as an
 accessible, keyboard-friendly dialog. It does not interrupt the sign-in form;
-it appears after authentication and can be acknowledged before continuing.
+it appears after authentication and can be acknowledged before continuing. The
+dialog closes immediately when the user continues, while the acknowledgement
+is saved in the background.

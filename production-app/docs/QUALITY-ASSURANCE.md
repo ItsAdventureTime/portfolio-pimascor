@@ -91,7 +91,9 @@ results prove local source only. VPS command output proves VPS activation.
 - Sign in with a user who has not acknowledged the current release and verify the
   dated **What's new in PIMASCOR** dialog appears once, explains user benefits,
   and records acknowledgement. Sign in again and confirm it does not repeat;
-  verify a different user still receives it once.
+  verify a different user still receives it once. Close the dialog during a
+  simulated acknowledgement failure and confirm the workspace remains usable;
+  the announcement should return on the next login.
 Browser observations prove only the tested route, account, viewport, and engine.
 
 ## Audit evidence: 2026-08-01
