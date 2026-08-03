@@ -7,7 +7,7 @@ from ..schemas import ReleaseChangeResponse, ReleaseUpdateResponse
 # published. Each user's last_seen_release_id makes the announcement appear
 # once after that release, across devices and browsers.
 CURRENT_RELEASE = ReleaseUpdateResponse(
-    id="2026-08-03-workspace-refresh",
+    id="2026-08-03-responsive-workspace",
     released_on=date(2026, 8, 3),
     title="A smoother way to stay on top of every shipment",
     summary=(
@@ -37,6 +37,14 @@ CURRENT_RELEASE = ReleaseUpdateResponse(
             description=(
                 "Important workflow decisions, document access, and security "
                 "messages are presented more clearly so the next step is easier to find."
+            ),
+        ),
+        ReleaseChangeResponse(
+            kind="improved",
+            title="Sign in faster on a phone",
+            description=(
+                "On smaller screens, the sign-in form appears first so you can "
+                "authenticate without scrolling through the introduction."
             ),
         ),
     ],

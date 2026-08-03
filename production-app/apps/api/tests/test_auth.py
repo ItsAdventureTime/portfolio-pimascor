@@ -173,9 +173,10 @@ def test_release_update_is_shown_once_per_user_after_acknowledgement(client):
     first = client.get("/api/v1/auth/release-updates")
     assert first.status_code == 200, first.text
     body = first.json()
-    assert body["id"] == "2026-08-03-workspace-refresh"
+    assert body["id"] == "2026-08-03-responsive-workspace"
     assert body["released_on"] == "2026-08-03"
     assert any(change["kind"] == "new" for change in body["changes"])
+    assert any(change["title"] == "Sign in faster on a phone" for change in body["changes"])
 
     acknowledged = client.post(
         "/api/v1/auth/release-updates/ack",
