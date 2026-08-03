@@ -21,12 +21,14 @@ The production API uses `DEPLOYMENT_TIER=production`,
 and the durable export worker. It never runs `demo_reset` and does not seed
 fictional clients or transactions.
 
-The web app also provides a compact, dismissible PWA installation reminder.
-It gives users platform-specific instructions for Safari on iPhone/iPad,
-Chrome on Android, and compatible desktop Chromium browsers. See
-`docs/PWA-INSTALLATION.md` for the user-facing handout. Installing the PWA
-does not change authentication, role permissions, session expiry, or document
-privacy.
+The authenticated workspace also provides a compact, dismissible PWA
+installation reminder. It is shown after sign-in—not on the login screen—and
+gives users platform-specific instructions for Safari on iPhone/iPad, Chrome
+on Android, and compatible desktop Chromium browsers. It is hidden when a
+standalone, fullscreen, minimal-ui, or window-controls-overlay display mode is
+detected. See `docs/PWA-INSTALLATION.md` for the user-facing handout.
+Installing the PWA does not change authentication, role permissions, session
+expiry, or document privacy.
 
 After a user-facing release, the latest plain-language update appears once per
 user after authentication. The acknowledgement is stored with the production

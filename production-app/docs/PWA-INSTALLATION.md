@@ -2,8 +2,9 @@
 
 PIMASCOR is a Progressive Web App. Installing it adds a dedicated PIMASCOR
 icon to the device and opens the protected workspace in an app-like window.
-The install reminder is intentionally compact, dismissible for 14 days, and
-hidden after the browser reports that the app is installed.
+The install reminder appears only after sign-in, is intentionally compact,
+dismissible for 14 days, and hidden when the browser reports an installed app
+display mode. It never appears inside the sign-in form.
 
 ## iPhone or iPad
 

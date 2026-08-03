@@ -495,6 +495,13 @@ type PwaInstallPromptEvent = Event & {
 const PWA_INSTALL_DISMISSAL_KEY = 'pimascor:pwa-install-dismissed-until'
 const PWA_INSTALL_DISMISSAL_MS = 14 * 24 * 60 * 60 * 1000
 
+function isRunningAsInstalledApp() {
+  const displayModes = ['standalone', 'fullscreen', 'minimal-ui', 'window-controls-overlay']
+  const hasInstalledDisplayMode = displayModes.some((mode) => window.matchMedia(`(display-mode: ${mode})`).matches)
+  const iosStandalone = Boolean((navigator as Navigator & { standalone?: boolean }).standalone)
+  return hasInstalledDisplayMode || iosStandalone
+}
+
 function ReleaseUpdateModal({ update, open, onAcknowledged }: { update: ApiReleaseUpdate | null; open: boolean; onAcknowledged: () => void }) {
   const [busy, setBusy] = useState(false)
 
@@ -555,9 +562,7 @@ function PwaInstallPrompt() {
   const [platform, setPlatform] = useState<'ios' | 'android' | 'desktop'>('desktop')
 
   useEffect(() => {
-    const standalone = window.matchMedia('(display-mode: standalone)').matches
-      || Boolean((navigator as Navigator & { standalone?: boolean }).standalone)
-    setInstalled(standalone)
+    setInstalled(isRunningAsInstalledApp())
     try {
       setDismissed(Number(window.localStorage.getItem(PWA_INSTALL_DISMISSAL_KEY) ?? 0) > Date.now())
     } catch {
@@ -2938,7 +2943,6 @@ function LoginPage({ onSignedIn }: { onSignedIn: (user: ApiUser) => void }) {
           {stage === 'reset-password' && mode === 'reset' ? <form key="reset-password-step" onSubmit={finishPasswordReset} className="form-stack"><div><p className="eyebrow">Account recovery</p><h2>Choose a new password</h2><p>Use at least 12 characters. After resetting, sign in again with the new password.</p></div>{sharedError}{sharedNotice}<label>New password<input name="password" autoComplete="new-password" type="password" required minLength={12} autoFocus /></label><label>Confirm password<input name="confirmation" autoComplete="new-password" type="password" required minLength={12} /></label><Button type="submit" disabled={busy}>{busy ? 'Resetting password…' : 'Reset password'}</Button><button type="button" className="text-button" onClick={resetToSignIn}>Cancel reset</button></form> : null}
           <p className="prototype-note">Passwords are checked by the API and stored only as secure hashes. The browser keeps only a protected session cookie.</p>
         </div>
-        <PwaInstallPrompt />
       </main>
     </div>
   )

@@ -84,10 +84,11 @@ results prove local source only. VPS command output proves VPS activation.
   sign-in, every prior session is revoked, and audit events contain no secrets.
 - Repeat on Chromium/Blink, Firefox/Gecko, and Safari/WebKit desktop and mobile
   viewports; verify keyboard focus, screen-reader labels, and no horizontal scroll.
-- On Android Chrome, verify the native install action when available. On iPhone/iPad
-  Safari, verify the manual Share → Add to Home Screen instructions. Confirm the
-  reminder is dismissible for 14 days, disappears in standalone mode, and never
-  blocks sign-in or workflow use.
+- After authentication, on Android Chrome verify the native install action when
+  available. On iPhone/iPad Safari, verify the manual Share → Add to Home Screen
+  instructions. Confirm the reminder is dismissible for 14 days, disappears in
+  standalone/fullscreen/minimal-ui/window-controls-overlay modes, does not appear
+  on the login screen, and never blocks workflow use.
 - Sign in with a user who has not acknowledged the current release and verify the
   dated **What's new in PIMASCOR** dialog appears once, explains user benefits,
   and records acknowledgement. Sign in again and confirm it does not repeat;

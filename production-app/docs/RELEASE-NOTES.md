@@ -9,8 +9,10 @@ implementation details.
 PIMASCOR is easier to keep close, easier to recover, and clearer to use when
 work moves from one team to the next.
 
-- **New — Install PIMASCOR as an app.** Add it to a phone or computer Home
-  Screen for one-tap access and a focused workspace.
+- **New — Install PIMASCOR as an app.** After signing in, add PIMASCOR to a
+  phone or computer Home Screen for one-tap access and a focused workspace.
+  The reminder stays out of the sign-in form and disappears when PIMASCOR is
+  already running as an installed app.
 - **New — Reset your password yourself.** Use **Forgot password?** to receive
   a secure email link and get back to work without waiting for an
   administrator.
