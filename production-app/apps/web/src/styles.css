@@ -894,7 +894,9 @@ td small { font-size: .72rem; }
 }
 
 @media (max-width: 1180px) {
-  .login-screen { grid-template-columns: 1fr; }
+  .login-screen { display: flex; flex-direction: column; }
+  .login-main { order: -1; width: 100%; }
+  .login-brand { order: 1; width: 100%; }
   .login-brand { min-height: 0; padding: clamp(30px, 6vw, 56px); justify-content: flex-start; }
   .login-brand > img { width: 96px; margin-bottom: 22px; padding: 7px; border-radius: 15px; }
   .login-brand h1 { max-width: 760px; font-size: clamp(2.15rem, 4.5vw, 3.25rem); }
@@ -1029,6 +1031,15 @@ td small { font-size: .72rem; }
   .pwa-install__actions { grid-column: 1 / -1; justify-content: stretch; }
   .pwa-install__actions .button { flex: 1; }
   .pwa-guide__step p { margin-left: 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: .01ms !important;
+    animation-iteration-count: 1 !important;
+    scroll-behavior: auto !important;
+    transition-duration: .01ms !important;
+  }
 }
 
 @media (min-width: 390px) and (max-width: 760px) {

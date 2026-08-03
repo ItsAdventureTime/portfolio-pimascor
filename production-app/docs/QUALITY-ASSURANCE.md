@@ -45,6 +45,12 @@ Test an authenticated workflow at these minimum viewports:
 | 1280 × 720 | Sign-in has no nested scrollbar; Payment Center and record tabs have no unintended scrollbar; print preview opens. |
 | 390 × 844 | No horizontal page overflow; navigation is operable; tabs reflow without clipping; forms and dialogs remain usable. |
 
+On narrow login screens, the sign-in card must be the first useful content in
+the viewport; the brand story may follow it without requiring a long scroll
+before authentication. Confirm the page still has vertical-only scrolling and
+that reduced-motion preferences suppress non-essential transitions and
+animations.
+
 Run the same smoke path in current Chromium/Blink, Firefox/Gecko, and
 Safari/WebKit. Check sign-in, navigation, one read-only record, one authorized
 role action, one forbidden role action, quotation print preview, and protected
@@ -106,6 +112,13 @@ The web TypeScript/Vite build passed with Vite 8.1.5. Chromium/Blink was
 exercised at desktop 1280 × 720 and mobile 390 × 844. Both viewports had no
 horizontal overflow, the installation guide opened in a bounded mobile dialog,
 and the browser console had no errors or warnings.
+
+A responsive follow-up also exercised 1440 × 900, 1280 × 720, 1024 × 768,
+390 × 844, and 360 × 800. Every viewport had `scrollWidth` equal to the
+document client width and no overflowing element. At the stacked tablet and
+phone breakpoints, the sign-in card now appears before the supporting hero
+content; recovery and first-time activation controls remained reachable, and
+the browser console stayed clear of errors and warnings.
 
 The API test run still reports Starlette's upstream deprecation warning for its
 legacy `httpx` TestClient import. It is test-tooling-only and does not affect

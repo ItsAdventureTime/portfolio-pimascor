@@ -19,6 +19,9 @@ work moves from one team to the next.
 - **Improved — Move through work with more confidence.** Important workflow
   decisions, document access, and security messages are presented more clearly
   so the next step is easier to find.
+- **Improved — Sign in faster on a phone.** On narrow screens, the sign-in form
+  appears before the supporting brand story, so users can authenticate without
+  scrolling through the full introduction first.
 
 Each production release has a date and release ID. The latest update appears
 once after a user signs in following that release. Selecting **Continue to
