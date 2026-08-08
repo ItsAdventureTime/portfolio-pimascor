@@ -1,7 +1,8 @@
 # Local and private Git workflow
 
-This repository contains NDA-sensitive project material. The authoritative
-remote is the private GitHub repository:
+This repository contains NDA-sensitive project material. The local Git
+repository and its checked-out, reviewed `main` branch are the source of truth.
+The private GitHub repository is the synchronized remote mirror:
 
 ```text
 git@github.com:ItsAdventureTime/bridge-pimascor.git
@@ -10,9 +11,9 @@ git@github.com:ItsAdventureTime/bridge-pimascor.git
 ## Required sequence for every tracked change
 
 Before staging, check `docs/REPOSITORY-EXPOSURE-AND-NDA.md`. Client records,
-supplied quotation PDFs, screenshots, photos, generated handoff packets,
-credentials, local databases, and runtime output are local-only even though
-the remote repository is private.
+supplied quotation PDFs, screenshots, photos, and generated handoff packets are
+allowed in the authorized private mirror. Credentials, private keys, local
+databases, and runtime output remain prohibited.
 
 1. Review the worktree and confirm the intended files are the only changes.
 2. Run the relevant local checks from `CONTRIBUTING.md`.
@@ -26,10 +27,11 @@ the remote repository is private.
    `infra/scripts/deploy-demo-vps.sh` and then run the documented VPS
    activation command.
 
-Local Git history is not evidence that the VPS or GitHub received a release.
+Local Git history is the authoritative change record, but it is not evidence
+that the VPS or GitHub received a release.
 Remote push output plus a GitHub CLI API verification are evidence of GitHub
 synchronization; VPS command output is required separately for deployment
-evidence. GitHub CLI is used for authentication and verification; local Git
+evidence. GitHub CLI supplies credentials and verifies the mirror; local Git
 remains the commit and push transport for this private repository. `gh repo
 sync` is not a replacement for publishing local commits; it synchronizes a
 repository from another repository or parent branch.

@@ -1,33 +1,26 @@
 # Repository exposure and NDA boundary
 
-Effective 2026-08-08, this policy separates the local working archive from
-the reviewed content published to the private GitHub mirror
-(`ItsAdventureTime/bridge-pimascor`). Private visibility is an access control,
-not permission to commit client records or credentials.
+Effective 2026-08-08, the local Git repository is the source of truth and the
+private GitHub mirror (`ItsAdventureTime/bridge-pimascor`) is its synchronized
+cross-computer recovery copy. Private visibility is required for approved
+NDA/client material, but it is not permission to commit credentials.
 
 ## Repository-safe content
 
 The remote repository may contain application source, tests, infrastructure
 definitions, synthetic demo data, deployment runbooks, design-system guidance,
-API contracts, and redacted implementation documentation. These files must not
-contain secrets, production data, personal document contents, or unapproved
-client attachments.
+API contracts, approved NDA/client records, supplied references, screenshots,
+photos, and generated handoff packets. These materials are for this private
+mirror only and must not be published or copied into public web assets.
 
-## Local-only content
+## Always-excluded content
 
-The following remain on the encrypted local workspace and are ignored or
-untracked from Git:
+The following remain excluded from both local commits and the remote:
 
-- meeting/context files containing participant names or NDA requirements;
-- financial and operational records such as SOA, budget-request, and payment-verification files;
-- screenshots, photos, and `possible-fixes/` evidence;
-- supplied quotation-reference PDFs under `docs/reference/`;
-- generated production/client handoff packets under `handoff/bridge-pimascor/`;
-- credentials, tokens, local databases, logs, and runtime output.
+- credentials, tokens, private keys, local databases, logs, runtime output, and active secrets.
 
-The reference and handoff README files may remain tracked when they contain
-only redacted process guidance. Their attached PDFs and client-specific account
-details must remain local.
+Client-specific files are allowed because this repository is private and
+explicitly authorized. Review every staged binary before committing.
 
 ## Required checks
 
@@ -53,6 +46,6 @@ force push.
 ## Demo handoff rule
 
 The demo deploy script transfers source/build artifacts, not the client packet.
-Keep generated handoff PDFs and supplied quotation references locally for
-controlled review, but never copy them into the public web directory or a
-release archive.
+Keep generated handoff PDFs and supplied quotation references out of the public
+web directory and release archives, even though they are retained in this
+private Git mirror.

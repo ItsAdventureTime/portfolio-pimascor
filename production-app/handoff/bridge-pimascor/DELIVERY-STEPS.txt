@@ -1,0 +1,33 @@
+BRIDGE / PIMASCOR HANDOFF DELIVERY STEPS
+
+1. Open this directory:
+   production-app/handoff/bridge-pimascor/
+
+2. Review the client packet inside:
+   client-packet/
+
+3. Send Bridge only:
+   bridge-pimascor-client-handoff-2026-08-01.zip
+
+   The archive contains client-facing PDFs and a delivery manifest. It does
+   not contain source code, Podman files, Caddyfiles, Bash scripts, secrets,
+   or live production data.
+
+4. Send the archive through an approved secure channel. Do not email secret
+   values, SSH private keys, API keys, database passwords, Restic passwords,
+   OTP codes, or production database/file exports.
+
+5. Schedule an acceptance session with Bridge/PIMASCOR. Use the acceptance
+   checklist in 00-bridge-pimascor-handoff-guide.pdf and record the accepted
+   runtime release commit from the VPS during that session.
+
+6. Transfer access using named provider invitations or an approved password
+   manager: VPS, DNS/registrar, CDN, Backblaze B2, Resend, and private GitHub
+   access only where the written support or source-transfer scope requires it.
+
+7. After Bridge confirms acceptance, rotate any commissioning credentials and
+   revoke developer access unless an active support agreement requires it.
+
+8. If PIMASCOR or Bridge later wants the complete source/IP package, quote and
+   document it as a separate purchase and written transfer agreement. The
+   current hosted-service handoff does not include the source code.

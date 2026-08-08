@@ -61,6 +61,10 @@ the account-bootstrap secret; ordinary releases preserve it.
 6. Use signed commits and GitHub CLI remote checks; verify the GitHub signature
    rather than assuming a local commit is verified.
 
+Local Git `main` is the production documentation source of truth. GitHub
+`origin/main` is synchronized after local validation and signed commit
+creation; a remote SHA mismatch means the mirror is stale.
+
 ## Repository hygiene
 
 The remote repository contains source, migrations, tests, reviewed

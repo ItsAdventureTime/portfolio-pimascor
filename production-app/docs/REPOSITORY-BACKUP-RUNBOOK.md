@@ -1,7 +1,8 @@
 # Private repository backup and recovery
 
-This project uses the private GitHub repository as a controlled continuity
-mirror, not as the only backup location. Private visibility limits access, but
+This project uses the local Git repository as its source of truth and the
+private GitHub repository as a controlled continuity mirror, not as the only
+backup location. Private visibility limits access, but
 does not replace encryption, account protection, retention, or an independent
 recovery copy.
 

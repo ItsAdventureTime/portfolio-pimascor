@@ -1,15 +1,19 @@
 # Local Git policy
 
-The working directory contains NDA-covered project materials. The approved
-private GitHub mirror contains only reviewed source, operational documentation,
-and repository-safe guidance. NDA/client evidence and delivery packets remain
-local-only and are excluded by `.gitignore`.
+The local Git repository is the project's source of truth. The private GitHub
+repository is a synchronized off-device mirror, not the authority for
+uncommitted or unpublished work.
+
+The local Git repository is the source of truth. The owner has authorized the
+private GitHub mirror as a synchronized recovery copy, including approved
+NDA/client project materials. Credentials, access tokens, private keys, local
+databases, runtime state, and unapproved secrets remain excluded.
 
 - The project owner has authorized this exact private mirror: `git@github.com:ItsAdventureTime/bridge-pimascor.git`.
 - The configured pre-push hook blocks every other remote and requires the explicit `PIMASCOR_ALLOW_PRIVATE_GITHUB_PUSH=1` flag for this mirror.
 - Never change the remote to a public repository or push NDA material to any other service.
 - Use a private, access-controlled, encrypted backup for the working directory and Git metadata. A Git bundle can provide a portable offline copy of committed history, but it does not include uncommitted worktree changes, local configuration, hooks, or the index.
-- Review staged files and the staged diff before every commit. Never commit credentials, access tokens, local databases, client records, supplied reference PDFs, screenshots/photos, or generated handoff packets.
+- Review staged files and the staged diff before every commit. Never commit credentials, access tokens, private keys, local databases, runtime output, or active secrets. Client records, supplied reference PDFs, screenshots/photos, and generated handoff packets may be committed only to this exact private mirror.
 - If a secret is committed, treat it as exposed: rotate or revoke it first, then use an approved remediation process. Deleting the current file does not remove it from Git history.
 
 ## Working conventions

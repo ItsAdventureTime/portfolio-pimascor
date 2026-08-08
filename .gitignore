@@ -35,17 +35,5 @@
 /Logins - Demo.pdf
 /Re: Request for Website Credentials.pdf
 
-# NDA/client evidence, working context, and generated delivery material
-# remain local-only. Never force-add a matching path.
-/01_BRIDGE_*.md
-/02_BRIDGE_*.md
-/PIMASCOR-ChatGPT-Context-Prompt.md
-/ACT-*.pdf
-/BUDGET REQUEST *.xlsx
-/MAY PAYMENT VERIFICATION*.xlsx
-/Generated image *.png
-/photo_*.jpg
-/PIMASCOR-*.png
-/possible-fixes/
-/production-app/docs/reference/*.pdf
-/production-app/handoff/bridge-pimascor/
+# Approved NDA/client material is synchronized to the authorized private mirror.
+# Credentials, secrets, databases, logs, and runtime state remain excluded.
