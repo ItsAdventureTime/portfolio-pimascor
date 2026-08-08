@@ -4,6 +4,9 @@ This index is the starting point for any agent, operator, reviewer, or future
 maintainer working on production. Demo documentation is intentionally separate
 and must not be used as a production deployment instruction.
 
+For demo-only work, start with `DEMO-DOCUMENTATION-INDEX.md`; it defines the
+demo authority, runbook sequence, generated-artifact boundary, and exclusions.
+
 ## Business authority
 
 - `REQUIREMENTS-V2.md` — approved production rules and role boundaries.

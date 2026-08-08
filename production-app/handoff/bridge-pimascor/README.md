@@ -4,6 +4,10 @@ This directory contains the client-facing handoff packet for the hosted
 PIMASCOR production service. It is intentionally separate from the demo
 materials and from the restricted deployment source.
 
+For demo work, start with `../../docs/DEMO-DOCUMENTATION-INDEX.md`. The demo
+runbook, demo Quadlets, synthetic reset, and demo source-of-truth are not in
+this production handoff packet.
+
 ## Send to Bridge/PIMASCOR
 
 Use `client-packet/` for the approved PDF packet and its manifest. The packet
@@ -13,6 +17,10 @@ format reference.
 
 The packet does not contain source code, Podman Quadlets, Caddy configuration,
 Bash deployment scripts, credentials, production data, or secret values.
+
+The PDFs under `client-packet/` are generated delivery snapshots. They are not
+authoritative after their generation date; update the Markdown sources and
+regenerate the packet before a new handoff.
 
 ## Keep with the VPS operator
 

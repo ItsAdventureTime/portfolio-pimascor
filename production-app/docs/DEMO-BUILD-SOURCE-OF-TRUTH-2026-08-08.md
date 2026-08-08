@@ -5,6 +5,9 @@ documentation. It supplements, and where necessary supersedes, older product
 specifications, requirements, handoff snapshots, and generated client-packet
 PDFs. Production behavior is not changed by these demo defaults.
 
+Use `DEMO-DOCUMENTATION-INDEX.md` for the complete demo file map and release
+sequence.
+
 ## Demo entry behavior
 
 - Demo controls are compiled only when `VITE_DEPLOYMENT_TIER=demo` (or the
