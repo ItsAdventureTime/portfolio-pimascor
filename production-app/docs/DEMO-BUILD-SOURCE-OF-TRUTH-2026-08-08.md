@@ -28,6 +28,11 @@ sequence.
 
 ## Demo capability baseline
 
+- Role switching has one canonical UI surface: Admin → Controls → workspace
+  picker. The top bar must not duplicate this selector. A preview banner and
+  **Return to Admin** action remain visible while operating in another
+  workspace.
+
 - Admin, GM, DCS, and Mich can evaluate Shipment Profitability and the authorized
   Accounting Export workflows. Requester is not given Shipment Profitability in
   the current demo baseline.

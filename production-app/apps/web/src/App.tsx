@@ -3134,7 +3134,6 @@ function App() {
           <div className="topbar__actions">
             <button className="global-search" onClick={() => setSearchOpen(true)}><Search size={17} /><span>Search anything</span><kbd>⌘ K</kbd></button>
             <button className="icon-button notification-button" onClick={() => setNotificationsOpen((current) => !current)} aria-label="Notifications"><Bell size={20} />{notificationsRead ? null : <span>3</span>}</button>
-            {isDemoBuild && signedInRole === 'Admin' ? <label className="role-switch"><span>Testing workspace</span><select aria-label="Switch workspace for testing" value={role} onChange={(event) => previewRole(event.target.value as Role)}>{documentedRoles.map((item) => <option key={item} value={item}>{item}</option>)}</select><ChevronDown size={15} aria-hidden="true" /></label> : null}
             <button className="profile-button" onClick={() => signedInRole === 'Admin' && (isRolePreview ? returnToAdmin() : navigate('admin'))}><span>{authUser.display_name.split(' ').map((part) => part[0]).slice(0, 2).join('').toUpperCase()}</span><div><strong>{authUser.display_name}</strong><small>{isRolePreview ? `Admin • operating as ${role}` : role}</small></div><ChevronDown size={15} /></button>
             <button className="icon-button" aria-label="Sign out" title="Sign out" onClick={() => signOut().catch(() => undefined).finally(() => { setAuthUser(null); window.location.hash = 'login' })}><LogOut size={19} /></button>
           </div>

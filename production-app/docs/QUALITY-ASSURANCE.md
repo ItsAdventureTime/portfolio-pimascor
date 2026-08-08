@@ -39,7 +39,8 @@ The demo login must visibly offer **Enter demo as Admin** without credential
 fields. It must create a server-backed demo session, and the authenticated
 Admin controls must expose the Requester, GM, DCS, and Mich workspaces for
 evaluation without changing the authenticated identity. Production must retain
-the normal credential and email-verification flow.
+the normal credential and email-verification flow. Verify that the role picker
+appears only in Admin Controls, not as a duplicate top-bar selector.
 
 For each attempted forbidden action, verify a `403` or the equivalent explicit
 permission message. For each state-changing action, verify the resulting record

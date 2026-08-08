@@ -88,6 +88,14 @@ Shows summary, next action, key amounts, ownership, and timeline without losing 
 
 States the record, action, consequence, and whether it can be reversed. High-risk actions require a reason or typed confirmation only when proportionate.
 
+### Role workspace switcher
+
+Provide one canonical switcher in the Administrator controls workspace. Do not
+duplicate the same role selector in the global top bar. When a role workspace
+is active, show a persistent, keyboard-accessible status banner with a clear
+return-to-Administrator action. This reduces competing navigation surfaces and
+keeps the operator's real authenticated identity visible.
+
 ## 6. Motion
 
 - Use brief 120 to 200 millisecond transitions for drawers, menus, and state changes.

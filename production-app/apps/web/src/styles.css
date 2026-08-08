@@ -94,10 +94,6 @@ small { color: var(--muted); }
 .icon-button:hover { color: var(--navy-900); background: var(--navy-100); }
 .notification-button { position: relative; border-color: var(--border); background: #fff; }
 .notification-button > span { position: absolute; top: -5px; right: -4px; min-width: 18px; padding: 2px 4px; color: white; background: var(--red-700); border: 2px solid white; border-radius: 999px; font-size: .56rem; font-weight: 800; }
-.role-switch { height: 42px; display: flex; align-items: center; padding: 0 8px 0 11px; gap: 6px; color: var(--muted); background: #fff; border: 1px solid var(--border); border-radius: 10px; }
-.role-switch span { font-size: .68rem; }
-.role-switch select { padding: 0 17px 0 0; color: var(--navy-900); background: transparent; border: 0; appearance: none; font-size: .74rem; font-weight: 750; }
-.role-switch svg { margin-left: -17px; pointer-events: none; }
 .profile-button { min-height: 44px; display: flex; align-items: center; padding: 4px 6px 4px 4px; gap: 9px; background: #fff; border: 1px solid var(--border); border-radius: 12px; text-align: left; }
 .profile-button > span { width: 34px; height: 34px; display: grid; place-items: center; color: var(--navy-900); background: var(--gold-100); border-radius: 9px; font-size: .72rem; font-weight: 850; }
 .profile-button div { display: flex; flex-direction: column; }
@@ -771,7 +767,7 @@ body.printing-official-document > .print-document-host { display: block !importa
 .topbar__title p { font-size: 1.02rem; }
 .topbar__title span { font-size: .8rem; }
 .global-search span, .profile-button strong { font-size: .84rem; }
-.profile-button small, .role-switch span, .role-switch select { font-size: .75rem; }
+.profile-button small { font-size: .75rem; }
 .page-heading p:last-child { font-size: .94rem; }
 .button { font-size: .84rem; }
 .text-button { font-size: .82rem; }
@@ -893,7 +889,7 @@ td small { font-size: .72rem; }
   .dashboard-grid { grid-template-columns: 1fr; }
   .admin-grid { grid-template-columns: 1fr; }
   .role-picker { grid-template-columns: repeat(3, minmax(0,1fr)); }
-  .profile-button div, .profile-button > svg, .role-switch > span { display: none; }
+  .profile-button div, .profile-button > svg { display: none; }
   .global-search { width: 190px; }
 }
 
@@ -950,7 +946,7 @@ td small { font-size: .72rem; }
 
 @media (max-width: 760px) {
   .topbar { min-height: 70px; padding: 10px 14px; }
-  .topbar__title span, .role-switch, .profile-button { display: none; }
+  .topbar__title span, .profile-button { display: none; }
   .topbar__title p { margin: 0; font-size: .92rem; }
   .content { padding: 20px 13px 42px; }
   .page-heading { align-items: flex-start; margin-bottom: 17px; }

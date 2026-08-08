@@ -62,6 +62,11 @@ instructions remain separate and must not be inferred from this index.
 - `DESIGN-SYSTEM.md`, `UX-PHILIPPINE-CONTROLS.md`, and `PWA-INSTALLATION.md`
   — user-experience and accessibility context.
 
+The demo role switch intentionally has one canonical location in Admin
+Controls. Do not re-add a duplicate top-bar selector in production; carry the
+same single-surface pattern forward while preserving the preview banner and
+return action.
+
 ## Generated and non-authoritative material
 
 `../handoff/bridge-pimascor/client-packet/` contains generated PDF snapshots
