@@ -35,9 +35,11 @@ or a command history.
 | DCS | Owns ordinary DCS Payment actions and the emergency/contingency override of a GM-owned approval, with an attributable reason and active configured funding source; cannot create arbitrary sources. |
 | Admin | Can administer funding sources, tax profiles, and activity; still cannot bypass CSRF, evidence, version, finalization, or confirmation controls. |
 
-The demo login must visibly offer **Login as Admin** / **Enter demo as Admin**,
-and the authenticated Admin controls must expose the Requester, GM, DCS, and
-Mich workspaces for evaluation without changing the authenticated identity.
+The demo login must visibly offer **Enter demo as Admin** without credential
+fields. It must create a server-backed demo session, and the authenticated
+Admin controls must expose the Requester, GM, DCS, and Mich workspaces for
+evaluation without changing the authenticated identity. Production must retain
+the normal credential and email-verification flow.
 
 For each attempted forbidden action, verify a `403` or the equivalent explicit
 permission message. For each state-changing action, verify the resulting record

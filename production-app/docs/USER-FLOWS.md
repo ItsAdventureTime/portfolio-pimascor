@@ -7,8 +7,8 @@ hand-offs, like a folder moving between accountable desks.
 ## Shipment Profitability after sign-in
 
 ```text
-Demo user selects **Login as Admin** and enters the demo, or a production user
-completes the normal sign-in flow.
+Demo user selects **Enter demo as Admin** and receives a server-backed synthetic
+session, or a production user completes the normal sign-in flow.
 Admin may then select an explicit Requester, GM, DCS, or Mich evaluation
 workspace without changing the authenticated Admin identity.
 User enters the permitted workspace

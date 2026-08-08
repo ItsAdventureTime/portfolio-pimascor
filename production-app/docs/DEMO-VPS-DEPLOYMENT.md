@@ -149,7 +149,9 @@ grep -R --quiet --fixed-strings 'Module-specific accounting CSVs' "$HOME/bridge-
 
 Then use a private/incognito browser window to check the public demo:
 
-1. Sign in with an approved demo account.
+1. Select **Enter demo as Admin**; no username, password, or OTP is required
+   in the synthetic demo. Confirm the session opens through the server-backed
+   demo endpoint.
 2. Open **Accounting Export** and confirm **Billing CSV** and **Collections CSV**
    are visible.
 3. Confirm the local-record archive action explains that archives are disabled

@@ -13,10 +13,11 @@ sequence.
 - Demo controls are compiled only when `VITE_DEPLOYMENT_TIER=demo` (or the
   explicitly equivalent `VITE_APP_ENV=demo`) is supplied. Missing markers fail
   closed, so a URL path alone never enables demo behavior.
-- The demo sign-in screen visibly offers **Login as Admin** / **Enter demo as
-  Admin** as the primary evaluation path.
-- The Admin entry remains an explicit user action; it is never silent auto-login
-  and never appears in the production build.
+- The demo sign-in screen visibly offers **Enter demo as Admin** as the primary
+  evaluation path and does not request username, password, or OTP credentials.
+- The button creates a normal server-side session only through the demo-tier
+  endpoint. It remains an explicit user action, is auditable, and never appears
+  in the production build.
 - After entering the demo, the Admin workspace visibly exposes the documented
   Requester, GM, DCS, and Mich workspaces for evaluation.
 - Switching workspaces is an attributable Admin testing mode. It does not create

@@ -43,7 +43,7 @@ instructions remain separate and must not be inferred from this index.
 
 ## Reference — implementation contracts
 
-- `DEMO-BUILD-SOURCE-OF-TRUTH-2026-08-08.md` — demo entry, role evaluation,
+- `DEMO-BUILD-SOURCE-OF-TRUTH-2026-08-08.md` — one-click demo entry, role evaluation,
   exports, document viewer, GM override, and precedence rules.
 - `REQUIREMENTS-V2.md`, `PRODUCT-SPEC.md`, `USER-FLOWS.md` — general workflow
   contracts; apply the newer demo overrides first.

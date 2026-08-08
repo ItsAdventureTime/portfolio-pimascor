@@ -12,6 +12,24 @@ def test_password_and_email_code_login(client):
     assert csrf
 
 
+def test_demo_session_requires_demo_tier_and_creates_normal_session(client):
+    settings = get_settings()
+    original_tier = settings.deployment_tier
+    try:
+        settings.deployment_tier = "production"
+        unavailable = client.post("/api/v1/auth/demo")
+        assert unavailable.status_code == 404
+
+        settings.deployment_tier = "demo"
+        entered = client.post("/api/v1/auth/demo")
+        assert entered.status_code == 200, entered.text
+        assert entered.json()["user"]["username"] == "admin"
+        assert "pimascor_session" in client.cookies
+        assert client.get("/api/v1/auth/me").status_code == 200
+    finally:
+        settings.deployment_tier = original_tier
+
+
 def test_email_code_expires_in_five_minutes(client):
     response = client.post(
         "/api/v1/auth/password/start",

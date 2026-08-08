@@ -615,6 +615,10 @@ td small { display: block; margin-top: 4px; font-size: .7rem; }
 .login-card p { margin-bottom: 0; font-size: .76rem; }
 .login-card .button { width: 100%; min-height: 46px; }
 .login-card .text-button { align-self: center; }
+.login-demo-entry { gap: 14px; }
+.login-demo-entry > div { display: grid; gap: 7px; }
+.login-demo-entry > div p { margin: 0; }
+.login-demo-entry__note { color: var(--muted); font-size: .68rem !important; text-align: center; }
 .code-input { height: 58px !important; font-size: 1.55rem !important; font-weight: 750 !important; letter-spacing: .28em; text-align: center; }
 .code-expiry { display: flex; align-items: center; justify-content: center; gap: 6px; color: var(--muted); font-size: .67rem; }
 .login-step { display: grid; grid-template-columns: auto 1fr auto; align-items: center; margin-top: 8px; gap: 7px; }

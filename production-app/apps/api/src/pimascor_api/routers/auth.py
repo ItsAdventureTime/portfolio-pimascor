@@ -8,7 +8,7 @@ from sqlalchemy.orm import Session
 from ..config import Settings, get_settings
 from ..db import get_db
 from ..dependencies import AuthContext, get_auth_context, require_csrf
-from ..models import EmailChallenge, LoginSession, PasswordResetRequest, User, UserStatus, utc_now
+from ..models import EmailChallenge, LoginSession, PasswordResetRequest, Role, User, UserStatus, utc_now
 from ..schemas import (
     ActivationCompleteRequest,
     ActivationStartRequest,
@@ -71,6 +71,51 @@ def mask_email(email: str) -> str:
     local, domain = email.split("@", 1)
     visible = local[:2] if len(local) > 2 else local[:1]
     return f"{visible}{'*' * max(2, len(local) - len(visible))}@{domain}"
+
+
+@router.post("/demo", response_model=AuthenticatedResponse)
+def demo_session(
+    response: Response,
+    request: Request,
+    db: Session = Depends(get_db),
+    settings: Settings = Depends(get_settings),
+) -> AuthenticatedResponse:
+    """Create the explicitly synthetic Admin session used by the hosted demo."""
+    if settings.deployment_tier != "demo":
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Demo sign-in is unavailable")
+
+    user = db.scalar(
+        select(User).where(
+            User.username == "admin",
+            User.role == Role.ADMIN,
+            User.status == UserStatus.ACTIVE,
+        )
+    )
+    if user is None:
+        raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail="Demo Admin account is unavailable")
+
+    raw_session = create_session_secret()
+    raw_csrf = create_csrf_secret()
+    login_session = LoginSession(
+        user_id=user.id,
+        token_hash=hash_secret(raw_session),
+        csrf_hash=hash_secret(raw_csrf),
+        expires_at=utc_now() + timedelta(hours=settings.session_ttl_hours),
+    )
+    db.add(login_session)
+    db.flush()
+    record_audit(
+        db,
+        actor_user_id=user.id,
+        action="AUTH_DEMO_SESSION_CREATED",
+        entity_type="session",
+        entity_id=login_session.id,
+        correlation_id=getattr(request.state, "correlation_id", None),
+        reason="Explicit synthetic demo entry",
+    )
+    db.commit()
+    _set_session_cookies(response, settings, login_session, raw_session, raw_csrf)
+    return AuthenticatedResponse(user=MeResponse.model_validate(user), csrf_token=raw_csrf)
 
 
 @router.post("/password/start", response_model=PasswordStartResponse)

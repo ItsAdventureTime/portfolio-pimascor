@@ -149,6 +149,14 @@ export type PasswordStartResult = {
   development_code?: string | null
 }
 
+export async function startDemoSession() {
+  const result = await request<{ user: ApiUser; csrf_token: string }>('/auth/demo', {
+    method: 'POST',
+  })
+  csrfToken = result.csrf_token
+  return result.user
+}
+
 export async function startPassword(username: string, password: string) {
   return request<PasswordStartResult>('/auth/password/start', {
     method: 'POST',
