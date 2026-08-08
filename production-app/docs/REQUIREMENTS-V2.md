@@ -15,7 +15,9 @@ This baseline reconciles:
 1. `01_BRIDGE_Operational_Dashboard_Meeting_AI_Context.md` — evaluation meeting findings.
 2. `02_BRIDGE_Access_Workflow_Requirements_AI_Context.md` — post-meeting role and workflow corrections.
 3. `context-v2.zip` — screenshots of the legacy Apps Script and revised demo used during the evaluation.
-4. `possible-fixes/` — 23 July screenshot set and annotated workflow corrections.
+4. The locally supplied screenshot set and annotated workflow corrections
+   (kept outside the remote repository) — visual evidence only, not runtime
+   data or an implementation dependency.
 5. `Operational Dashboard and Accounting Progress Meeting.md` — the
    109-minute owner evaluation reviewed on 24 July 2026.
 

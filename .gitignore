@@ -30,29 +30,18 @@
 **/*.log
 *.bundle
 
-# Local-only NDA/source-review material and live business records. Keep these
-# outside the remote repository; retain them locally only when required for
-# project evidence or handoff preparation.
-/ACT-*.pdf
-/BUDGET REQUEST *.xlsx
-/MAY PAYMENT VERIFICATION*.xlsx
-/Generated image *.png
-/PIMASCOR-*.png
-/photo_*.jpg
-/possible-fixes/
-production-app/handoff/bridge-pimascor/*.zip
-
 # Credential-bearing source material must never enter Git history.
 /Logins - Demo.docx
 /Logins - Demo.pdf
 /Re: Request for Website Credentials.pdf
 
-# NDA/client evidence and working context (local-only)
+# NDA/client evidence, working context, and generated delivery material
+# remain local-only. Never force-add a matching path.
 /01_BRIDGE_*.md
 /02_BRIDGE_*.md
 /PIMASCOR-ChatGPT-Context-Prompt.md
 /ACT-*.pdf
-/BUDGET REQUEST*.xlsx
+/BUDGET REQUEST *.xlsx
 /MAY PAYMENT VERIFICATION*.xlsx
 /Generated image *.png
 /photo_*.jpg

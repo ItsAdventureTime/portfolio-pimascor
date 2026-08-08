@@ -58,3 +58,12 @@ the account-bootstrap secret; ordinary releases preserve it.
 5. Record the accepted commit in the handoff manifest.
 6. Use signed commits and GitHub CLI remote checks; verify the GitHub signature
    rather than assuming a local commit is verified.
+
+## Repository hygiene
+
+The remote repository contains source, migrations, tests, reviewed
+documentation, deployment definitions, approved reference PDFs, and the
+client-facing handoff packet. It excludes live business records, screenshots
+and photographs supplied for one-off review, generated planning images, local
+archives, credentials, secrets, and runtime data. The root `.gitignore` is the
+authoritative prevention layer; a local-only file must not be force-added.
