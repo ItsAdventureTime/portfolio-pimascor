@@ -200,11 +200,39 @@ Run on the Mac:
 /Users/jk.deguzman/dev/bridge-ph_Dashboard/production-app/infra/scripts/deploy-production-vps.sh
 ```
 
+The Mac-side script archives the committed `production-app` tree and transfers
+it to `/var/home/jk/bridge-ph/pimascor/source`. It does not transfer secrets,
+PostgreSQL data, uploads, backups, or the demo tree. Repeat it for every
+committed production release. When the approved account names, email
+addresses, or roles change, use the explicit account-refresh option:
+
+```bash
+/Users/jk.deguzman/dev/bridge-ph_Dashboard/production-app/infra/scripts/deploy-production-vps.sh --refresh-account-manifest
+```
+
+That option replaces only the account-bootstrap Podman secret. It does not
+replace passwords or existing user sessions. The subsequent production update
+re-runs the bootstrap idempotently; already-correct accounts are unchanged and
+new or corrected pending accounts are reconciled.
+
 After SSH login, run on the VPS:
 
 ```bash
 cd /var/home/jk/bridge-ph/pimascor/source && ./infra/scripts/provision-production-secrets.sh && ./infra/scripts/update-production.sh --source /var/home/jk/bridge-ph/pimascor/source && ./infra/scripts/install-production-caddy.sh
 ```
+
+The normal repeatable sequence is to run the Mac transfer script, then run
+`update-production.sh` on the VPS. Migrations execute through `alembic upgrade
+head`: each revision runs once because Alembic records it in the database.
+The account bootstrap, service restarts, web asset replacement, and backup
+timer activation are safe to repeat. Secret provisioning preserves existing
+secrets unless the explicit account-manifest replacement option is used.
+
+Local macOS builds are optional validation only. The deployment script builds
+the production images on the VPS with its rootless Podman runtime. If local
+validation is needed, use the existing Podman machine and disposable
+`podman run --rm` containers; do not install production secrets or data on the
+Mac.
 
 This is the complete VPS sequence. Secret provisioning preserves existing
 secrets and only prompts for missing values. The updater builds and activates

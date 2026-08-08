@@ -39,6 +39,11 @@ and must not be used as a production deployment instruction.
 - `../infra/quadlet/demo/` and `DEMO-VPS-DEPLOYMENT.md` — demo only; do not
   mix with production paths or secrets.
 
+The Mac-side production transfer entry point is
+`../infra/scripts/deploy-production-vps.sh`. The optional
+`--refresh-account-manifest` flag is the only path that intentionally replaces
+the account-bootstrap secret; ordinary releases preserve it.
+
 ## Change-control rules
 
 1. Confirm the change belongs to production before editing.

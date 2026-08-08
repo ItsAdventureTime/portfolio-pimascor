@@ -6,6 +6,19 @@ SSH_USER="jk"
 SSH_PORT="22"
 SSH_TARGET="${SSH_USER}@${SSH_HOST}"
 SOURCE_ROOT="$(CDPATH= cd -- "$(dirname -- "$0")/../.." && pwd)"
+REFRESH_ACCOUNT_MANIFEST=false
+
+while [ "$#" -gt 0 ]; do
+  case "$1" in
+    --refresh-account-manifest) REFRESH_ACCOUNT_MANIFEST=true; shift ;;
+    --help|-h)
+      printf '%s\n' 'Usage: deploy-production-vps.sh [--refresh-account-manifest]'
+      printf '%s\n' '  --refresh-account-manifest  Replace the VPS account-bootstrap secret with the committed production identities.'
+      exit 0
+      ;;
+    *) printf 'Unknown option: %s\n' "$1" >&2; exit 2 ;;
+  esac
+done
 
 cd "$SOURCE_ROOT"
 git rev-parse --is-inside-work-tree >/dev/null 2>&1 || {
@@ -45,6 +58,16 @@ ssh -o ConnectTimeout=15 -o ServerAliveInterval=30 -o ServerAliveCountMax=3 -p "
   trap - EXIT
 '
 printf 'Transferred committed production release: %s\n' "$release_commit"
+if [ "$REFRESH_ACCOUNT_MANIFEST" = true ]; then
+  printf '%s\n' 'Refreshing the production account-bootstrap secret on the VPS.'
+  ssh -tt -o ConnectTimeout=15 -o ServerAliveInterval=30 -o ServerAliveCountMax=3 -p "$SSH_PORT" "$SSH_TARGET" \
+    'cd /var/home/jk/bridge-ph/pimascor/source && ./infra/scripts/provision-production-secrets.sh --replace-account-manifest'
+fi
 printf '%s\n' 'Log in to the VPS, then run:'
+if [ "$REFRESH_ACCOUNT_MANIFEST" = true ]; then
+  printf '%s\n' 'The account-bootstrap secret was refreshed; update-production.sh will apply the pending identities idempotently.'
+else
+  printf '%s\n' 'Account identities are unchanged. To refresh them explicitly, rerun this script with --refresh-account-manifest.'
+fi
 printf '%s\n' 'cd /var/home/jk/bridge-ph/pimascor/source && ./infra/scripts/provision-production-secrets.sh'
 printf '%s\n' 'cd /var/home/jk/bridge-ph/pimascor/source && ./infra/scripts/update-production.sh --source /var/home/jk/bridge-ph/pimascor/source'

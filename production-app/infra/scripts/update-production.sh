@@ -30,6 +30,8 @@ required_files=(
   "${SOURCE_ROOT}/apps/api/Containerfile"
   "${SOURCE_ROOT}/apps/api/migrations/versions/20260729_0011_data_exports.py"
   "${SOURCE_ROOT}/apps/api/migrations/versions/20260801_0012_account_activation.py"
+  "${SOURCE_ROOT}/apps/api/migrations/versions/20260803_0013_password_reset_requests.py"
+  "${SOURCE_ROOT}/apps/api/migrations/versions/20260803_0014_release_tracking.py"
   "${SOURCE_ROOT}/apps/web/Containerfile"
   "${SOURCE_ROOT}/infra/quadlet/production/bridge-ph-pimascor-api.container"
   "${SOURCE_ROOT}/infra/quadlet/production/bridge-ph-pimascor-account-bootstrap.container"
@@ -42,6 +44,15 @@ required_files=(
 )
 for required_file in "${required_files[@]}"; do
   [[ -f "$required_file" ]] || { printf 'Missing required file: %s\n' "$required_file" >&2; exit 1; }
+done
+for migration in 20260729_0011 20260801_0012 20260803_0013 20260803_0014; do
+  migration_file="${SOURCE_ROOT}/apps/api/migrations/versions/${migration}_*.py"
+  migration_matches=( ${migration_file} )
+  [[ "${#migration_matches[@]}" -eq 1 ]] || { printf 'Missing or ambiguous production migration: %s\n' "$migration" >&2; exit 1; }
+  grep -Fqx "revision = \"${migration}\"" "${migration_matches[0]}" || {
+    printf 'Unexpected revision ID in migration: %s\n' "${migration_matches[0]}" >&2
+    exit 1
+  }
 done
 [[ -x "${SOURCE_ROOT}/infra/scripts/install-production-caddy.sh" ]] || { printf '%s\n' 'Caddy installer is not executable in the deployed source.' >&2; exit 1; }
 release_commit="$(tr -d '\r\n' < "${SOURCE_ROOT}/.deployment-source-commit")"
