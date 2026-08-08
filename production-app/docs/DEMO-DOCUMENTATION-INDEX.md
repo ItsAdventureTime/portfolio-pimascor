@@ -7,6 +7,14 @@ instructions remain separate and must not be inferred from this index.
 
 ## Authority and scope
 
+Before changing or publishing demo content, read
+`REPOSITORY-EXPOSURE-AND-NDA.md`. It defines which source and documentation
+may enter the private GitHub mirror and which client material must stay local.
+
+Before changing or publishing demo content, read
+`REPOSITORY-EXPOSURE-AND-NDA.md`. It defines which source and documentation
+may enter the private GitHub mirror and which client material must stay local.
+
 1. `DEMO-BUILD-SOURCE-OF-TRUTH-2026-08-08.md` is the controlling demo
    decision record. Newer dated demo decisions supersede it.
 2. `DEMO-VPS-DEPLOYMENT.md` is the current demo release runbook and contains

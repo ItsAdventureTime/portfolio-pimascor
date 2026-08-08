@@ -50,3 +50,5 @@ The current production requirements source of truth is `docs/MEETING-DECISIONS-2
 
 For demo work, start with `docs/DEMO-DOCUMENTATION-INDEX.md`. Do not use the
 production runbook, production Quadlets, or production secrets for the demo.
+For the local-only NDA boundary and remote publication checks, read
+`docs/REPOSITORY-EXPOSURE-AND-NDA.md`.

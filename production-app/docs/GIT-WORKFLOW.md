@@ -9,6 +9,11 @@ git@github.com:ItsAdventureTime/bridge-pimascor.git
 
 ## Required sequence for every tracked change
 
+Before staging, check `docs/REPOSITORY-EXPOSURE-AND-NDA.md`. Client records,
+supplied quotation PDFs, screenshots, photos, generated handoff packets,
+credentials, local databases, and runtime output are local-only even though
+the remote repository is private.
+
 1. Review the worktree and confirm the intended files are the only changes.
 2. Run the relevant local checks from `CONTRIBUTING.md`.
 3. Commit the change locally with a focused Conventional Commit message.
@@ -28,6 +33,11 @@ evidence. GitHub CLI is used for authentication and verification; local Git
 remains the commit and push transport for this private repository. `gh repo
 sync` is not a replacement for publishing local commits; it synchronizes a
 repository from another repository or parent branch.
+
+Removing a file from the current tree does not remove it from prior commits.
+If a confirmed secret or NDA file was committed historically, stop and use the
+approved sensitive-data-removal procedure. History rewriting requires explicit
+authorization because it changes commit IDs and may require a force push.
 
 ## Exact synchronization commands
 
