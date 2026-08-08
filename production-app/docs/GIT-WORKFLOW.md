@@ -13,15 +13,21 @@ git@github.com:ItsAdventureTime/bridge-pimascor.git
 2. Run the relevant local checks from `CONTRIBUTING.md`.
 3. Commit the change locally with a focused Conventional Commit message.
 4. Confirm `origin` still resolves to the private repository above.
-5. Push the commit to `main` without force-push.
-6. Verify GitHub authentication and the published commit with GitHub CLI.
-7. For demo changes, use the committed tree with `infra/scripts/deploy-demo-vps.sh` and then run the documented VPS activation command.
+5. Run `gh auth setup-git --hostname github.com` so GitHub CLI supplies the
+   credential helper used by Git operations.
+6. Push the commit to `main` without force-push.
+7. Verify GitHub authentication and the published commit with GitHub CLI.
+8. For demo changes, use the committed tree with
+   `infra/scripts/deploy-demo-vps.sh` and then run the documented VPS
+   activation command.
 
 Local Git history is not evidence that the VPS or GitHub received a release.
 Remote push output plus a GitHub CLI API verification are evidence of GitHub
 synchronization; VPS command output is required separately for deployment
 evidence. GitHub CLI is used for authentication and verification; local Git
-remains the commit and push transport for this private repository.
+remains the commit and push transport for this private repository. `gh repo
+sync` is not a replacement for publishing local commits; it synchronizes a
+repository from another repository or parent branch.
 
 ## Exact synchronization commands
 
@@ -30,6 +36,7 @@ Run from the repository root after checks and after committing:
 ```bash
 git remote get-url origin
 git status --short
+gh auth setup-git --hostname github.com
 git push origin main
 gh auth status
 gh repo view ItsAdventureTime/bridge-pimascor --json nameWithOwner,isPrivate,defaultBranchRef
