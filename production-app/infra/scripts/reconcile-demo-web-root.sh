@@ -20,10 +20,16 @@ CONTAINER_WEB_ROOT="/srv/bridge-ph-pimascor-demo"
   exit 1
 }
 
-expected_mount="${WEB_ROOT}/web-dist -> ${CONTAINER_WEB_ROOT}"
-actual_mounts="$(podman inspect caddy --format '{{range .Mounts}}{{println .Source "->" .Destination}}{{end}}')"
-[[ "${actual_mounts}" == *"${expected_mount}"* ]] || {
-  printf 'Refusing cleanup: Caddy is not mounted from %s.\n' "${expected_mount}" >&2
+expected_web_root="$(realpath "${WEB_ROOT}/web-dist")"
+actual_web_root="$(podman inspect caddy --format "{{range .Mounts}}{{if eq .Destination \"${CONTAINER_WEB_ROOT}\"}}{{.Source}}{{end}}{{end}}")"
+[[ -n "${actual_web_root}" ]] || {
+  printf 'Refusing cleanup: Caddy has no mount at %s.\n' "${CONTAINER_WEB_ROOT}" >&2
+  exit 1
+}
+actual_web_root="$(realpath "${actual_web_root}")"
+[[ "${actual_web_root}" == "${expected_web_root}" ]] || {
+  printf 'Refusing cleanup: Caddy mount resolves to %s; expected %s.\n' \
+    "${actual_web_root}" "${expected_web_root}" >&2
   exit 1
 }
 

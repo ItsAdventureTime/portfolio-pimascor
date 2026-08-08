@@ -34,7 +34,8 @@ instructions remain separate and must not be inferred from this index.
 - `../infra/scripts/deploy-demo-vps.sh` — Mac-side transfer entry point.
 - `../infra/scripts/update-demo.sh` — VPS-only guarded build/migration/reset.
 - `../infra/scripts/reconcile-demo-web-root.sh` — Caddy mount and stale-stage
-  reconciliation.
+  reconciliation; it validates canonical paths so `/home/jk` and
+  `/var/home/jk` equivalents are not falsely rejected.
 - `../infra/scripts/cleanup-demo-rollback.sh` — remove obsolete rollback
   directories only after the active release is verified.
 - `QUALITY-ASSURANCE.md` — source and deployed acceptance evidence.

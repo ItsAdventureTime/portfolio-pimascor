@@ -73,7 +73,10 @@ a source tree without a valid commit marker.
 The source, runtime data, and Caddy-served PWA share one canonical application
 root. The updater builds the PWA only into
 `/var/home/jk/bridge-ph/pimascor-demo/web-dist`. Caddy's rootless Quadlet must
-bind that exact host directory read-only to `/srv/bridge-ph-pimascor-demo`.
+bind that directory read-only to `/srv/bridge-ph-pimascor-demo`. The guarded
+reconciliation helper compares canonicalized paths, so Fedora's equivalent
+`/home/jk/...` symlink representation is accepted when it resolves to the same
+directory.
 The top-level `~/pimascor-demo` path is invalid and must not be mounted or used.
 
 Because Caddy bind-mounts the `web-dist` directory itself, the updater keeps
