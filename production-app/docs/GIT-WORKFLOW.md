@@ -62,3 +62,26 @@ in the repository or in deployment scripts.
 The final `gh api` SHA must equal the local `git rev-parse HEAD` output. Never
 paste the token printed by `gh auth status` into a command, document, issue, or
 log.
+
+## Required deployment handoff for production changes
+
+Every response that changes production code, infrastructure, or deployment
+configuration must include both commands below, clearly labelled. The Mac
+command transfers the committed production tree; the VPS command activates it.
+Do not describe local build output as proof of VPS deployment.
+
+**Run on macOS:**
+
+```bash
+/Users/jk.deguzman/dev/bridge-ph_Dashboard/production-app/infra/scripts/deploy-production-vps.sh
+```
+
+**Run after logging into the VPS:**
+
+```bash
+cd /var/home/jk/bridge-ph/pimascor/source && ./infra/scripts/provision-production-secrets.sh && ./infra/scripts/update-production.sh --source /var/home/jk/bridge-ph/pimascor/source && ./infra/scripts/install-production-caddy.sh
+```
+
+If the approved account manifest changed, the Mac command must use
+`--refresh-account-manifest`; secrets, migrations, and account bootstrap remain
+idempotent according to `PRODUCTION-VPS-DEPLOYMENT.md`.
