@@ -14,11 +14,14 @@ git@github.com:ItsAdventureTime/bridge-pimascor.git
 3. Commit the change locally with a focused Conventional Commit message.
 4. Confirm `origin` still resolves to the private repository above.
 5. Push the commit to `main` without force-push.
-6. For demo changes, use the committed tree with `infra/scripts/deploy-demo-vps.sh` and then run the documented VPS activation command.
+6. Verify GitHub authentication and the published commit with GitHub CLI.
+7. For demo changes, use the committed tree with `infra/scripts/deploy-demo-vps.sh` and then run the documented VPS activation command.
 
 Local Git history is not evidence that the VPS or GitHub received a release.
-Remote push output is evidence of GitHub synchronization; VPS command output is
-required separately for deployment evidence.
+Remote push output plus a GitHub CLI API verification are evidence of GitHub
+synchronization; VPS command output is required separately for deployment
+evidence. GitHub CLI is used for authentication and verification; local Git
+remains the commit and push transport for this private repository.
 
 ## Exact synchronization commands
 
@@ -28,8 +31,15 @@ Run from the repository root after checks and after committing:
 git remote get-url origin
 git status --short
 git push origin main
+gh auth status
+gh repo view ItsAdventureTime/bridge-pimascor --json nameWithOwner,isPrivate,defaultBranchRef
+gh api repos/ItsAdventureTime/bridge-pimascor/commits/main --jq .sha
 ```
 
 The first command must print the private URL shown above. Stop if it prints a
 different host or repository. Do not place credentials, tokens, or private keys
 in the repository or in deployment scripts.
+
+The final `gh api` SHA must equal the local `git rev-parse HEAD` output. Never
+paste the token printed by `gh auth status` into a command, document, issue, or
+log.
