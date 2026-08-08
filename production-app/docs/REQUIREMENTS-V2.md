@@ -116,9 +116,9 @@ The distinct Bridge Accounting role is deferred until its exact duties are appro
 ## DCS for Payment
 
 - Every GM-approved Budget Request, Additional Budget, OPEX, Marketing, Loan Payment, and Other payment request appears in one DCS/CEO queue.
-- GM and Mich may read the queue; DCS and Admin act normally. In the current
-  demo, GM may use an exceptional DCS Payment override only with a reasoned,
-  attributable explanation.
+- GM and Mich may read the queue; DCS and Admin act normally. In production,
+  DCS may use an exceptional emergency override of a GM-owned approval only
+  with a reasoned, attributable explanation.
 - DCS may pay, place on hold, return for correction, resume, or annotate.
 - Actual funding source comes from an administrator-controlled list. The requester does not select the bank account.
 - The permanent payment record includes amount, payment date, method, funding source, recipient, transaction reference, note, actor, and time.

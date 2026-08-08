@@ -103,16 +103,10 @@ create_account_manifest() {
   fi
 
   printf '%s\n' 'Preparing the Section 1 production accounts. Users choose passwords after email OTP activation.'
-  local processor1_email=''
   if [[ "$INTERACTIVE_ACCOUNT_MANIFEST" == true ]]; then
     printf '%s\n' 'Interactive account mode is enabled; press Enter to keep each documented default.'
   else
     printf '%s\n' 'Using the documented defaults; use --interactive-account-manifest only to customize them.'
-    printf '%s\n' 'Processor 1 has an incomplete email in the source document and must be corrected.'
-    read -r -p 'Processor 1 real email address: ' processor1_email
-  fi
-  if [[ "$INTERACTIVE_ACCOUNT_MANIFEST" != true ]]; then
-    [[ "$processor1_email" == *@*.* ]] || { printf '%s\n' 'A valid Processor 1 email address is required; the source value is incomplete.' >&2; exit 1; }
   fi
 
   local manifest='['
@@ -134,15 +128,14 @@ create_account_manifest() {
   }
   append_account 'Admin (Team)' ADMIN admin-team team@bridge-ph.com 'Bridge PH Team'
   append_account 'Admin (Alyssa)' ADMIN alyssa.d alyssa.d@bridge-ph.com 'Alyssa D.'
-  append_account 'GM' GM carmel.urot carmel.urot@pimascor.com 'Carmel Urot'
-  append_account 'DCS' DCS dan.c.subido dan.c.subido@gmail.com 'Dan C. Subido'
+  append_account 'GM' GM carmel.urot carmel.urot@gmail.com 'Carmel C. Urot'
+  append_account 'DCS / CEO / Chairman' DCS dan.c.subido dan.c.subido@gmail.com 'Atty. Daniel C. Subido'
   append_account 'Sales (Maker) - Leane' REQUESTER leane.tejero leane.tejero@pimascor.com 'Leane Tejero'
   append_account 'Sales (Maker) - Romeo' REQUESTER romeo.reano romeo.reano@pimascor.com 'Romeo Reano'
-  append_account 'Processor (Maker) - 1' REQUESTER processor1 "$processor1_email" 'Processor 1'
-  [[ "$email" == *@*.* ]] || { printf '%s\n' 'A valid Processor 1 email address is required; the source value is incomplete.' >&2; exit 1; }
-  append_account 'Processor (Maker) - 2' REQUESTER processor2 processor2@pimascor.com 'Processor 2'
-  append_account 'Processor (Maker) - 3' REQUESTER processor3 processor3@pimascor.com 'Processor 3'
-  append_account 'Bookkeeper (Mich)' MICH operations operations@pimascor.com 'Mich'
+  append_account 'Processor (Marcelo Sabando)' REQUESTER processor1 processor1@pimascor.com 'Marcelo Sabando'
+  append_account 'Processor (Christian Arcangel)' REQUESTER processor2 processor2@pimascor.com 'Christian Arcangel'
+  append_account 'Processor (Jaycee Dimandal)' REQUESTER processor3 processor3@pimascor.com 'Jaycee Dimandal'
+  append_account 'Bookkeeper (Michelle Umpacuman)' MICH operations operations@pimascor.com 'Michelle Umpacuman'
   manifest+=']'
   if [[ "$REPLACE_ACCOUNT_MANIFEST" == true ]]; then
     printf '%s' "$manifest" | podman secret create --replace "$name" - >/dev/null
