@@ -120,6 +120,15 @@ type NavItem = {
 const brandLogoUrl = `${import.meta.env.BASE_URL}pimascor-logo.jpg`
 const brandIconUrl = `${import.meta.env.BASE_URL}pimascor-app-icon.jpg`
 
+// Demo-only controls are enabled only by an explicit deployment marker. The
+// build scripts pass VITE_DEPLOYMENT_TIER=demo for the hosted demo and
+// VITE_DEPLOYMENT_TIER=production for production, so a missing build argument
+// fails closed and cannot expose demo controls accidentally.
+const deploymentTier = String(import.meta.env.VITE_DEPLOYMENT_TIER ?? '').toLowerCase()
+const appEnvironment = String(import.meta.env.VITE_APP_ENV ?? '').toLowerCase()
+const isDemoBuild = deploymentTier === 'demo'
+  || appEnvironment === 'demo'
+
 const navigation: { label: string; items: NavItem[] }[] = [
   {
     label: 'Control room',
@@ -146,7 +155,7 @@ const navigation: { label: string; items: NavItem[] }[] = [
   {
     label: 'Records',
     items: [
-      { id: 'accounting', label: 'Accounting Export', icon: BookOpen, roles: ['Admin'] },
+      { id: 'accounting', label: 'Accounting Export', icon: BookOpen, roles: ['Admin', 'GM', 'DCS', 'Mich'] },
       { id: 'clients-documents', label: 'Clients & Documents', icon: FolderOpen, roles: ['Admin', 'GM', 'DCS', 'Mich'] },
       { id: 'admin', label: 'Administration', icon: Settings, roles: ['Admin'] },
     ],
@@ -2724,7 +2733,7 @@ function AdminPage({
   </div>
 }
 
-function LoginPage({ onSignedIn }: { onSignedIn: (user: ApiUser) => void }) {
+function LoginPage({ onSignedIn, demoBuild }: { onSignedIn: (user: ApiUser) => void; demoBuild: boolean }) {
   const [mode, setMode] = useState<'sign-in' | 'activate' | 'reset'>('sign-in')
   const [stage, setStage] = useState<'password' | 'code' | 'activation-code' | 'activation-password' | 'reset-start' | 'reset-sent' | 'reset-password'>('password')
   const [username, setUsername] = useState('')
@@ -2933,7 +2942,7 @@ function LoginPage({ onSignedIn }: { onSignedIn: (user: ApiUser) => void }) {
       </section>
       <main className="login-main">
         <div className="login-card">
-          {stage === 'password' && mode === 'sign-in' ? <form key="password-step" onSubmit={continueWithPassword} className="form-stack"><div><p className="eyebrow">Welcome back</p><h2>Sign in to PIMASCOR</h2><p>Use your assigned company account.</p></div>{sharedError}{sharedNotice}<label>Username or email<input autoComplete="username" value={username} onChange={(event) => setUsername(event.target.value)} required autoFocus /></label><label>Password<input autoComplete="current-password" type="password" value={password} onChange={(event) => setPassword(event.target.value)} required minLength={8} /></label><Button type="submit" disabled={busy}>{busy ? 'Checking account…' : 'Continue securely'}</Button><button type="button" className="text-button" onClick={() => { setMode('reset'); setStage('reset-start'); setError(''); setNotice('') }}>Forgot password?</button><button type="button" className="text-button" onClick={() => { setMode('activate'); setError(''); setNotice('') }}>First-time access? Activate your account</button><div className="login-step"><span className="active">1</span><i /><span>2</span><small>Password</small><small>Email verification</small></div></form> : null}
+           {stage === 'password' && mode === 'sign-in' ? <form key="password-step" onSubmit={continueWithPassword} className="form-stack"><div><p className="eyebrow">Welcome back</p><h2>Sign in to PIMASCOR</h2><p>Use your assigned company account.</p></div>{sharedError}{sharedNotice}<label>Username or email<input autoComplete="username" value={username} onChange={(event) => setUsername(event.target.value)} required autoFocus /></label><label>Password<input autoComplete="current-password" type="password" value={password} onChange={(event) => setPassword(event.target.value)} required minLength={8} /></label><Button type="submit" disabled={busy}>{busy ? 'Checking account…' : 'Continue securely'}</Button>{demoBuild ? <div className="login-demo-entry"><p className="eyebrow">Demo evaluation</p><p>Use the assigned Admin account to enter the synthetic workspace. This action only fills the Admin username; password and email verification remain required.</p><button type="button" className="button button--secondary" onClick={() => { setUsername('admin'); setPassword(''); setError(''); setNotice('Admin demo entry selected. Enter the assigned Admin password to continue securely.') }}>Enter demo as Admin</button></div> : null}<button type="button" className="text-button" onClick={() => { setMode('reset'); setStage('reset-start'); setError(''); setNotice('') }}>Forgot password?</button><button type="button" className="text-button" onClick={() => { setMode('activate'); setError(''); setNotice('') }}>First-time access? Activate your account</button><div className="login-step"><span className="active">1</span><i /><span>2</span><small>Password</small><small>Email verification</small></div></form> : null}
           {stage === 'password' && mode === 'activate' ? <form key="activation-start-step" onSubmit={startAccountActivation} className="form-stack"><div><p className="eyebrow">First-time access</p><h2>Activate your account</h2><p>Enter the assigned username or email. We will send a one-time code before you choose a password.</p></div>{sharedError}<label>Username or email<input autoComplete="username" value={username} onChange={(event) => setUsername(event.target.value)} required autoFocus /></label><Button type="submit" disabled={busy}>{busy ? 'Sending code…' : 'Send activation code'}</Button><button type="button" className="text-button" onClick={resetToSignIn}>Already activated? Sign in</button></form> : null}
           {stage === 'code' ? <form key="email-code-step" onSubmit={finishSignIn} className="form-stack"><div><p className="eyebrow">One more check</p><h2>{busy ? 'Checking your secure link' : 'Verify your email'}</h2><p>{busy ? 'Please wait while we finish signing you in.' : <>We sent a six-digit code to {challenge?.destination}.</>}</p></div>{sharedError}{challenge?.developmentCode ? <div className="callout callout--info"><AlertCircle size={18} /><span>Local development code: <strong>{challenge.developmentCode}</strong></span></div> : null}<label>Verification code<input name="code" className="code-input" inputMode="numeric" autoComplete="one-time-code" maxLength={6} pattern="[0-9]{6}" placeholder="000000" required autoFocus disabled={busy} /></label><div className="code-expiry"><Clock3 size={16} />Code works once and expires in 5 minutes</div><Button type="submit" disabled={busy}>{busy ? 'Verifying…' : 'Verify and sign in'}</Button><button type="button" className="text-button" onClick={resetToSignIn}>Return to sign in</button><div className="login-step"><span className="done"><Check size={13} /></span><i className="done" /><span className="active">2</span><small>Password checked</small><small>Email verification</small></div></form> : null}
           {stage === 'activation-code' ? <form key="activation-code-step" onSubmit={continueActivation} className="form-stack"><div><p className="eyebrow">First-time access</p><h2>Verify your email</h2><p>We sent a six-digit activation code to {challenge?.destination}.</p></div>{sharedError}{activationCodeCallout}<label>Activation code<input name="code" className="code-input" inputMode="numeric" autoComplete="one-time-code" maxLength={6} pattern="[0-9]{6}" placeholder="000000" required autoFocus /></label><div className="code-expiry"><Clock3 size={16} />Code works once and expires in 5 minutes</div><Button type="submit" disabled={busy}>Continue to password</Button><button type="button" className="text-button" onClick={resetToSignIn}>Return to sign in</button></form> : null}
@@ -3048,7 +3057,7 @@ function App() {
 
   if (authUser === undefined) return <main className="app-splash" aria-busy="true"><section role="status" aria-live="polite"><img src={brandLogoUrl} alt="PIMASCOR" /><RefreshCw className="app-splash__spinner" size={22} aria-hidden="true" /><strong>Opening your protected workspace…</strong><small>Preparing your secure operational view</small></section></main>
 
-  if (!authUser || page === 'login') return <LoginPage onSignedIn={(user) => {
+  if (!authUser || page === 'login') return <LoginPage demoBuild={isDemoBuild} onSignedIn={(user) => {
     setAuthUser(user)
     setRole(apiRoleToRole[user.role])
     navigate(defaultPageForRole(apiRoleToRole[user.role]))
@@ -3063,21 +3072,21 @@ function App() {
 
   let content: ReactNode
   switch (resolvedPage) {
-    case 'quotations': content = <QuotationsPage role={role} notify={notify} />; break
-    case 'budget-requests': content = <BudgetRequestsPage role={role} notify={notify} />; break
-    case 'approvals': content = <ApprovalPage role={role} notify={notify} />; break
-    case 'releases': content = <ReleasesPage role={role} notify={notify} />; break
-    case 'liquidation': content = <LiquidationPage role={role} notify={notify} navigate={navigate} />; break
-    case 'billing': content = <BillingPage role={role} notify={notify} />; break
-    case 'collections': content = <CollectionsPage role={role} notify={notify} />; break
-    case 'payment-requests': content = <PaymentRequestsPage role={role} notify={notify} />; break
-    case 'opex': content = <ExpensePage type="OPEX" role={role} notify={notify} />; break
-    case 'marketing': content = <ExpensePage type="Marketing" role={role} notify={notify} />; break
-    case 'loan-payments': content = <ExpensePage type="Loan Payment" role={role} notify={notify} />; break
-    case 'accounting': content = <AccountingPage />; break
-    case 'clients-documents': content = <ClientsDocumentsPage role={role} />; break
-    case 'admin': content = <AdminPage role={role} notify={notify} onPreviewRole={previewRole} />; break
-    default: content = <DashboardPage role={role} displayName={authUser.display_name} navigate={navigate} />
+    case 'quotations': content = <QuotationsPage key={role} role={role} notify={notify} />; break
+    case 'budget-requests': content = <BudgetRequestsPage key={role} role={role} notify={notify} />; break
+    case 'approvals': content = <ApprovalPage key={role} role={role} notify={notify} />; break
+    case 'releases': content = <ReleasesPage key={role} role={role} notify={notify} />; break
+    case 'liquidation': content = <LiquidationPage key={role} role={role} notify={notify} navigate={navigate} />; break
+    case 'billing': content = <BillingPage key={role} role={role} notify={notify} />; break
+    case 'collections': content = <CollectionsPage key={role} role={role} notify={notify} />; break
+    case 'payment-requests': content = <PaymentRequestsPage key={role} role={role} notify={notify} />; break
+    case 'opex': content = <ExpensePage key={role} type="OPEX" role={role} notify={notify} />; break
+    case 'marketing': content = <ExpensePage key={role} type="Marketing" role={role} notify={notify} />; break
+    case 'loan-payments': content = <ExpensePage key={role} type="Loan Payment" role={role} notify={notify} />; break
+    case 'accounting': content = <AccountingPage key={role} />; break
+    case 'clients-documents': content = <ClientsDocumentsPage key={role} role={role} />; break
+    case 'admin': content = <AdminPage key={role} role={role} notify={notify} onPreviewRole={previewRole} />; break
+    default: content = <DashboardPage key={role} role={role} displayName={authUser.display_name} navigate={navigate} />
   }
 
   return (
@@ -3111,6 +3120,7 @@ function App() {
           <div className="topbar__actions">
             <button className="global-search" onClick={() => setSearchOpen(true)}><Search size={17} /><span>Search anything</span><kbd>⌘ K</kbd></button>
             <button className="icon-button notification-button" onClick={() => setNotificationsOpen((current) => !current)} aria-label="Notifications"><Bell size={20} />{notificationsRead ? null : <span>3</span>}</button>
+            {isDemoBuild && signedInRole === 'Admin' ? <label className="role-switch"><span>Testing workspace</span><select aria-label="Switch workspace for testing" value={role} onChange={(event) => previewRole(event.target.value as Role)}>{documentedRoles.map((item) => <option key={item} value={item}>{item}</option>)}</select><ChevronDown size={15} aria-hidden="true" /></label> : null}
             <button className="profile-button" onClick={() => signedInRole === 'Admin' && (isRolePreview ? returnToAdmin() : navigate('admin'))}><span>{authUser.display_name.split(' ').map((part) => part[0]).slice(0, 2).join('').toUpperCase()}</span><div><strong>{authUser.display_name}</strong><small>{isRolePreview ? `Admin • operating as ${role}` : role}</small></div><ChevronDown size={15} /></button>
             <button className="icon-button" aria-label="Sign out" title="Sign out" onClick={() => signOut().catch(() => undefined).finally(() => { setAuthUser(null); window.location.hash = 'login' })}><LogOut size={19} /></button>
           </div>

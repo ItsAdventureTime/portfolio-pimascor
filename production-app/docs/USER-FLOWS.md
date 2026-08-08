@@ -1,18 +1,25 @@
 # PIMASCOR user flows
 
-These flows implement `REQUIREMENTS-V2.md`. The arrows describe ownership hand-offs, like a folder moving between accountable desks.
+These flows implement `REQUIREMENTS-V2.md`, with the newer demo-only overrides
+in `DEMO-BUILD-SOURCE-OF-TRUTH-2026-08-08.md`. The arrows describe ownership
+hand-offs, like a folder moving between accountable desks.
 
 ## Shipment Profitability after sign-in
 
 ```text
-User signs in
-  -> dashboard loads permitted Budget Requests for the selected month
+Demo user selects **Login as Admin** and enters the demo, or a production user
+completes the normal sign-in flow.
+Admin may then select an explicit Requester, GM, DCS, or Mich evaluation
+workspace without changing the authenticated Admin identity.
+User enters the permitted workspace
+  -> management roles load Shipment Profitability for the selected month
   -> user filters shipments by operational status
   -> compares approved Selling with Liquidation actual spending
   -> calculates profit and margin
   -> shows Liquidation, collection, outstanding receivable, and aging status
   -> user switches between animated bars and exact figures
-Requester sees owned shipments; management roles see their authorized scope
+Requester follows the first permitted workspace in the current demo; management
+roles see their authorized Shipment Profitability scope
 Admin, GM, and DCS also see monthly OPEX, Marketing, Loan Payment, and Other totals
   -> Open Request for Payment leads to the detailed workflow
 ```

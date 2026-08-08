@@ -1,5 +1,10 @@
 # Factual basis and evidence policy
 
+For demo-only behavior, the newest source-of-truth overlay is
+`DEMO-BUILD-SOURCE-OF-TRUTH-2026-08-08.md`. It supersedes older demo wording;
+this evidence policy still governs what may be claimed as locally verified,
+VPS-verified, or externally verified.
+
 This document controls how PIMASCOR documentation, deployment instructions,
 and implementation notes state facts. It prevents an observed file, a user
 statement, a verified command result, and an assumption from being presented as

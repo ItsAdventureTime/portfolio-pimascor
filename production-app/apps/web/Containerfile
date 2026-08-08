@@ -11,9 +11,11 @@ COPY src ./src
 ARG VITE_BASE_PATH=/pimascor/demo/
 ARG VITE_API_URL=/pimascor/demo/api/v1
 ARG VITE_CSRF_COOKIE_NAME=bridge_ph_pimascor_demo_csrf
+ARG VITE_DEPLOYMENT_TIER=development
 ENV VITE_BASE_PATH=${VITE_BASE_PATH}
 ENV VITE_API_URL=${VITE_API_URL}
 ENV VITE_CSRF_COOKIE_NAME=${VITE_CSRF_COOKIE_NAME}
+ENV VITE_DEPLOYMENT_TIER=${VITE_DEPLOYMENT_TIER}
 RUN npm run build
 
 # This artifact-only stage is exported to the host with:

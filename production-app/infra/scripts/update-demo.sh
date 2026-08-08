@@ -280,6 +280,7 @@ podman build \
   --build-arg VITE_BASE_PATH=/pimascor/demo/ \
   --build-arg VITE_API_URL=/pimascor/demo/api/v1 \
   --build-arg VITE_CSRF_COOKIE_NAME=bridge_ph_pimascor_demo_csrf \
+  --build-arg VITE_DEPLOYMENT_TIER=demo \
   "${SOURCE_ROOT}/apps/web"
 
 test -f "${web_stage}/index.html"

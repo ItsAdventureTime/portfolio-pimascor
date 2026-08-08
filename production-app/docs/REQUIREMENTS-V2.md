@@ -3,6 +3,11 @@
 Status: implementation baseline for the revised demo and future production system  
 Reviewed source date: 24 July 2026
 
+Demo-only supersession: `DEMO-BUILD-SOURCE-OF-TRUTH-2026-08-08.md` is the
+newer source for the demo entry experience, visible Admin role evaluation, and
+demo capability exceptions. This baseline remains the production-oriented
+workflow reference where it does not conflict with that newer demo document.
+
 ## Authority and interpretation
 
 This baseline reconciles:
@@ -111,7 +116,9 @@ The distinct Bridge Accounting role is deferred until its exact duties are appro
 ## DCS for Payment
 
 - Every GM-approved Budget Request, Additional Budget, OPEX, Marketing, Loan Payment, and Other payment request appears in one DCS/CEO queue.
-- GM and Mich may read the queue; only DCS and Admin can act.
+- GM and Mich may read the queue; DCS and Admin act normally. In the current
+  demo, GM may use an exceptional DCS Payment override only with a reasoned,
+  attributable explanation.
 - DCS may pay, place on hold, return for correction, resume, or annotate.
 - Actual funding source comes from an administrator-controlled list. The requester does not select the bank account.
 - The permanent payment record includes amount, payment date, method, funding source, recipient, transaction reference, note, actor, and time.
@@ -176,8 +183,10 @@ The distinct Bridge Accounting role is deferred until its exact duties are appro
 - Document upload stores actual bytes in private Backblaze B2, validates
   size/type/signature, and records SHA-256. The authenticated no-store viewer uses
   type-specific JPEG/PNG and PDF rendering, visible loading/retry states, and API
-  byte-range support. The download route and download UI are disabled. Production
-  still requires an approved malware scanner and retention policy.
+  byte-range support. In the current demo correction, Mich, GM, DCS, and Admin
+  may use the separately authorized, audited download route; Requesters remain
+  view-only for protected payment evidence. Production still requires an
+  approved malware scanner and retention policy.
 - The protected Document Library indexes signed quotations, DCS payment proof,
   Liquidation receipts, physical-original handover photos, and variance proof.
   Authorized staff can search by filename, document type, client/payee, or

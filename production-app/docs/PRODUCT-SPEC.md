@@ -1,5 +1,10 @@
 # PIMASCOR product specification
 
+For the current demo build, `DEMO-BUILD-SOURCE-OF-TRUTH-2026-08-08.md` is the
+newer authority for Admin entry, visible role evaluation, and demo-only access
+exceptions. Production-oriented behavior below remains unchanged unless that
+document explicitly identifies a demo override.
+
 Version: evaluation revision v2  
 Controlling requirements: `REQUIREMENTS-V2.md`
 
@@ -128,7 +133,9 @@ proof.
 The protected Document Library indexes signed quotations, payment proof,
 Liquidation receipts, physical-original handover photos, and variance evidence.
 Authorized staff can search by filename, type, client/payee, or reference. It
-offers view-only no-store rendering and no download action.
+offers view-only no-store rendering to ordinary users and an audited download
+ action to the authorized supervisory roles defined by the current demo source
+ of truth.
 
 ## Liquidations
 
@@ -178,7 +185,13 @@ For Loan Payment, principal is required; interest and penalties/fees are optiona
 
 ## Shipment Profitability and reports
 
-Every role lands on Shipment Profitability. Requesters see only their own shipments; management roles see all permitted shipments. Selling comes from approved Budget Requests, actual spending from Liquidations, and collection/aging from finalized Billing and allocations. Profit equals selling less actual spending; margin equals profit divided by selling. The accessible bar comparison is paired with a complete data table.
+Management roles land on Shipment Profitability in the current demo. Requesters
+are routed to their first permitted workspace; the current demo does not expose
+Shipment Profitability to Requesters. Selling comes from approved Budget
+Requests, actual spending from Liquidations, and collection/aging from finalized
+Billing and allocations. Profit equals selling less actual spending; margin
+equals profit divided by selling. The accessible bar comparison is paired with a
+complete data table.
 
 ## Search and notifications
 

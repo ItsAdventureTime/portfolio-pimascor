@@ -82,7 +82,7 @@ printf 'Building production API image for commit %s...\n' "$release_commit"
 podman build --pull=always --tag localhost/bridge-ph-pimascor-api:production "${SOURCE_ROOT}/apps/api"
 web_stage="$(mktemp -d "${WEB_ROOT}/web-dist.next.XXXXXX")"
 trap 'rm -rf -- "${web_stage}"' EXIT
-podman build --pull=always --output "type=local,dest=${web_stage}" --build-arg VITE_BASE_PATH=/pimascor/ --build-arg VITE_API_URL=/pimascor/api/v1 --build-arg VITE_CSRF_COOKIE_NAME=bridge_ph_pimascor_csrf "${SOURCE_ROOT}/apps/web"
+podman build --pull=always --output "type=local,dest=${web_stage}" --build-arg VITE_BASE_PATH=/pimascor/ --build-arg VITE_API_URL=/pimascor/api/v1 --build-arg VITE_CSRF_COOKIE_NAME=bridge_ph_pimascor_csrf --build-arg VITE_DEPLOYMENT_TIER=production "${SOURCE_ROOT}/apps/web"
 test -f "${web_stage}/index.html" && test -f "${web_stage}/manifest.webmanifest" && test -f "${web_stage}/sw.js"
 install -d -m 700 "${WEB_ROOT}/web-dist"
 find "${WEB_ROOT}/web-dist" -mindepth 1 -maxdepth 1 -exec rm -rf -- {} +

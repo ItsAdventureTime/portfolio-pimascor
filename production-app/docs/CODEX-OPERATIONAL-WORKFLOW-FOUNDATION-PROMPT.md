@@ -1,5 +1,10 @@
 # Codex foundation prompt for an operational workflow application
 
+For this repository's demo build, read `DEMO-BUILD-SOURCE-OF-TRUTH-2026-08-08.md`
+after this general foundation. The newer demo document supersedes older demo
+entry, navigation, and role-evaluation wording below; production behavior is a
+separate acceptance decision.
+
 Use this file as the baseline prompt for ChatGPT Codex. Attach the target
 organization's approved requirements, screenshots, forms, brand assets, sample
 records, and hosting constraints with it. Replace every bracketed value.

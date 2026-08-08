@@ -4,6 +4,9 @@ Use this checklist for each demo release and before any production release.
 It distinguishes source checks from evidence captured against the deployed
 application. Do not mark a release production-ready when an entry is skipped.
 
+For the current demo-only entry and role-testing behavior, use
+`DEMO-BUILD-SOURCE-OF-TRUTH-2026-08-08.md` when this older checklist conflicts.
+
 ## Local source gate
 
 Run these from the repository before transfer:
@@ -31,6 +34,10 @@ or a command history.
 | GM | Can approve or return pending approved-work queues and may use an exceptional DCS Payment override only with a reason of at least 10 characters; verify its distinct `GM_PAYMENT_OVERRIDE` audit action. |
 | DCS | Can record a payment only with an active configured funding source, can hold/return/note, and cannot create arbitrary sources. |
 | Admin | Can administer funding sources, tax profiles, and activity; still cannot bypass CSRF, evidence, version, finalization, or confirmation controls. |
+
+The demo login must visibly offer **Login as Admin** / **Enter demo as Admin**,
+and the authenticated Admin controls must expose the Requester, GM, DCS, and
+Mich workspaces for evaluation without changing the authenticated identity.
 
 For each attempted forbidden action, verify a `403` or the equivalent explicit
 permission message. For each state-changing action, verify the resulting record

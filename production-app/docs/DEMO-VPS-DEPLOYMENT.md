@@ -17,6 +17,11 @@ Podman/Caddy services.
 - The reviewed demo Quadlet definitions and reset timer.
 - Accounting exports as separate **Billing CSV** and **Collections CSV**.
 - The local-record archive UI in its intentionally non-operational demo mode.
+- The demo-only Admin entry action and visible role-testing workspace switch.
+
+The current demo source of truth is
+`docs/DEMO-BUILD-SOURCE-OF-TRUTH-2026-08-08.md`. It supersedes older demo
+wording when the two documents conflict.
 
 The demo API explicitly sets `DATA_EXPORT_ENABLED=false`. Do **not** run
 `python -m pimascor_api.export_worker` on the demo VPS and do not set this value

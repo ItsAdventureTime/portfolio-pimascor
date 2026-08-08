@@ -12,11 +12,12 @@ Backblaze B2 should have bucket-default SSE-B2 (AES-256) enabled before producti
 - `attachments/*`: the original uploaded PDF/JPEG/PNG evidence and signed quotations, retained in their original usable formats.
 - `README.txt`: archive scope and exclusions.
 
-The archive deliberately excludes password hashes, live sessions, email verification challenges, and storage credentials. It is a portable operational-records copy, not a general-ledger import and not a replacement for a tested disaster-recovery backup.
+The archive deliberately excludes password hashes, live sessions, email verification challenges, and storage credentials. It is a portable operational-records copy, not a general-ledger import and not a replacement for a tested disaster-recovery backup. The current demo source of truth defines the authorized evaluation roles for this feature.
 
 ## Controls
 
-- Only an Administrator can request, see, or download an archive.
+- Admin, Mich, GM, and DCS can request, see, or download an archive when the
+  feature is enabled; Requester cannot. The demo keeps the feature disabled.
 - The quota is two accepted archive requests per organization per Philippine calendar week. It applies to requests, not download attempts, so a ready archive can be retried during its availability window.
 - A single worker processes durable queued requests. It must run as one dedicated replica using `python -m pimascor_api.export_worker`; this is intentionally separate from the API process so a restart does not abandon the work.
 - Completion creates an auditable archive, sends the requester an email, and makes it available for exactly one hour. The worker deletes expired objects and records the expiry.
