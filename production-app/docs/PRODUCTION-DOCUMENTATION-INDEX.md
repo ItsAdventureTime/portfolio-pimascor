@@ -14,6 +14,8 @@ demo authority, runbook sequence, generated-artifact boundary, and exclusions.
 - `USER-FLOWS.md` — step-by-step role workflows.
 - `DATA-MODEL.md` — records, relationships, and state rules.
 - `UX-PHILIPPINE-CONTROLS.md` — currency, language, privacy, and PH controls.
+- `DESIGN-SYSTEM.md` — visual tokens, responsive behavior, accessibility, and
+  the production-to-demo design-change protocol.
 
 ## Security and operations
 

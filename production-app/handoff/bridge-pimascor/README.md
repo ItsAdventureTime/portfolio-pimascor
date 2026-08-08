@@ -60,6 +60,13 @@ DCS/CEO/Chairman is one person represented by the technical `DCS` role. DCS
 retains the approved emergency approval/override authority and must provide an
 attributable reason for exceptional actions.
 
+## Visual consistency
+
+Production UI changes follow `docs/DESIGN-SYSTEM.md`, target WCAG 2.2 AA, and
+are reviewed on desktop and mobile layouts. Each production visual change must
+record equivalent guidance for the demo build so the two experiences remain
+visually consistent while retaining their separate data and permissions.
+
 ## Revision control
 
 The repository commit accepted during handoff must be written on the cover

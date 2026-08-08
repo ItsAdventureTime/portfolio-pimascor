@@ -29,6 +29,25 @@ The interface is calm, maritime, trustworthy, and operational. It uses the PIMAS
 
 Text and interactive color combinations must meet WCAG 2.2 AA contrast requirements.
 
+## Design change protocol
+
+Production visual changes must preserve this system across desktop and mobile
+layouts. Before release, review responsive reflow, keyboard focus, focus
+visibility, contrast, touch target size, readable hierarchy, modal/drawer
+alignment, and overflow behavior. Do not add a decorative treatment that
+reduces the visibility of financial status or primary actions.
+
+Every production visual change must also include a short entry in the release
+notes or handoff change record describing the user-facing reason, affected
+surfaces, responsive behavior, and the equivalent guidance that should be
+applied to the demo build. The demo may use different data and permissions,
+but its visual implementation should not drift without an explicit reason.
+
+This protocol follows WCAG 2.2 AA, including focus appearance, focus-not-
+obscured, reflow, consistent help, accessible authentication, and minimum
+target-size expectations. See the official [WCAG 2.2 Recommendation](https://www.w3.org/TR/WCAG22/)
+and [WCAG 2.2 changes](https://www.w3.org/WAI/standards-guidelines/wcag/new-in-22/).
+
 ### Brand marks
 
 - Use `pimascor-logo.jpg` for the sign-in screen and protected-workspace splash,
