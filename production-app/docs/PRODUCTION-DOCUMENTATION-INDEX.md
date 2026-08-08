@@ -16,6 +16,8 @@ demo authority, runbook sequence, generated-artifact boundary, and exclusions.
 - `UX-PHILIPPINE-CONTROLS.md` — currency, language, privacy, and PH controls.
 - `DESIGN-SYSTEM.md` — visual tokens, responsive behavior, accessibility, and
   the production-to-demo design-change protocol.
+- `REPOSITORY-BACKUP-RUNBOOK.md` — private GitHub continuity, encrypted mirror,
+  restore checks, and exposure response.
 
 ## Security and operations
 
