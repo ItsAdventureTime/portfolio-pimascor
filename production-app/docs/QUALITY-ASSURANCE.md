@@ -31,8 +31,8 @@ or a command history.
 | --- | --- |
 | Requester | Can create and submit only its own draft Budget Request, cannot view DCS payment proof or Shipment Profitability, and receives a forbidden result for another Requester's draft. |
 | Mich | Can review a submitted Budget, manage permitted Billing/Liquidation work, and cannot make GM or DCS decisions. |
-| GM | Can approve or return pending approved-work queues and may use an exceptional DCS Payment override only with a reason of at least 10 characters; verify its distinct `GM_PAYMENT_OVERRIDE` audit action. |
-| DCS | Can record a payment only with an active configured funding source, can hold/return/note, and cannot create arbitrary sources. |
+| GM | Can approve or return pending approval queues, but receives `403` for DCS Payment actions and cannot record payment or payment proof. |
+| DCS | Owns ordinary DCS Payment actions and the emergency/contingency override of a GM-owned approval, with an attributable reason and active configured funding source; cannot create arbitrary sources. |
 | Admin | Can administer funding sources, tax profiles, and activity; still cannot bypass CSRF, evidence, version, finalization, or confirmation controls. |
 
 The demo login must visibly offer **Login as Admin** / **Enter demo as Admin**,

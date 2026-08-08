@@ -140,7 +140,7 @@ const navigation: { label: string; items: NavItem[] }[] = [
       { id: 'quotations', label: 'Sales Quotations', icon: FileCheck2, roles: ['Admin', 'Requester', 'GM', 'DCS', 'Mich'] },
       { id: 'budget-requests', label: 'Budget Requests', icon: Ship, roles: ['Admin', 'Requester', 'GM', 'DCS', 'Mich'], roleLabels: { Requester: 'My Budget Requests' } },
       { id: 'approvals', label: 'Approval', icon: ClipboardCheck, roles: ['Admin', 'GM', 'DCS', 'Mich'], roleLabels: { Mich: 'Budget Review', DCS: 'Approval Visibility' } },
-      { id: 'releases', label: 'DCS for Payment', icon: HandCoins, roles: ['Admin', 'DCS', 'GM', 'Mich'] },
+  { id: 'releases', label: 'DCS for Payment', icon: HandCoins, roles: ['Admin', 'DCS', 'Mich'] },
       { id: 'liquidation', label: 'Liquidations', icon: ReceiptText, roles: ['Admin', 'Requester', 'GM', 'DCS', 'Mich'], roleLabels: { Requester: 'My Liquidations', Mich: 'Liquidations to Review' } },
       { id: 'billing', label: 'Billing', icon: FileCheck2, roles: ['Admin', 'Requester', 'GM', 'DCS', 'Mich'], roleLabels: { Requester: 'My Billing', Mich: 'Prepare Billing' } },
       { id: 'collections', label: 'Client Payments', icon: CreditCard, roles: ['Admin', 'GM', 'DCS', 'Mich'] },
@@ -1539,7 +1539,7 @@ function ReleasesPage({ role, notify }: { role: Role; notify: Notify }) {
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState('')
   const [fundingSources, setFundingSources] = useState<ApiFundingSource[]>([])
-  const canPay = role === 'DCS' || role === 'Admin' || role === 'GM'
+  const canPay = role === 'DCS' || role === 'Admin'
 
   const load = () => getPayments().then(setItems).catch((reason) => {
     setItems([])

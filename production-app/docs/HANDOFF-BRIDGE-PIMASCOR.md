@@ -106,7 +106,9 @@ the account used. Do not record passwords or full document contents.
   link, choose a new password, and sign in again; old sessions are revoked.
 - Unknown, disabled, pending, expired, reused, and rate-limited reset requests
   do not disclose account existence or expose reset tokens in logs.
-- GM and DCS payment authority/override rules match the approved policy.
+- GM can approve or return work but cannot act in DCS for Payment. DCS/CEO/
+  Chairman owns ordinary DCS Payment actions and the emergency/contingency
+  override of a GM-owned approval, with an attributable reason.
 - Quotation print preview and generated PDF dynamically populate client,
   shipment, currency, amount, terms, and dates using the revised reference.
 - Authorized users can open quotation and uploaded document attachments;

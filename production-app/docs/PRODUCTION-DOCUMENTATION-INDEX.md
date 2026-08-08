@@ -24,19 +24,19 @@ and must not be used as a production deployment instruction.
 
 ## Handoff
 
-- `docs/HANDOFF-BRIDGE-PIMASCOR.md` — boundary, ownership, access transfer,
+- `HANDOFF-BRIDGE-PIMASCOR.md` — boundary, ownership, access transfer,
   acceptance, and source/IP terms.
-- `handoff/bridge-pimascor/README.md` — handoff packet navigation and the
+- `../handoff/bridge-pimascor/README.md` — handoff packet navigation and the
   authoritative production account list.
-- `handoff/bridge-pimascor/client-packet/` — client-facing PDFs and manifest.
+- `../handoff/bridge-pimascor/client-packet/` — client-facing PDFs and manifest.
   Regenerate PDFs after source-document revisions before delivery.
 
 ## Infrastructure ownership
 
-- `infra/scripts/` — deployment and maintenance commands.
-- `infra/quadlet/production/` — production-only rootless Podman units.
-- `infra/caddy/` — production Caddy fragments and reviewed configuration.
-- `infra/quadlet/demo/` and `docs/DEMO-VPS-DEPLOYMENT.md` — demo only; do not
+- `../infra/scripts/` — deployment and maintenance commands.
+- `../infra/quadlet/production/` — production-only rootless Podman units.
+- `../infra/caddy/` — production Caddy fragments and reviewed configuration.
+- `../infra/quadlet/demo/` and `DEMO-VPS-DEPLOYMENT.md` — demo only; do not
   mix with production paths or secrets.
 
 ## Change-control rules
