@@ -16,6 +16,8 @@ demo authority, runbook sequence, generated-artifact boundary, and exclusions.
 - `UX-PHILIPPINE-CONTROLS.md` — currency, language, privacy, and PH controls.
 - `DESIGN-SYSTEM.md` — visual tokens, responsive behavior, accessibility, and
   the production-to-demo design-change protocol.
+- `UI-UX-ISSUES-2026-08-09.md` — current demo findings and production
+  carry-forward fixes for menus, grids, and responsive forms.
 - `REPOSITORY-BACKUP-RUNBOOK.md` — private GitHub continuity, encrypted mirror,
   restore checks, and exposure response.
 
@@ -68,8 +70,7 @@ creation; a remote SHA mismatch means the mirror is stale.
 ## Repository hygiene
 
 The remote repository contains source, migrations, tests, reviewed
-documentation, deployment definitions, approved reference PDFs, and the
-client-facing handoff packet. It excludes live business records, screenshots
-and photographs supplied for one-off review, generated planning images, local
-archives, credentials, secrets, and runtime data. The root `.gitignore` is the
-authoritative prevention layer; a local-only file must not be force-added.
+documentation, deployment definitions, approved reference PDFs, client-facing
+handoff material, and authorized project records for this private mirror. It
+excludes credentials, private keys, local databases, secrets, and runtime data.
+The root `.gitignore` is the prevention layer for those always-excluded files.

@@ -2988,6 +2988,7 @@ function App() {
   const [mobileNav, setMobileNav] = useState(false)
   const [searchOpen, setSearchOpen] = useState(false)
   const [notificationsOpen, setNotificationsOpen] = useState(false)
+  const [profileOpen, setProfileOpen] = useState(false)
   const [notificationsRead, setNotificationsRead] = useState(false)
   const [actionMessage, setActionMessage] = useState<ActionMessage>(null)
   const [releaseUpdate, setReleaseUpdate] = useState<ApiReleaseUpdate | null>(null)
@@ -3038,6 +3039,7 @@ function App() {
     setPage(nextPage)
     setMobileNav(false)
     setSearchOpen(false)
+    setProfileOpen(false)
   }
 
   function notify(message: string, tone: Tone = 'info', solution?: string) {
@@ -3134,7 +3136,12 @@ function App() {
           <div className="topbar__actions">
             <button className="global-search" onClick={() => setSearchOpen(true)}><Search size={17} /><span>Search anything</span><kbd>⌘ K</kbd></button>
             <button className="icon-button notification-button" onClick={() => setNotificationsOpen((current) => !current)} aria-label="Notifications"><Bell size={20} />{notificationsRead ? null : <span>3</span>}</button>
-            <button className="profile-button" onClick={() => signedInRole === 'Admin' && (isRolePreview ? returnToAdmin() : navigate('admin'))}><span>{authUser.display_name.split(' ').map((part) => part[0]).slice(0, 2).join('').toUpperCase()}</span><div><strong>{authUser.display_name}</strong><small>{isRolePreview ? `Admin • operating as ${role}` : role}</small></div><ChevronDown size={15} /></button>
+            <div className="profile-menu-wrap">
+              <button className="profile-button" type="button" aria-haspopup="menu" aria-expanded={profileOpen} onClick={() => setProfileOpen((current) => !current)}><span>{authUser.display_name.split(' ').map((part) => part[0]).slice(0, 2).join('').toUpperCase()}</span><div><strong>{authUser.display_name}</strong><small>{isRolePreview ? `Admin • operating as ${role}` : role}</small></div><ChevronDown size={15} /></button>
+              {profileOpen ? <div className="profile-menu" role="menu">
+                {signedInRole === 'Admin' ? <button type="button" role="menuitem" onClick={() => { setProfileOpen(false); isRolePreview ? returnToAdmin() : navigate('admin') }}>{isRolePreview ? 'Return to Admin controls' : 'Open Administration'}</button> : null}
+              </div> : null}
+            </div>
             <button className="icon-button" aria-label="Sign out" title="Sign out" onClick={() => signOut().catch(() => undefined).finally(() => { setAuthUser(null); window.location.hash = 'login' })}><LogOut size={19} /></button>
           </div>
           {notificationsOpen ? <div className="notification-panel"><SectionHeader eyebrow={notificationsRead ? 'No unread items' : '3 unread'} title="Notifications" action={notificationsRead ? undefined : <button className="text-button" onClick={() => setNotificationsRead(true)}>Mark all read</button>} />{attentionByRole[role].slice(0, 3).map((item) => <button key={item.id} onClick={() => { navigate(item.page); setNotificationsOpen(false) }}><span className={`notification-dot notification-dot--${item.tone}`} /><span><strong>{item.title}</strong><small>{item.detail}</small></span><span>{item.age}</span></button>)}</div> : null}

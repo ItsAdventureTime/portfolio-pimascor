@@ -11,6 +11,10 @@ Before changing or publishing demo content, read
 `REPOSITORY-EXPOSURE-AND-NDA.md`. It defines which source and documentation
 may enter the private GitHub mirror and which client material must stay local.
 
+`UI-UX-ISSUES-2026-08-09.md` is the current demo UI issue and production
+carry-forward record. Use its interaction and responsive rules instead of
+inferring behavior from screenshots.
+
 1. `DEMO-BUILD-SOURCE-OF-TRUTH-2026-08-08.md` is the controlling demo
    decision record. Newer dated demo decisions supersede it.
 2. `DEMO-VPS-DEPLOYMENT.md` is the current demo release runbook and contains

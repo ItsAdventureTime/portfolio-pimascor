@@ -1,5 +1,11 @@
 # PIMASCOR Design System
 
+## 2026-08-09 responsive interaction addendum
+
+Apply `UI-UX-ISSUES-2026-08-09.md` to production components before copying demo
+styling. It defines the profile disclosure, shrink-safe grid, form, and
+overflow rules.
+
 This guide implements the terminology, role boundaries, and task structure in `REQUIREMENTS-V2.md`. WCAG 2.2 AA is the accessibility target.
 
 ## 1. Design character
