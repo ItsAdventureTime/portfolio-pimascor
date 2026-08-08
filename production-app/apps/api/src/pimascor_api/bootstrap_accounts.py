@@ -76,8 +76,14 @@ def main() -> None:
             if user is None and by_email is not None:
                 raise SystemExit(f"Email is already assigned to another account: {email}")
             if user is not None:
-                if user.email != email or user.role != role:
-                    raise SystemExit(f"Existing account metadata differs: {username}")
+                if user.must_set_password:
+                    user.email = email
+                    user.display_name = display_name
+                    user.role = role
+                    print(f"Updated pending activation account {username} ({role.value})")
+                    continue
+                if user.email != email or user.display_name != display_name or user.role != role:
+                    raise SystemExit(f"Active account metadata differs: {username}")
                 print(f"Keeping existing account {username} ({role.value})")
                 continue
 

@@ -54,3 +54,30 @@ def test_bootstrap_rejects_invalid_processor_email(tmp_path, monkeypatch):
         assert "deliverable domain" in str(exc)
     else:
         raise AssertionError("Incomplete email domain was accepted")
+
+
+def test_bootstrap_updates_pending_account_metadata(tmp_path, monkeypatch):
+    manifest = tmp_path / "accounts.json"
+    manifest.write_text(
+        json.dumps([{"username": "carmel.urot", "email": "carmel.urot@gmail.com", "display_name": "Carmel C. Urot", "role": "GM"}]),
+        encoding="utf-8",
+    )
+    with TestingSession() as db:
+        db.add(User(
+            username="carmel.urot",
+            email="old@example.com",
+            display_name="Old Name",
+            password_hash="old-hash",
+            must_set_password=True,
+            role=Role.REQUESTER,
+        ))
+        db.commit()
+    monkeypatch.setattr(bootstrap_accounts, "SessionLocal", TestingSession)
+    monkeypatch.setattr(sys, "argv", ["bootstrap-accounts", "--manifest", str(manifest)])
+    bootstrap_accounts.main()
+    with TestingSession() as db:
+        user = db.query(User).filter(User.username == "carmel.urot").one()
+        assert user.email == "carmel.urot@gmail.com"
+        assert user.display_name == "Carmel C. Urot"
+        assert user.role == Role.GM
+        assert user.must_set_password is True

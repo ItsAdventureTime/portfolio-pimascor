@@ -213,7 +213,9 @@ addresses, or roles change, use the explicit account-refresh option:
 That option replaces only the account-bootstrap Podman secret. It does not
 replace passwords or existing user sessions. The subsequent production update
 re-runs the bootstrap idempotently; already-correct accounts are unchanged and
-new or corrected pending accounts are reconciled.
+new or corrected pending accounts are reconciled. An already-activated account
+whose email, display name, or role differs is refused for safety and must be
+changed through an explicit Administrator procedure.
 
 After SSH login, run on the VPS:
 
