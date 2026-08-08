@@ -54,6 +54,18 @@ obscured, reflow, consistent help, accessible authentication, and minimum
 target-size expectations. See the official [WCAG 2.2 Recommendation](https://www.w3.org/TR/WCAG22/)
 and [WCAG 2.2 changes](https://www.w3.org/WAI/standards-guidelines/wcag/new-in-22/).
 
+### Profile menu interaction contract
+
+The top-bar identity control is a menu button, not an implicit navigation
+link. It exposes `aria-haspopup="menu"`, `aria-expanded`, and `aria-controls`;
+opening it places focus on the first menu item. Up/Down, Home/End, Enter, and
+Space follow the menu-button convention, while Escape closes the menu and
+returns focus to the trigger. Pointer interaction outside the menu closes it.
+Administration and role-workspace actions remain explicit menu items so the
+identity control never performs unrelated navigation on its primary click.
+When no profile actions are available for a role, the identity control is
+rendered as a non-disclosure control rather than exposing an empty menu.
+
 ### Brand marks
 
 - Use `pimascor-logo.jpg` for the sign-in screen and protected-workspace splash,

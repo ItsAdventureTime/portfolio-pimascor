@@ -2989,6 +2989,10 @@ function App() {
   const [searchOpen, setSearchOpen] = useState(false)
   const [notificationsOpen, setNotificationsOpen] = useState(false)
   const [profileOpen, setProfileOpen] = useState(false)
+  const profileButtonRef = useRef<HTMLButtonElement>(null)
+  const profileMenuRef = useRef<HTMLDivElement>(null)
+  const profileWrapRef = useRef<HTMLDivElement>(null)
+  const profileMenuId = useId()
   const [notificationsRead, setNotificationsRead] = useState(false)
   const [actionMessage, setActionMessage] = useState<ActionMessage>(null)
   const [releaseUpdate, setReleaseUpdate] = useState<ApiReleaseUpdate | null>(null)
@@ -3033,6 +3037,42 @@ function App() {
     const allowed = navigation.some((group) => group.items.some((item) => item.id === page && item.roles.includes(role)))
     if (!allowed) navigate(defaultPageForRole(role))
   }, [authUser, page, role])
+
+  useEffect(() => {
+    if (!profileOpen) return
+    const menu = profileMenuRef.current
+    const items = () => Array.from(menu?.querySelectorAll<HTMLButtonElement>('[role="menuitem"]') ?? [])
+    items()[0]?.focus()
+    const onKeyDown = (event: KeyboardEvent) => {
+      const menuItems = items()
+      if (event.key === 'Escape') {
+        event.preventDefault()
+        setProfileOpen(false)
+        profileButtonRef.current?.focus()
+        return
+      }
+      if (event.key === 'Tab') {
+        setProfileOpen(false)
+        return
+      }
+      if (!menuItems.length) return
+      const current = Math.max(0, menuItems.indexOf(document.activeElement as HTMLButtonElement))
+      if (event.key === 'ArrowDown' || event.key === 'ArrowUp' || event.key === 'Home' || event.key === 'End') {
+        event.preventDefault()
+        const next = event.key === 'Home' ? 0 : event.key === 'End' ? menuItems.length - 1 : (current + (event.key === 'ArrowDown' ? 1 : -1) + menuItems.length) % menuItems.length
+        menuItems[next]?.focus()
+      }
+    }
+    const onPointerDown = (event: PointerEvent) => {
+      if (!profileWrapRef.current?.contains(event.target as Node)) setProfileOpen(false)
+    }
+    document.addEventListener('keydown', onKeyDown)
+    document.addEventListener('pointerdown', onPointerDown)
+    return () => {
+      document.removeEventListener('keydown', onKeyDown)
+      document.removeEventListener('pointerdown', onPointerDown)
+    }
+  }, [profileOpen])
 
   function navigate(nextPage: PageId) {
     window.location.hash = nextPage
@@ -3136,9 +3176,9 @@ function App() {
           <div className="topbar__actions">
             <button className="global-search" onClick={() => setSearchOpen(true)}><Search size={17} /><span>Search anything</span><kbd>⌘ K</kbd></button>
             <button className="icon-button notification-button" onClick={() => setNotificationsOpen((current) => !current)} aria-label="Notifications"><Bell size={20} />{notificationsRead ? null : <span>3</span>}</button>
-            <div className="profile-menu-wrap">
-              <button className="profile-button" type="button" aria-haspopup="menu" aria-expanded={profileOpen} onClick={() => setProfileOpen((current) => !current)}><span>{authUser.display_name.split(' ').map((part) => part[0]).slice(0, 2).join('').toUpperCase()}</span><div><strong>{authUser.display_name}</strong><small>{isRolePreview ? `Admin • operating as ${role}` : role}</small></div><ChevronDown size={15} /></button>
-              {profileOpen ? <div className="profile-menu" role="menu">
+            <div className="profile-menu-wrap" ref={profileWrapRef}>
+              <button ref={profileButtonRef} className="profile-button" type="button" aria-haspopup={signedInRole === 'Admin' ? 'menu' : undefined} aria-expanded={signedInRole === 'Admin' ? profileOpen : undefined} aria-controls={signedInRole === 'Admin' ? profileMenuId : undefined} onClick={signedInRole === 'Admin' ? () => setProfileOpen((current) => !current) : undefined}><span>{authUser.display_name.split(' ').map((part) => part[0]).slice(0, 2).join('').toUpperCase()}</span><div><strong>{authUser.display_name}</strong><small>{isRolePreview ? `Admin • operating as ${role}` : role}</small></div>{signedInRole === 'Admin' ? <ChevronDown size={15} /> : null}</button>
+              {profileOpen && signedInRole === 'Admin' ? <div id={profileMenuId} ref={profileMenuRef} className="profile-menu" role="menu" aria-label="Profile actions">
                 {signedInRole === 'Admin' ? <button type="button" role="menuitem" onClick={() => { setProfileOpen(false); isRolePreview ? returnToAdmin() : navigate('admin') }}>{isRolePreview ? 'Return to Admin controls' : 'Open Administration'}</button> : null}
               </div> : null}
             </div>

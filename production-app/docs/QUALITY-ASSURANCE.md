@@ -53,7 +53,9 @@ Test an authenticated workflow at these minimum viewports:
 | Viewport | Required checks |
 | --- | --- |
 | 1280 × 720 | Sign-in has no nested scrollbar; Payment Center and record tabs have no unintended scrollbar; print preview opens. |
+| 768 × 1024 | Admin role cards remain readable; tax and funding forms keep controls inside their cards; profile menu remains anchored. |
 | 390 × 844 | No horizontal page overflow; navigation is operable; tabs reflow without clipping; forms and dialogs remain usable. |
+| 320 × 568 | No component exceeds the viewport; long role descriptions wrap; funding controls stack; no horizontal scrollbar appears. |
 
 On narrow login screens, the sign-in card must be the first useful content in
 the viewport; the brand story may follow it without requiring a long scroll
@@ -66,6 +68,12 @@ Safari/WebKit. Check sign-in, navigation, one read-only record, one authorized
 role action, one forbidden role action, quotation print preview, and protected
 document viewer. Record the browser version and pass/fail result. Do not infer
 WebKit or Gecko support from a Chromium run.
+
+For the top-bar profile control, verify that the trigger exposes its menu state,
+opens focus on the first action, supports Up/Down and Home/End navigation,
+closes with Escape and restores focus to the trigger, and closes on outside
+pointer interaction. Verify Administration is an explicit menu action rather
+than an unintended primary-click navigation.
 
 ## Public demo release evidence
 

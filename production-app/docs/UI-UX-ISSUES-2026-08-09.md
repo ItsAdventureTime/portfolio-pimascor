@@ -32,3 +32,19 @@ state, text wrapping, and adjacent form controls.
 - [WAI-ARIA disclosure pattern](https://www.w3.org/WAI/ARIA/apg/patterns/disclosure/)
 - [MDN `minmax()`](https://developer.mozilla.org/en-US/docs/Web/CSS/Reference/Values/minmax)
 - [MDN `min-width`](https://developer.mozilla.org/en-US/docs/Web/CSS/Reference/Properties/min-width)
+
+## Implementation status — production review
+
+The production web implementation now carries the four resolutions above.
+The top-bar identity control is an explicit menu button with a labelled menu,
+`aria-expanded`, `aria-controls`, focus placement, Escape handling, and
+keyboard item navigation. Role cards use shrink-safe grid tracks and bounded
+copy. Tax-profile and DCS funding forms keep intrinsic widths from forcing
+overflow and stack their controls at narrow widths.
+Roles without available profile actions do not expose an empty menu.
+
+Before release, repeat the verification matrix in this document against the
+built production artifact. Record browser/version, viewport, keyboard path,
+overflow result, and any assistive-technology findings in the production QA
+record; a successful TypeScript/Vite build alone does not establish responsive
+or accessibility conformance.
