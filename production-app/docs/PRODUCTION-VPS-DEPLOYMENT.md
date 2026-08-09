@@ -324,13 +324,9 @@ indicates a missing host mount in the shared Caddy Quadlet, not a failed web
 build or invalid application Caddyfile. The installer preflights every shared
 Caddy host mount and names missing sources before it attempts a restart.
 
-For example, the configured Accustanda route uses
-`/srv/bridge-ph-accustandardrdrd-demo`. If its corresponding host source
-`/home/jk/bridge-ph/accustandardrdrd-demo` is absent, PIMASCOR must not remove
-that mount by itself: restore the Accustanda site at its intended host path or
-intentionally remove both its Caddy route and its Quadlet mount as a separate
-site-retirement change. Creating an empty placeholder directory only hides the
-configuration error and is not an acceptable recovery.
+The preflight does not create placeholder directories or remove another site's
+route. If it reports a missing source, correct that owning site's deployment or
+retire its route and mount together as a separate, explicitly approved change.
 
 After the owning site is corrected, re-run the installer from the deployed
 production source:
