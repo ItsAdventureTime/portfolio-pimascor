@@ -316,7 +316,9 @@ The installer verifies that the user-level `caddy.service` is loaded before it
 changes the shared configuration. It reloads the Quadlet generator with
 `systemctl --user daemon-reload`, restarts `caddy.service`, and validates the
 running rootless container afterward. It does not use `caddy reload`, which
-would bypass the intended Quadlet lifecycle.
+would bypass the intended Quadlet lifecycle. After restart it polls the
+production API health endpoint for up to 60 seconds, so a normal API warm-up
+does not produce a false deployment failure or invite an immediate CDN purge.
 
 Podman fails a container start when a bind-mount source does not exist. A
 `statfs ... no such file or directory` message with exit status 125 therefore

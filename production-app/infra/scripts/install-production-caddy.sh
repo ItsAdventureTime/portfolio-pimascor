@@ -144,4 +144,19 @@ systemctl --user restart bridge-ph-pimascor-proxy-network.service
 systemctl --user restart caddy.service
 podman exec caddy caddy validate --config /etc/caddy/Caddyfile --adapter caddyfile
 curl --fail --silent --show-error --location --max-time 15 "https://delegateops.business/pimascor/" >/dev/null
-printf '%s\n' 'Production Caddy route is active at https://delegateops.business/pimascor/'
+
+api_health_url='https://delegateops.business/pimascor/api/v1/health'
+api_ready=false
+for _attempt in {1..30}; do
+  if curl --fail --silent --show-error --location --max-time 10 "${api_health_url}" >/dev/null; then
+    api_ready=true
+    break
+  fi
+  sleep 2
+done
+if [[ "${api_ready}" != true ]]; then
+  printf 'Production API did not become reachable through Caddy: %s\n' "${api_health_url}" >&2
+  systemctl --user status --no-pager --full bridge-ph-pimascor-api.service >&2 || true
+  exit 1
+fi
+printf '%s\n' 'Production Caddy route and API health check are active at https://delegateops.business/pimascor/'
