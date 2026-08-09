@@ -74,7 +74,11 @@ cd /var/home/jk/bridge-ph/pimascor/source && ./infra/scripts/update-production.s
 `update-production.sh` reinstalls the production Quadlets, regenerates the
 user-level services, recreates missing containers, rebuilds the API and web
 images, runs recorded migrations, and restarts the production workers. It does
-not reset the database or seed fictional records.
+not reset the database or seed fictional records. If the API fails to start,
+the updater now prints the user-unit status, recent user journal, and recent
+API container log automatically, without printing secret contents. Preserve
+that diagnostic output for the incident record; do not repeatedly restart the
+service while investigating the first failure.
 
 If any production secret is reported missing, stop and run the interactive
 provisioner as `jk`; never put a secret in a command argument or source file:

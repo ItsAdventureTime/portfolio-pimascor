@@ -107,7 +107,13 @@ rm -rf -- "${web_stage}"
 trap - EXIT
 
 systemctl --user restart bridge-ph-pimascor-account-bootstrap.service
-systemctl --user restart bridge-ph-pimascor-api.service
+if ! systemctl --user restart bridge-ph-pimascor-api.service; then
+  printf '%s\n' 'Production API failed to start. Safe diagnostics follow; secret values are not printed.' >&2
+  systemctl --user status --no-pager --full bridge-ph-pimascor-api.service >&2 || true
+  journalctl --user --unit=bridge-ph-pimascor-api.service --no-pager --lines=160 >&2 || true
+  podman logs --tail=160 bridge-ph-pimascor-api >&2 || true
+  exit 1
+fi
 systemctl --user restart bridge-ph-pimascor-export-worker.service
 systemctl --user is-active --quiet bridge-ph-pimascor-api.service
 systemctl --user is-active --quiet bridge-ph-pimascor-export-worker.service
