@@ -26,8 +26,8 @@ invent a path, service state, provider configuration, or production decision.
 ## Commit and release policy
 
 - Never rewrite published `main` history or move a release tag.
-- This project uses the private GitHub remote `git@github.com:ItsAdventureTime/bridge-pimascor.git`.
-- Every change that modifies tracked files must be committed locally and pushed to that private remote after local validation. Never push to an unverified remote, and never use force-push.
+- This project uses the private HTTPS GitHub remote `https://github.com/ItsAdventureTime/bridge-pimascor.git`, authenticated through GitHub CLI.
+- Every change that modifies tracked files must be committed locally and pushed to that private HTTPS remote after local validation. Run `gh auth setup-git --hostname github.com`, use `PIMASCOR_ALLOW_PRIVATE_GITHUB_PUSH=1 git push origin main`, then verify the SHA and signature with `gh api`. Never push to an unverified remote, and never use force-push.
 - Tag an accepted release only after the demo or production validation evidence is recorded.
 - Treat secrets, personal data, live finance records, and production exports as incident-sensitive: do not commit them. If one is committed, stop distribution, rotate the affected secret or access, and use an approved remediation process rather than casually rewriting history.
 - For every demo-relevant change handoff, provide the exact one-line local

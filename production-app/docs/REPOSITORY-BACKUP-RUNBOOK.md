@@ -38,7 +38,8 @@ remote, and a remote SHA equal to the local `HEAD`.
 GitHub's documented mirror method preserves the Git repository and history:
 
 ```bash
-git clone --mirror git@github.com:ItsAdventureTime/bridge-pimascor.git /secure/backup/bridge-pimascor.git
+gh auth setup-git --hostname github.com
+git clone --mirror https://github.com/ItsAdventureTime/bridge-pimascor.git /secure/backup/bridge-pimascor.git
 ```
 
 Place that mirror on an encrypted disk or approved encrypted backup service.
