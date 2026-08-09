@@ -10,6 +10,12 @@ https://github.com/ItsAdventureTime/bridge-pimascor.git
 
 ## Required sequence for every tracked change
 
+**Transport rule:** create commits with local `git` commands. Publish the
+already-created commit with GitHub CLI over the HTTPS `origin`; do not use an
+SSH GitHub remote. `gh auth setup-git --hostname github.com` configures Git to
+use the authenticated GitHub CLI credential helper. Authentication must still
+be verified with `gh auth status`; do not assume a machine is authenticated.
+
 Before staging, check `docs/REPOSITORY-EXPOSURE-AND-NDA.md`. Client records,
 supplied quotation PDFs, screenshots, photos, and generated handoff packets are
 allowed in the authorized private mirror. Credentials, private keys, local
@@ -27,6 +33,12 @@ databases, and runtime output remain prohibited.
 8. For demo changes, use the committed tree with
    `infra/scripts/deploy-demo-vps.sh` and then run the documented VPS
    activation command.
+
+The responsibility is intentionally split: local Git creates the signed
+commit; GitHub CLI authenticates and verifies publication to the HTTPS remote.
+GitHub CLI has no separate `gh commit` operation, so do not invent one or put
+tokens into a URL. `gh auth setup-git` configures Git's credential helper, and
+the guarded HTTPS push publishes the already-created local commit.
 
 Local Git history is the authoritative change record, but it is not evidence
 that the VPS or GitHub received a release.
@@ -57,6 +69,8 @@ authorization because it changes commit IDs and may require a force push.
 Run from the repository root after checks and after committing:
 
 ```bash
+git add <reviewed-files>
+git commit -S -m "type(scope): concise change"
 git remote get-url origin
 git status --short
 git remote set-url origin https://github.com/ItsAdventureTime/bridge-pimascor.git
