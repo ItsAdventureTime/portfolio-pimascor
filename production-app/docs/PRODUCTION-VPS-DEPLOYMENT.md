@@ -287,7 +287,28 @@ cd /var/home/jk/bridge-ph/pimascor/source && ./infra/scripts/install-production-
 The script installs the production handler import, adds the production static
 web root and proxy network to the existing rootless Caddy Quadlet, validates
 Caddy's adapted configuration, restarts Caddy, and checks the public route.
-It refuses to edit the file if the expected site block or Quadlet is absent.
+It refuses to edit the file if the expected site block, Quadlet, or production
+web root is absent. It also removes only the known retired
+`/home/jk/bridge-ph/accustanda-demo` bind-mount line when that host path is
+absent. It does not delete that path or alter unrelated Caddy sites.
+
+Podman fails a container start when a bind-mount source does not exist. A
+`statfs ... no such file or directory` message with exit status 125 therefore
+indicates a stale host mount in the shared Caddy Quadlet, not a failed web
+build or invalid application Caddyfile. Re-run the installer from the
+deployed production source so it can reconcile the production mount and the
+known retired mount:
+
+```bash
+cd /var/home/jk/bridge-ph/pimascor/source && ./infra/scripts/install-production-caddy.sh
+systemctl --user status --no-pager caddy.service
+journalctl --user -u caddy.service --no-pager --lines=80
+```
+
+Do not create a placeholder `accustanda-demo` directory merely to make Caddy
+start; that would hide configuration drift and could expose an unintended
+site. Inspect any other missing `Volume=` source reported by Podman and
+correct its owning site or Quadlet explicitly.
 
 ## Backup and export
 
