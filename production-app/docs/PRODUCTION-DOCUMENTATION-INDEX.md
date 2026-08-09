@@ -27,6 +27,8 @@ demo authority, runbook sequence, generated-artifact boundary, and exclusions.
   and Caddy activation. This is operator-only material.
 - `PRODUCTION-BACKUP-RESTORE-RUNBOOK.md` — owner-only CLI dry-run restore,
   encrypted backup catalog, retention, and recovery evidence.
+- `PRODUCTION-INCIDENT-RECOVERY-PODMAN-RM.md` — safe recovery after broad
+  rootless Podman container removal, with bind-mount and secret checks.
 - `PASSWORD-RECOVERY.md` — activation and self-service recovery controls.
 - `DATA-EXPORTS.md` — CSV/full archive behavior and retention.
 - `INCIDENT-REPORTING.md` — reporting and response expectations.
