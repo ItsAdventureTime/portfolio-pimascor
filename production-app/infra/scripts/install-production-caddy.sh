@@ -8,6 +8,7 @@ SOURCE_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 CADDYFILE="${CADDY_CONF_ROOT}/Caddyfile"
 HANDLERS="${CADDY_CONF_ROOT}/pimascor-production.handlers.Caddyfile"
 MARKER='import /etc/caddy/pimascor-production.handlers.Caddyfile'
+CADDY_IMAGE=""
 
 if [[ -z "${CADDY_CONF_ROOT}" ]]; then
   for candidate in "${HOME}/caddy/conf" "/home/jk/caddy/conf"; do
@@ -27,6 +28,8 @@ HANDLERS="${CADDY_CONF_ROOT}/pimascor-production.handlers.Caddyfile"
 [[ -f "${SOURCE_ROOT}/infra/caddy/pimascor-production.handlers.Caddyfile" ]] || { printf '%s\n' 'Production Caddy handlers are missing from the committed source.' >&2; exit 1; }
 grep -Eq '^delegateops\.business[[:space:]]*\{' "${CADDYFILE}" || { printf '%s\n' 'Expected delegateops.business site block was not found; refusing to edit Caddy.' >&2; exit 1; }
 [[ -d "${APP_ROOT}/web-dist" ]] || { printf 'Production web root not found: %s\n' "${APP_ROOT}/web-dist" >&2; exit 1; }
+CADDY_IMAGE="$(awk -F= '/^Image=/{print $2; exit}' "${CADDY_QUADLET}")"
+[[ -n "${CADDY_IMAGE}" ]] || { printf '%s\n' 'Caddy image was not found in the shared Caddy Quadlet.' >&2; exit 1; }
 
 install -d -m 700 "${CADDY_CONF_ROOT}"
 install -m 600 "${SOURCE_ROOT}/infra/caddy/pimascor-production.handlers.Caddyfile" "${HANDLERS}"
@@ -58,6 +61,18 @@ if ! grep -Fq "${MARKER}" "${CADDYFILE}"; then
   chmod 600 "${caddy_tmp}"
   mv "${caddy_tmp}" "${CADDYFILE}"
 fi
+
+# caddy fmt makes only presentation changes; caddy validate catches syntax and
+# provisioning errors before the shared edge service is restarted. Both run in
+# disposable containers so no tooling is installed on the Fedora CoreOS host.
+podman run --rm --network none \
+  --volume "${CADDY_CONF_ROOT}:/etc/caddy:Z" \
+  "${CADDY_IMAGE}" \
+  caddy fmt --overwrite /etc/caddy/Caddyfile
+podman run --rm --network none \
+  --volume "${CADDY_CONF_ROOT}:/etc/caddy:ro,Z" \
+  "${CADDY_IMAGE}" \
+  caddy validate --config /etc/caddy/Caddyfile --adapter caddyfile
 
 if awk '
   /^Volume=.*:\/srv\/bridge-ph-pimascor(:|$)/ &&

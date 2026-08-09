@@ -295,6 +295,15 @@ changes an unrelated Caddy site. It also removes the exact legacy relative
 `import pimascor-production.handlers.Caddyfile` line if present, leaving the
 single canonical absolute import installed by the production route.
 
+Before any Caddy restart, the installer runs the official `caddy fmt
+--overwrite` command against the shared Caddyfile, then runs `caddy validate`
+in a disposable `podman run --rm` container using the exact Caddy image declared
+by the shared Quadlet. Formatting standardizes whitespace and indentation only;
+it does not invent routes, repair missing directories, change proxy targets, or
+alter security policy. Validation adapts and provisions the configuration
+without starting it, so syntax, import, and provisioning failures stop the
+activation before the live edge service is affected.
+
 Podman fails a container start when a bind-mount source does not exist. A
 `statfs ... no such file or directory` message with exit status 125 therefore
 indicates a missing host mount in the shared Caddy Quadlet, not a failed web
