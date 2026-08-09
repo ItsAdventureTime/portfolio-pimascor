@@ -43,6 +43,8 @@ inferring behavior from screenshots.
 
 - `DEMO-VPS-DEPLOYMENT.md` — transfer, activate, validate, rollback, cleanup,
   and targeted Bunny cache purge.
+- `DEMO-INCIDENT-RECOVERY-PODMAN-RM.md` — recovery after broad rootless Podman
+  stop/remove commands; inspect first and preserve demo data.
 - `../infra/scripts/deploy-demo-vps.sh` — Mac-side transfer entry point.
 - `../infra/scripts/update-demo.sh` — VPS-only guarded build/migration/reset.
 - `../infra/scripts/reconcile-demo-web-root.sh` — Caddy mount and stale-stage
