@@ -16,6 +16,14 @@ Runtime paths:
 - Caddy serves `~/bridge-ph/pimascor/web-dist` at
   `https://delegateops.business/pimascor/`.
 
+Caddy is not host-installed or root-run. It is the existing rootless Podman
+container managed by the user-level, Quadlet-generated `caddy.service`, with
+its source Quadlet at `~/.config/containers/systemd/caddy/caddy.container`.
+Run all Caddy lifecycle commands as VPS user `jk` with `systemctl --user`; do
+not use `sudo systemctl`, a system-level `caddy.service`, or a host `caddy`
+binary. The generated service creates the established `caddy` container name,
+which is used only for post-start inspection.
+
 The production API uses `DEPLOYMENT_TIER=production`,
 `APP_ENV=production`, private B2 storage, HTTPS-only cookies, Resend email,
 and the durable export worker. It never runs `demo_reset` and does not seed
@@ -303,6 +311,12 @@ it does not invent routes, repair missing directories, change proxy targets, or
 alter security policy. Validation adapts and provisions the configuration
 without starting it, so syntax, import, and provisioning failures stop the
 activation before the live edge service is affected.
+
+The installer verifies that the user-level `caddy.service` is loaded before it
+changes the shared configuration. It reloads the Quadlet generator with
+`systemctl --user daemon-reload`, restarts `caddy.service`, and validates the
+running rootless container afterward. It does not use `caddy reload`, which
+would bypass the intended Quadlet lifecycle.
 
 Podman fails a container start when a bind-mount source does not exist. A
 `statfs ... no such file or directory` message with exit status 125 therefore

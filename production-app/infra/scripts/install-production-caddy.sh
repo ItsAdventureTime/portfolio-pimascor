@@ -28,6 +28,11 @@ HANDLERS="${CADDY_CONF_ROOT}/pimascor-production.handlers.Caddyfile"
 [[ -f "${SOURCE_ROOT}/infra/caddy/pimascor-production.handlers.Caddyfile" ]] || { printf '%s\n' 'Production Caddy handlers are missing from the committed source.' >&2; exit 1; }
 grep -Eq '^delegateops\.business[[:space:]]*\{' "${CADDYFILE}" || { printf '%s\n' 'Expected delegateops.business site block was not found; refusing to edit Caddy.' >&2; exit 1; }
 [[ -d "${APP_ROOT}/web-dist" ]] || { printf 'Production web root not found: %s\n' "${APP_ROOT}/web-dist" >&2; exit 1; }
+systemctl --user show --property=LoadState --value caddy.service | grep -Fxq 'loaded' || {
+  printf '%s\n' 'Rootless Caddy user unit is unavailable: caddy.service.' >&2
+  printf 'Expected Quadlet: %s\n' "${CADDY_QUADLET}" >&2
+  exit 1
+}
 CADDY_IMAGE="$(awk -F= '/^Image=/{print $2; exit}' "${CADDY_QUADLET}")"
 [[ -n "${CADDY_IMAGE}" ]] || { printf '%s\n' 'Caddy image was not found in the shared Caddy Quadlet.' >&2; exit 1; }
 
