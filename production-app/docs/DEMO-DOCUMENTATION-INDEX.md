@@ -5,6 +5,10 @@ working on the synthetic demo only. It follows the Diátaxis separation of
 tutorials, how-to guides, reference material, and explanations. Production
 instructions remain separate and must not be inferred from this index.
 
+All demo changes are committed with local `git`, then published to the private
+GitHub HTTPS remote using `gh`. VPS transfer/activation SSH is a separate
+deployment operation.
+
 ## Authority and scope
 
 Before changing or publishing demo content, read
