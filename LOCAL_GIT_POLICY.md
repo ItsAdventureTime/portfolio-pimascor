@@ -9,7 +9,8 @@ private GitHub mirror as a synchronized recovery copy, including approved
 NDA/client project materials. Credentials, access tokens, private keys, local
 databases, runtime state, and unapproved secrets remain excluded.
 
-- The project owner has authorized this exact private mirror: `git@github.com:ItsAdventureTime/bridge-pimascor.git`.
+- The project owner has authorized this exact private mirror: `https://github.com/ItsAdventureTime/bridge-pimascor.git`.
+- GitHub publication uses HTTPS with the GitHub CLI credential helper. Run `gh auth setup-git --hostname github.com`; do not configure an SSH GitHub remote.
 - The configured pre-push hook blocks every other remote and requires the explicit `PIMASCOR_ALLOW_PRIVATE_GITHUB_PUSH=1` flag for this mirror.
 - Never change the remote to a public repository or push NDA material to any other service.
 - Use a private, access-controlled, encrypted backup for the working directory and Git metadata. A Git bundle can provide a portable offline copy of committed history, but it does not include uncommitted worktree changes, local configuration, hooks, or the index.
