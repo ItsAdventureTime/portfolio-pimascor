@@ -20,7 +20,8 @@ databases, runtime state, and unapproved secrets remain excluded.
 
 ## Working conventions
 
-Use local `git` for `add`, `commit`, and history inspection. Use GitHub CLI for
+Use local `git` for `add`, `commit`, and history inspection. No SSH key is
+required for this Git workflow. Use GitHub CLI for
 remote authentication, publication, and verification over the HTTPS origin:
 `gh auth setup-git --hostname github.com`, `gh auth status`, and
 `PIMASCOR_ALLOW_PRIVATE_GITHUB_PUSH=1 git push origin main`. Never replace the

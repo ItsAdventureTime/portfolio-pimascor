@@ -1,5 +1,11 @@
 # Demo incident recovery: broad rootless Podman removal
 
+## Recovery status
+
+On 2026-08-10, the owner reported that the demo recovery completed
+successfully. This is owner-reported evidence; retain the service health and
+role-walkthrough output separately as deployment evidence.
+
 This runbook applies after a command such as:
 
 ```bash

@@ -12,9 +12,10 @@ https://github.com/ItsAdventureTime/bridge-pimascor.git
 
 **Transport rule:** create commits with local `git` commands. Publish the
 already-created commit with GitHub CLI over the HTTPS `origin`; do not use an
-SSH GitHub remote. `gh auth setup-git --hostname github.com` configures Git to
-use the authenticated GitHub CLI credential helper. Authentication must still
-be verified with `gh auth status`; do not assume a machine is authenticated.
+SSH GitHub remote or an SSH signing key for Git transport. `gh auth setup-git
+--hostname github.com` configures Git to use the authenticated GitHub CLI
+credential helper. Authentication must still be verified with `gh auth status`;
+do not assume a machine is authenticated.
 
 Before staging, check `docs/REPOSITORY-EXPOSURE-AND-NDA.md`. Client records,
 supplied quotation PDFs, screenshots, photos, and generated handoff packets are
