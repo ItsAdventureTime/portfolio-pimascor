@@ -86,6 +86,26 @@ install -m 700 "${SOURCE_ROOT}/infra/scripts/record-production-backup.sh" "${APP
 systemctl --user daemon-reload
 systemd-analyze --user --generators=true verify bridge-ph-pimascor-db.service bridge-ph-pimascor-account-bootstrap.service bridge-ph-pimascor-api.service bridge-ph-pimascor-export-worker.service bridge-ph-pimascor-db-dump.service bridge-ph-pimascor-backup.service
 systemctl --user start bridge-ph-pimascor-data-network.service bridge-ph-pimascor-egress-network.service bridge-ph-pimascor-proxy-network.service
+
+ensure_network() {
+  network_name="$1"
+  network_unit="$2"
+  if ! podman network exists "$network_name"; then
+    printf 'Required production network is missing; recreating through %s.\n' "$network_unit" >&2
+    systemctl --user restart "$network_unit"
+  fi
+  if ! podman network exists "$network_name"; then
+    printf 'Production network remains unavailable: %s\n' "$network_name" >&2
+    systemctl --user status --no-pager --full "$network_unit" >&2 || true
+    journalctl --user --unit="$network_unit" --no-pager --lines=120 >&2 || true
+    exit 1
+  fi
+}
+
+ensure_network bridge-ph-pimascor-data bridge-ph-pimascor-data-network.service
+ensure_network bridge-ph-pimascor-egress bridge-ph-pimascor-egress-network.service
+ensure_network bridge-ph-pimascor-proxy bridge-ph-pimascor-proxy-network.service
+
 if ! systemctl --user start bridge-ph-pimascor-db.service; then
   printf '%s\n' 'PostgreSQL failed to start. Safe diagnostics follow; secret contents are not printed.' >&2
   systemctl --user status --no-pager --full bridge-ph-pimascor-db.service >&2 || true

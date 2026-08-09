@@ -50,6 +50,12 @@ database deletion:
 The `linkwarden-*`, demo, and other site containers shown by `podman ps` are
 separate workloads. Do not remove or reset them while recovering PIMASCOR.
 
+If the API diagnostic says `unable to find network with name or ID
+bridge-ph-pimascor-egress`, the API image and database are not the root cause.
+The updater checks the `data`, `egress`, and `proxy` network objects after
+starting their Quadlet units and recreates a missing network through its
+user-level `.network` unit before attempting the API.
+
 If the production source directory is missing or incomplete, run this on the
 Mac. The transfer contains committed source and Quadlet definitions only; it
 does not transfer secrets, PostgreSQL data, uploads, or backups:
