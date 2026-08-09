@@ -291,7 +291,9 @@ It refuses to edit the file if the expected site block, Quadlet, or production
 web root is absent. It normalizes the PIMASCOR web mount to the canonical
 `%h/bridge-ph/pimascor/web-dist` source and removes only duplicate PIMASCOR
 mounts that target the same container directory. It never removes, creates, or
-changes an unrelated Caddy site.
+changes an unrelated Caddy site. It also removes the exact legacy relative
+`import pimascor-production.handlers.Caddyfile` line if present, leaving the
+single canonical absolute import installed by the production route.
 
 Podman fails a container start when a bind-mount source does not exist. A
 `statfs ... no such file or directory` message with exit status 125 therefore

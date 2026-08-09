@@ -31,6 +31,18 @@ grep -Eq '^delegateops\.business[[:space:]]*\{' "${CADDYFILE}" || { printf '%s\n
 install -d -m 700 "${CADDY_CONF_ROOT}"
 install -m 600 "${SOURCE_ROOT}/infra/caddy/pimascor-production.handlers.Caddyfile" "${HANDLERS}"
 
+# Keep one canonical import. A legacy relative import would load the same
+# production handlers twice after the absolute import below is installed.
+if grep -Eq '^[[:space:]]*import[[:space:]]+pimascor-production\.handlers\.Caddyfile[[:space:]]*$' "${CADDYFILE}"; then
+  caddy_tmp="$(mktemp "${CADDYFILE}.next.XXXXXX")"
+  awk '
+    /^[[:space:]]*import[[:space:]]+pimascor-production\.handlers\.Caddyfile[[:space:]]*$/ { next }
+    { print }
+  ' "${CADDYFILE}" > "${caddy_tmp}"
+  chmod 600 "${caddy_tmp}"
+  mv "${caddy_tmp}" "${CADDYFILE}"
+fi
+
 if ! grep -Fq "${MARKER}" "${CADDYFILE}"; then
   caddy_tmp="$(mktemp "${CADDYFILE}.next.XXXXXX")"
   awk -v marker="${MARKER}" '
