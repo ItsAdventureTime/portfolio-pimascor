@@ -62,8 +62,9 @@ the account-bootstrap secret; ordinary releases preserve it.
 3. Run focused tests, then the full QA gate when practical.
 4. Never commit credentials, Podman secret values, live data, or reset tokens.
 5. Record the accepted commit in the handoff manifest.
-6. Use signed commits and GitHub CLI remote checks; verify the GitHub signature
-   rather than assuming a local commit is verified.
+6. Use signed commits and GitHub CLI remote checks over the configured HTTPS
+   remote; verify the GitHub signature rather than assuming a local commit is
+   verified.
 
 Local Git `main` is the production documentation source of truth. GitHub
 `origin/main` is synchronized after local validation and signed commit
