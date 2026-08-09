@@ -147,8 +147,9 @@ curl --fail --silent --show-error --location --max-time 15 "https://delegateops.
 
 api_health_url='https://delegateops.business/pimascor/api/v1/health'
 api_ready=false
+printf 'Waiting for production API health through Caddy...\n'
 for _attempt in {1..30}; do
-  if curl --fail --silent --show-error --location --max-time 10 "${api_health_url}" >/dev/null; then
+  if curl --fail --silent --location --max-time 10 "${api_health_url}" >/dev/null 2>&1; then
     api_ready=true
     break
   fi
