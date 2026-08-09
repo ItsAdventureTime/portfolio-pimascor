@@ -17,7 +17,7 @@ Client packet scope intentionally excludes source code, infrastructure files,
 Podman Quadlets, Caddyfiles, Bash scripts, credentials, and live production
 records.
 
-The source documentation was revised on 2026-08-08 for the approved production
-account identities and DCS/CEO/Chairman policy. Regenerate and render-check the
-client PDFs before delivery; do not distribute the previous 2026-08-01 PDFs as
-the final packet.
+The source documentation was revised on 2026-08-09 for the approved production
+account identities, DCS/CEO/Chairman policy, and owner-only backup restoration
+workflow. Regenerate and render-check the client PDFs before delivery; do not
+distribute the previous 2026-08-01 PDFs as the final packet.

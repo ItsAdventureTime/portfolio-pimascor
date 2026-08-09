@@ -25,6 +25,8 @@ demo authority, runbook sequence, generated-artifact boundary, and exclusions.
 
 - `PRODUCTION-VPS-DEPLOYMENT.md` — production VPS, secrets, Quadlets, backups,
   and Caddy activation. This is operator-only material.
+- `PRODUCTION-BACKUP-RESTORE-RUNBOOK.md` — owner-only CLI dry-run restore,
+  encrypted backup catalog, retention, and recovery evidence.
 - `PASSWORD-RECOVERY.md` — activation and self-service recovery controls.
 - `DATA-EXPORTS.md` — CSV/full archive behavior and retention.
 - `INCIDENT-REPORTING.md` — reporting and response expectations.

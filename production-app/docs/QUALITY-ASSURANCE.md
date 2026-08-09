@@ -95,6 +95,22 @@ After VPS activation and before any Bunny purge:
 Follow [Factual basis and evidence policy](FACTUAL-BASIS.md). Local build/test
 results prove local source only. VPS command output proves VPS activation.
 
+### Production backup acceptance
+
+- As Admin and DCS, verify Accounting shows completed encrypted backup metadata
+  without exposing B2 keys, Restic passwords, object paths, or restore controls.
+- As Mich and Requester, verify the backup catalog is not offered and the API
+  returns `403` for `/api/v1/backups`.
+- On the VPS, run `production-backup-now.sh --dry-run`, then one real forced
+  backup. Confirm transient PostgreSQL staging is removed only after service
+  success and a catalog entry appears.
+- Run `production-restore.sh --list` and the default dry run. Confirm neither
+  command stops production or downloads data. Perform a quarantine restore only
+  after owner approval and record checksums, migration head, and evidence.
+- Do not claim continuous WAL/PITR until a separate WAL archive and restore
+  rehearsal has passed. Fixed base backups plus Restic deduplication are the
+  current release behavior.
+
 ### Password recovery acceptance
 
 - Submit reset for active, disabled, pending, and unknown identifiers; verify the

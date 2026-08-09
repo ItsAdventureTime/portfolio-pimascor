@@ -1,5 +1,4 @@
-# Future production template. Enable only after recovery objectives and the
-# production backup service have been approved and tested.
+# Active production schedule. Change only through the production change record.
 [Unit]
 Description=Back up PIMASCOR production every six hours
 

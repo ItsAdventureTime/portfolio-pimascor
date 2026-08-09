@@ -36,6 +36,16 @@ remains the commit and push transport for this private repository. `gh repo
 sync` is not a replacement for publishing local commits; it synchronizes a
 repository from another repository or parent branch.
 
+### Signature requirement
+
+Commits must be SSH-signed with the signing key registered on the GitHub
+account. Confirm the local commit with `git log --show-signature -1`, then
+confirm the remote API reports `commit.verification.verified=true`. `gh auth
+setup-git` supplies GitHub credentials; it does not create or sign commits. If
+the configured 1Password SSH signer is locked or unavailable, unlock it before
+committing. Do not fall back to an unsigned commit merely to make the push
+succeed.
+
 Removing a file from the current tree does not remove it from prior commits.
 If a confirmed secret or NDA file was committed historically, stop and use the
 approved sensitive-data-removal procedure. History rewriting requires explicit

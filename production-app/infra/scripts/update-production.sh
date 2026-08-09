@@ -41,6 +41,9 @@ required_files=(
   "${SOURCE_ROOT}/infra/quadlet/production/bridge-ph-pimascor-data.network"
   "${SOURCE_ROOT}/infra/quadlet/production/bridge-ph-pimascor-egress.network"
   "${SOURCE_ROOT}/infra/quadlet/production/bridge-ph-pimascor-proxy.network"
+  "${SOURCE_ROOT}/infra/scripts/record-production-backup.sh"
+  "${SOURCE_ROOT}/infra/scripts/production-backup-now.sh"
+  "${SOURCE_ROOT}/infra/scripts/production-restore.sh"
 )
 for required_file in "${required_files[@]}"; do
   [[ -f "$required_file" ]] || { printf 'Missing required file: %s\n' "$required_file" >&2; exit 1; }
@@ -55,6 +58,7 @@ for migration in 20260729_0011 20260801_0012 20260803_0013 20260803_0014; do
   }
 done
 [[ -x "${SOURCE_ROOT}/infra/scripts/install-production-caddy.sh" ]] || { printf '%s\n' 'Caddy installer is not executable in the deployed source.' >&2; exit 1; }
+[[ -x "${SOURCE_ROOT}/infra/scripts/production-backup-now.sh" && -x "${SOURCE_ROOT}/infra/scripts/production-restore.sh" ]] || { printf '%s\n' 'Production backup/restore helpers must be executable.' >&2; exit 1; }
 release_commit="$(tr -d '\r\n' < "${SOURCE_ROOT}/.deployment-source-commit")"
 [[ "$release_commit" =~ ^[0-9a-f]{40}$ ]] || { printf '%s\n' 'Invalid Git commit marker.' >&2; exit 1; }
 grep -Fqx 'Environment=DEPLOYMENT_TIER=production' "${SOURCE_ROOT}/infra/quadlet/production/bridge-ph-pimascor-api.container"
@@ -70,13 +74,14 @@ for secret_name in bridge_ph_pimascor_postgres_password bridge_ph_pimascor_datab
   podman secret exists "$secret_name" || { printf 'Missing production Podman secret: %s\n' "$secret_name" >&2; exit 1; }
 done
 
-install -d -m 700 "$APP_ROOT" "$APP_ROOT/data/postgres/18/docker" "$APP_ROOT/data/uploads-tmp" "$APP_ROOT/backup-staging" "$APP_ROOT/restic-cache" "$QUADLET_ROOT" "$TIMER_ROOT"
+install -d -m 700 "$APP_ROOT" "$APP_ROOT/data/postgres/18/docker" "$APP_ROOT/data/uploads-tmp" "$APP_ROOT/backup-staging" "$APP_ROOT/backup-catalog/history" "$APP_ROOT/restic-cache" "$APP_ROOT/bin" "$QUADLET_ROOT" "$TIMER_ROOT"
 quadlet_files=(bridge-ph-pimascor-data.network bridge-ph-pimascor-egress.network bridge-ph-pimascor-proxy.network bridge-ph-pimascor-db.container bridge-ph-pimascor-api.container bridge-ph-pimascor-account-bootstrap.container bridge-ph-pimascor-export-worker.container bridge-ph-pimascor-db-dump.container bridge-ph-pimascor-backup.container bridge-ph-pimascor-backup-retention.container)
 for quadlet_file in "${quadlet_files[@]}"; do
   install -m 600 "${SOURCE_ROOT}/infra/quadlet/production/${quadlet_file}" "${QUADLET_ROOT}/${quadlet_file}"
 done
 install -m 600 "${SOURCE_ROOT}/infra/systemd/bridge-ph-pimascor-backup.timer" "${TIMER_ROOT}/bridge-ph-pimascor-backup.timer"
 install -m 600 "${SOURCE_ROOT}/infra/systemd/bridge-ph-pimascor-backup-retention.timer" "${TIMER_ROOT}/bridge-ph-pimascor-backup-retention.timer"
+install -m 700 "${SOURCE_ROOT}/infra/scripts/record-production-backup.sh" "${APP_ROOT}/bin/record-production-backup.sh"
 
 systemctl --user daemon-reload
 systemd-analyze --user --generators=true verify bridge-ph-pimascor-db.service bridge-ph-pimascor-account-bootstrap.service bridge-ph-pimascor-api.service bridge-ph-pimascor-export-worker.service bridge-ph-pimascor-db-dump.service bridge-ph-pimascor-backup.service

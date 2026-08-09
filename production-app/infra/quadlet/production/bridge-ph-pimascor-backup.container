@@ -1,5 +1,5 @@
-# Future production template. Use production-only secrets and a production-only
-# Backblaze repository; never substitute demo credentials.
+# Active production backup template. Use production-only secrets and repository;
+# never substitute demo credentials.
 [Unit]
 Description=Back up PIMASCOR production files, Quadlets, and PostgreSQL dump to Backblaze B2
 After=bridge-ph-pimascor-db-dump.service
@@ -36,3 +36,4 @@ LogDriver=journald
 Type=oneshot
 Restart=no
 TimeoutStartSec=7200
+ExecStartPost=%h/bridge-ph/pimascor/bin/record-production-backup.sh

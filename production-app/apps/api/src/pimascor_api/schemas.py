@@ -685,6 +685,18 @@ class DataExportResponse(ApiModel):
     requested_by: MeResponse
 
 
+class BackupCatalogResponse(BaseModel):
+    id: str
+    completed_at: datetime
+    scope: str
+    encrypted: bool
+    storage: str
+    retention_class: str
+    local_copy_deleted: bool
+    restore_mode: str
+    verification: str
+
+
 class LiquidationLineResponse(ApiModel):
     id: str
     description: str

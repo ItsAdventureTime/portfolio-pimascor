@@ -1,5 +1,11 @@
 # Local records exports
 
+This document covers user-requested CSV/full-record archives. It is not the
+production disaster-recovery backup. Encrypted Restic snapshots and their
+owner-only CLI restore procedure are documented in
+`PRODUCTION-BACKUP-RESTORE-RUNBOOK.md`; Admin and DCS can view completion
+metadata but cannot restore from the application.
+
 ## Decision
 
 Use the existing private Backblaze B2 S3-compatible storage for completed ZIP archives. Do not place the generated archive on the API server filesystem and do not use a public Bunny CDN URL for it. The API keeps the bucket private and streams a download only after the signed-in Administrator is authorized; the notification email takes the user to the authenticated Accounting Export page, not to a bearer URL.

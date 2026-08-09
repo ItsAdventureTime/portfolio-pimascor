@@ -1,5 +1,4 @@
-# Future production template. Retention values require management approval
-# before this unit is installed or enabled.
+# Active production template. Retention changes require management approval.
 [Unit]
 Description=Apply the approved retention policy to PIMASCOR production Backblaze snapshots
 After=bridge-ph-pimascor-backup.service
@@ -17,7 +16,7 @@ Environment=RESTIC_REPOSITORY=s3:https://s3.us-west-001.backblazeb2.com/bridge-p
 Environment=RESTIC_PASSWORD_FILE=/run/secrets/restic_password
 Environment=RESTIC_CACHE_DIR=/cache
 Volume=%h/bridge-ph/pimascor/restic-cache:/cache:Z
-Exec=forget --tag=bridge-ph-pimascor-production --keep-within=7d --keep-daily=35 --keep-weekly=12 --keep-monthly=12 --keep-yearly=3 --prune
+Exec=forget --tag=bridge-ph-pimascor-production --keep-within=7d --keep-daily=35 --keep-weekly=12 --keep-monthly=12 --keep-yearly=5 --prune
 ReadOnly=true
 ReadOnlyTmpfs=true
 Tmpfs=/tmp:rw,size=128m,mode=1777

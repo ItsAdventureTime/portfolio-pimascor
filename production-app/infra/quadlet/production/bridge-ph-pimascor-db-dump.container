@@ -1,5 +1,5 @@
-# Future production template. Do not install until bridge-ph-pimascor-db.service and
-# bridge-ph-pimascor-data.network exist and production secrets have been created.
+# Active production template. It requires the database network and production
+# secrets, which update-production.sh verifies before installation.
 [Unit]
 Description=Create a consistent PostgreSQL dump for the PIMASCOR production backup
 After=bridge-ph-pimascor-db.service

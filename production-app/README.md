@@ -18,6 +18,7 @@ This directory is the working root for the new PIMASCOR Operational Control Syst
 - `docs/INCIDENT-REPORTING.md`: shared error detection, recovery, privacy, notification, and audit contract
 - `docs/FACTUAL-BASIS.md`: evidence labels, confirmed VPS layout, and rules against presenting assumptions as facts
 - `docs/QUALITY-ASSURANCE.md`: required role, responsive, browser-engine, and deployment acceptance evidence
+- `docs/PRODUCTION-BACKUP-RESTORE-RUNBOOK.md`: encrypted backup catalog and owner-only CLI dry-run restore procedure
 - `docs/DEMO-BUILD-SOURCE-OF-TRUTH-2026-08-08.md`: newest demo-only Admin entry and role-evaluation rules
 - `docs/DEMO-DOCUMENTATION-INDEX.md`: starting point and file map for demo-only work
 - `docs/CODEX-OPERATIONAL-WORKFLOW-FOUNDATION-PROMPT.md`: downloadable Codex foundation prompt for adapting the system to another industry

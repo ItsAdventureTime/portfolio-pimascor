@@ -24,6 +24,9 @@ BRIDGE / PIMASCOR HANDOFF DELIVERY STEPS
 6. Transfer access using named provider invitations or an approved password
    manager: VPS, DNS/registrar, CDN, Backblaze B2, Resend, and private GitHub
    access only where the written support or source-transfer scope requires it.
+   The production backup catalog is visible to Admin and DCS, but restoration
+   is intentionally owner-only through the VPS CLI. Provide the technical
+   backup runbook only to the named service owner, not in the client packet.
 
 7. After Bridge confirms acceptance, rotate any commissioning credentials and
    revoke developer access unless an active support agreement requires it.

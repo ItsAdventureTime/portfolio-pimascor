@@ -118,7 +118,10 @@ Use separate real demo accounts for every role. Check an item only after the nam
 - [ ] Malware scanning and approved document retention.
 - [ ] Archival PDF requirements.
 - [ ] Password recovery, account lifecycle, notification, and global-search scope.
-- [ ] Management-approved RPO, RTO, retention, and restore-test cadence.
+- [ ] Management-approved RPO, RTO, retention, and restore-test cadence. The
+  current release uses fixed four-times-daily base backups plus encrypted
+  Restic retention; Admin/DCS catalog access is read-only and restoration is
+  owner-only CLI with dry-run and quarantine evidence.
 
 ## Sign-off
 

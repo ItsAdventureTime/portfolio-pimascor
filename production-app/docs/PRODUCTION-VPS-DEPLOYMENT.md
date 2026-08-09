@@ -230,6 +230,13 @@ The account bootstrap, service restarts, web asset replacement, and backup
 timer activation are safe to repeat. Secret provisioning preserves existing
 secrets unless the explicit account-manifest replacement option is used.
 
+The first production activation also creates the host backup-catalog directory,
+installs the post-success catalog hook, and installs the backup/restore helper
+scripts. Those filesystem setup steps are idempotent; later releases refresh
+the scripts and Quadlets without deleting the catalog history or production
+data. The first real backup creates the first catalog entry. No restore runs
+automatically during deployment.
+
 Local macOS builds are optional validation only. The deployment script builds
 the production images on the VPS with its rootless Podman runtime. If local
 validation is needed, use the existing Podman machine and disposable
@@ -290,6 +297,59 @@ CSV records plus original attachments and generated documents in an encrypted
 short-lived archive. The API enforces the two-request Philippine calendar-week
 limit; the worker processes the queue and expires archives.
 
+### Recovery policy and operator controls
+
+The encrypted Backblaze B2 Restic repository is the recovery source of truth.
+The scheduled service creates a consistent PostgreSQL custom-format dump,
+backs up production uploads, the dump, and production Quadlets, then records a
+non-sensitive completion entry for the Admin/DCS catalog. The transient dump is
+deleted only after the Restic service exits successfully. B2 credentials and
+the Restic password never enter the catalog or the web response.
+
+The current base-backup schedule is four fixed runs per day. It is deliberately
+not an adaptive 1-hour/2-hour/4-hour policy: predictable schedules are easier
+to audit and restore. Near-real-time PostgreSQL WAL archiving/PITR remains a
+separate production change requiring a tested archive destination and restore
+rehearsal; this release does not claim WAL/PITR availability.
+
+Retention is applied by the Restic timer (short daily, weekly, monthly, and
+yearly classes). Quarterly and semiannual legal retention must be represented
+by approved tagged/archive copies or a B2 lifecycle/Object Lock policy; Restic
+`forget` alone does not create those business calendar tiers. A legal hold
+must be approved before enabling immutable retention because Object Lock can
+prevent lifecycle deletion.
+
+Admin and DCS can view the encrypted backup completion catalog under Accounting.
+They cannot restore, replace, delete, or re-encrypt production data from the
+web app. Only the service owner uses the VPS CLI, and every restore starts as a
+dry run and then a quarantine restore for inspection.
+
+Force a backup on the VPS:
+
+```bash
+cd /var/home/jk/bridge-ph/pimascor/source && ./infra/scripts/production-backup-now.sh --dry-run
+cd /var/home/jk/bridge-ph/pimascor/source && ./infra/scripts/production-backup-now.sh
+```
+
+List encrypted repository snapshots, then perform a safe dry run (the default)
+before any download:
+
+```bash
+cd /var/home/jk/bridge-ph/pimascor/source && ./infra/scripts/production-restore.sh --list
+cd /var/home/jk/bridge-ph/pimascor/source && ./infra/scripts/production-restore.sh --snapshot latest --dry-run
+```
+
+After reviewing the snapshot and approving a target directory, restore only to
+quarantine. The script refuses the live production root:
+
+```bash
+cd /var/home/jk/bridge-ph/pimascor/source && ./infra/scripts/production-restore.sh --snapshot SNAPSHOT_ID --target /var/home/jk/bridge-ph/pimascor/restore-quarantine --execute
+```
+
+Review checksums, database contents, migrations, and uploaded files before a
+separate controlled cutover. There is intentionally no restore button or
+restore API endpoint.
+
 Do not enable production traffic until:
 
 1. all production secrets exist and are scoped correctly;
@@ -302,6 +362,9 @@ Do not enable production traffic until:
 7. password recovery is tested with a real mailbox, including an expired link,
    a reused link, a wrong-token attempt, and confirmation that old sessions are
    revoked.
+8. the owner runs the force-backup dry run, confirms a completed catalog entry,
+   lists snapshots, and rehearses a quarantine restore before production data
+   is considered recoverable.
 
 The architecture follows the official Podman Quadlet user-unit model and
 SQLAlchemy's explicit child-before-parent deletion requirement for bulk

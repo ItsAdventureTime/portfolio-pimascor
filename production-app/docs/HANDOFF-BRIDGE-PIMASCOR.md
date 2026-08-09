@@ -41,6 +41,8 @@ files. Confirm that the version/commit is recorded on the handoff cover sheet.
 - `docs/USER-FLOWS.md` — role-based workflows for acceptance testing.
 - `docs/API-CONTRACT.md` — supported API behavior for integrations and support.
 - `docs/DATA-EXPORTS.md` — archive contents, retention, and export controls.
+- `docs/PRODUCTION-BACKUP-RESTORE-RUNBOOK.md` — owner-only backup/restore
+  responsibilities and evidence (technical appendix; no secret values).
 - `docs/INCIDENT-REPORTING.md` — user reporting and operator response behavior.
 - `docs/QUALITY-ASSURANCE.md` — release and browser/device acceptance criteria.
 - `docs/UX-PHILIPPINE-CONTROLS.md` — language, currency, and PH-context controls.
@@ -116,7 +118,9 @@ the account used. Do not record passwords or full document contents.
 - CSV accounting export and full archive export produce the documented formats.
 - Export retention, one-hour download availability, and weekly request limit are
   confirmed with non-production test data.
-- PostgreSQL dump, Restic backup, and a restoration test are evidenced.
+- PostgreSQL dump and encrypted Restic backup are evidenced. Restore authority
+  remains with the named service owner and is CLI-only; Admin and DCS can view
+  the in-app backup catalog but cannot restore or replace production data.
 - Resend operational and technical incident notifications reach the agreed
   recipients without exposing confidential payloads.
 - Desktop and mobile acceptance is completed in Chromium, WebKit, and Gecko.
@@ -134,8 +138,9 @@ Bridge should:
 2. Rotate any credential that was temporarily shared during commissioning.
 3. Verify the VPS firewall, DNS, TLS renewal, Caddy service, and rootless user
    lingering are still enabled.
-4. Run one controlled backup and verify that the Restic repository can list and
-   restore a test object.
+4. Run one controlled backup, verify the encrypted catalog entry, list Restic
+   snapshots, and complete a dry-run followed by a quarantine restore. Do not
+   restore directly over the live production root.
 5. Confirm the production B2 bucket is private and the production prefix is
    separate from demo objects.
 6. Confirm the data-retention, incident-response, and data-subject request

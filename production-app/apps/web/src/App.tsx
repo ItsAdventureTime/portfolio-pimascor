@@ -58,8 +58,8 @@ import {
   toneForStatus,
 } from './data'
 import type { BudgetRequest, PageId, Role, Tone } from './types'
-import type { ApiActivityCategory, ApiAdminActivity, ApiBilling, ApiBudgetRequest, ApiClient, ApiClientPayment, ApiCreditMemo, ApiDataExport, ApiDocument, ApiExpenseRequest, ApiExpenseType, ApiFundingSource, ApiLiquidation, ApiPaymentQueueItem, ApiQuotation, ApiQuotationLine, ApiReleaseUpdate, ApiShipmentProfitability, ApiTaxProfile, ApiUser } from './types'
-import { ApiError, acknowledgeReleaseUpdate, closeLiquidation, completeActivation, completePasswordReset, createAdditionalBudget, createBillingDraft, createBillingReplacement, createBudgetRequest, createClientPayment, createCreditMemo, createExpenseRequest, createFundingSource, createQuotation, createTaxProfile, decideBilling, decideBudgetRequest, decideCreditMemo, decideExpenseRequest, decideQuotation, downloadDataExport, downloadDocument, emitApiIncident, finalizeBilling, getAdminActivity, getBilling, getBudgetApprovalQueue, getBudgetRequests, getBudgetReviewQueue, getClientPayments, getClients, getCreditMemos, getDataExports, getDocumentBlob, getDocuments, getExpenseApprovalQueue, getExpenseRequests, getFundingSources, getLiquidations, getMe, getPayments, getQuotations, getReceivables, getReleaseUpdate, getShipmentProfitability, getTaxProfiles, overrideBudgetAsDcs, overrideQuotationAsDcs, recordPayment, recordQuotationAcceptance, requestDataExport, returnBudgetFromReview, reviewBudgetRequest, saveLiquidation, signOut, startActivation, startDemoSession, startPassword, startPasswordReset, submitBilling, submitBudgetRequest, submitExpenseRequest, submitLiquidation, submitQuotation, updateBillingDraft, updateBudgetRequest, updateFundingSource, updatePayment, uploadLiquidationEvidence, uploadPaymentProof, verifyEmailCode, voidBilling } from './api'
+import type { ApiActivityCategory, ApiAdminActivity, ApiBackupCatalogItem, ApiBilling, ApiBudgetRequest, ApiClient, ApiClientPayment, ApiCreditMemo, ApiDataExport, ApiDocument, ApiExpenseRequest, ApiExpenseType, ApiFundingSource, ApiLiquidation, ApiPaymentQueueItem, ApiQuotation, ApiQuotationLine, ApiReleaseUpdate, ApiShipmentProfitability, ApiTaxProfile, ApiUser } from './types'
+import { ApiError, acknowledgeReleaseUpdate, closeLiquidation, completeActivation, completePasswordReset, createAdditionalBudget, createBillingDraft, createBillingReplacement, createBudgetRequest, createClientPayment, createCreditMemo, createExpenseRequest, createFundingSource, createQuotation, createTaxProfile, decideBilling, decideBudgetRequest, decideCreditMemo, decideExpenseRequest, decideQuotation, downloadDataExport, downloadDocument, emitApiIncident, finalizeBilling, getAdminActivity, getBackups, getBilling, getBudgetApprovalQueue, getBudgetRequests, getBudgetReviewQueue, getClientPayments, getClients, getCreditMemos, getDataExports, getDocumentBlob, getDocuments, getExpenseApprovalQueue, getExpenseRequests, getFundingSources, getLiquidations, getMe, getPayments, getQuotations, getReceivables, getReleaseUpdate, getShipmentProfitability, getTaxProfiles, overrideBudgetAsDcs, overrideQuotationAsDcs, recordPayment, recordQuotationAcceptance, requestDataExport, returnBudgetFromReview, reviewBudgetRequest, saveLiquidation, signOut, startActivation, startDemoSession, startPassword, startPasswordReset, submitBilling, submitBudgetRequest, submitExpenseRequest, submitLiquidation, submitQuotation, updateBillingDraft, updateBudgetRequest, updateFundingSource, updatePayment, uploadLiquidationEvidence, uploadPaymentProof, verifyEmailCode, voidBilling } from './api'
 import { IncidentCenter } from './IncidentCenter'
 import { ActionMessageDialog, type ActionMessage } from './ActionMessageDialog'
 
@@ -2429,18 +2429,20 @@ function AccountingPageLegacy() {
   )
 }
 
-function AccountingPage() {
+function AccountingPage({ role }: { role: Role }) {
   const [billing, setBilling] = useState<ApiBilling[]>([])
   const [payments, setPayments] = useState<ApiClientPayment[]>([])
   const [archives, setArchives] = useState<ApiDataExport[]>([])
+  const [backups, setBackups] = useState<ApiBackupCatalogItem[]>([])
   const [error, setError] = useState('')
   const [requestingArchive, setRequestingArchive] = useState(false)
   const [archiveMessage, setArchiveMessage] = useState('')
+  const canViewBackups = role === 'Admin' || role === 'DCS'
   const refresh = useCallback(() => {
-    Promise.all([getBilling(), getClientPayments(), getDataExports()])
-      .then(([bills, receipts, exportRows]) => { setBilling(bills); setPayments(receipts); setArchives(exportRows) })
+    Promise.all([getBilling(), getClientPayments(), getDataExports(), canViewBackups ? getBackups() : Promise.resolve([])])
+      .then(([bills, receipts, exportRows, backupRows]) => { setBilling(bills); setPayments(receipts); setArchives(exportRows); setBackups(backupRows) })
       .catch((reason) => setError(reason instanceof Error ? reason.message : 'Could not load accounting export data.'))
-  }, [])
+  }, [canViewBackups])
   useEffect(() => { refresh() }, [refresh])
   const finalizedBilling = useMemo(() => billing.filter((item) => item.status === 'FINALIZED'), [billing])
   const billed = finalizedBilling.reduce((sum, item) => sum + Number(item.adjusted_net_due), 0)
@@ -2490,6 +2492,10 @@ function AccountingPage() {
       <div className="callout callout--warning"><Clock3 size={18} /><span>Limit: two archive requests per Philippine calendar week for the whole organization. This limits compute and storage use; it is not a limit on retrying a permitted download during its one-hour availability window.</span></div>
       {archives.length ? <div className="table-wrap"><table><thead><tr><th>Requested</th><th>Requested by</th><th>Status</th><th>Available until</th><th>Archive</th></tr></thead><tbody>{archives.map((archive) => <tr key={archive.id}><td data-label="Requested">{activityTime(archive.requested_at)}</td><td data-label="Requested by">{archive.requested_by.display_name}</td><td data-label="Status"><Status>{archive.status}</Status></td><td data-label="Available until">{archive.expires_at ? activityTime(archive.expires_at) : '—'}</td><td data-label="Archive">{archive.status === 'READY' ? <Button tone="secondary" icon={Download} onClick={() => downloadArchive(archive)}>Download {archive.size_bytes ? `(${formatBytes(archive.size_bytes)})` : ''}</Button> : archive.status === 'FAILED' ? archive.error_message ?? 'Could not create archive' : 'Email is sent when ready'}</td></tr>)}</tbody></table></div> : <EmptyState icon={Archive} title="No local archive requested" detail="When needed, request a complete recovery copy here. The archive is never made public." />}
     </Card>
+    {canViewBackups ? <Card><SectionHeader eyebrow="Production recovery status" title="Encrypted backup history" description="Each entry confirms a successful encrypted backup to Backblaze B2. The local staging copy is removed after verification; restoration is deliberately available only through the owner’s CLI runbook." />
+      <div className="callout callout--info"><ShieldCheck size={18} /><span>Backups are encrypted at rest. Daily, weekly, and monthly classes are kept operationally; yearly snapshots are retained up to five years. Quarterly or semiannual legal archives require an approved immutable copy. Admin and DCS can review this catalog, but neither role can restore or replace production data from the web app.</span></div>
+      {backups.length ? <div className="table-wrap"><table><thead><tr><th>Completed</th><th>Coverage</th><th>Retention</th><th>Verification</th></tr></thead><tbody>{backups.map((backup) => <tr key={backup.id}><td data-label="Completed">{activityTime(backup.completed_at)}</td><td data-label="Coverage">{backup.scope}</td><td data-label="Retention">{backup.retention_class}</td><td data-label="Verification"><Status tone="success">Completed</Status></td></tr>)}</tbody></table></div> : <EmptyState icon={ShieldCheck} title="No completed backup is recorded yet" detail="The catalog will appear after the first successful production backup run." />}
+    </Card> : null}
   </div>
 }
 
@@ -3139,7 +3145,7 @@ function App() {
     case 'opex': content = <ExpensePage key={role} type="OPEX" role={role} notify={notify} />; break
     case 'marketing': content = <ExpensePage key={role} type="Marketing" role={role} notify={notify} />; break
     case 'loan-payments': content = <ExpensePage key={role} type="Loan Payment" role={role} notify={notify} />; break
-    case 'accounting': content = <AccountingPage key={role} />; break
+    case 'accounting': content = <AccountingPage key={role} role={role} />; break
     case 'clients-documents': content = <ClientsDocumentsPage key={role} role={role} />; break
     case 'admin': content = <AdminPage key={role} role={role} notify={notify} onPreviewRole={previewRole} />; break
     default: content = <DashboardPage key={role} role={role} displayName={authUser.display_name} navigate={navigate} />

@@ -412,7 +412,10 @@ Production backup templates remain under `infra/quadlet/production/`. They use:
 s3:https://s3.us-west-001.backblazeb2.com/bridge-ph/pimascor/backups/restic
 ```
 
-Enable them only after management approves recovery objectives and an isolated restore rehearsal succeeds.
+`update-production.sh` installs and enables the backup and retention timers
+after production services pass their health checks. Use
+`docs/PRODUCTION-BACKUP-RESTORE-RUNBOOK.md` for the owner-only force-backup,
+dry-run, and quarantine restore procedure; Admin/DCS web access is catalog-only.
 
 ## Official references
 

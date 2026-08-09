@@ -1,5 +1,5 @@
 BRIDGE / PIMASCOR CLIENT HANDOFF
-Source documentation revision: 2026-08-08
+Source documentation revision: 2026-08-09
 
 This directory contains client-facing PDFs only. It intentionally excludes source code, Podman files, Caddyfiles, Bash scripts, secrets, and live production data.
 
@@ -22,4 +22,5 @@ Brand reference: https://bridge-ph.com/about-us/
 Before delivery, regenerate the PDFs from the current production source
 documents and update this manifest with the accepted Git commit. The existing
 PDF files are the 2026-08-01 packet and must not be treated as the current
-account or policy record until regenerated and visually reviewed.
+account, policy, or backup-restoration record until regenerated and visually
+reviewed.
