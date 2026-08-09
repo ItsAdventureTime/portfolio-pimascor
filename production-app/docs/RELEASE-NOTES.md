@@ -4,6 +4,15 @@ This is the user-facing record of production changes. It explains what users
 can do now and how the change helps their work; it intentionally leaves out
 implementation details.
 
+## 2026-08-10 — A more dependable return after maintenance
+
+- **Improved — Get back to work with confidence.** PIMASCOR now confirms the
+  workspace is ready before an update is reported as complete, reducing the
+  chance of a short-lived connection error immediately after maintenance.
+- **Improved — Keep the workspace available.** The sign-in and workspace
+  route are checked together, so users can return to the same protected
+  workflow once the update is ready.
+
 ## 2026-08-09 — Clearer recovery visibility
 
 - **New — See backup health at a glance.** Admin and DCS can review when the

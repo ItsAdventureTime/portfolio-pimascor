@@ -130,3 +130,22 @@ Record the incident time, inventory result, deployed commit, service statuses,
 health-check result, selected backup snapshot, quarantine checksum results, and
 owner approval. Never record Podman secret contents, Restic passwords, B2 keys,
 session cookies, or reset tokens.
+
+## Verified recovery record — 2026-08-10
+
+The production route was successfully reactivated after the container recovery
+work. The following checks were observed on the VPS and are retained as the
+acceptance evidence for this recovery:
+
+- Caddy adapted the shared Caddyfile and reported **Valid configuration** on
+  both preflight validations.
+- The rootless `caddy.service` restarted successfully.
+- The installer waited for the production API readiness check instead of
+  treating a transient upstream response as a completed deployment.
+- The public route and API health check completed successfully at
+  `https://delegateops.business/pimascor/` and
+  `https://delegateops.business/pimascor/api/v1/health`.
+
+No secret values, database contents, or credentials belong in this record.
+Repeat the read-only inventory and the documented health check after any
+future recovery or production activation.

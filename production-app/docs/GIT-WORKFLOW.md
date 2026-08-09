@@ -60,6 +60,11 @@ the configured 1Password SSH signer is locked or unavailable, unlock it before
 committing. Do not fall back to an unsigned commit merely to make the push
 succeed.
 
+The SSH signing key is used only to verify commit authorship. It is not an SSH
+transport, VPS login credential, or GitHub remote. GitHub synchronization uses
+the HTTPS `origin` together with the authenticated GitHub CLI credential helper;
+no GitHub SSH key is required for fetch or push.
+
 Removing a file from the current tree does not remove it from prior commits.
 If a confirmed secret or NDA file was committed historically, stop and use the
 approved sensitive-data-removal procedure. History rewriting requires explicit
