@@ -30,6 +30,26 @@ incident report. The inventory records existence and metadata only.
 
 ## 2. Re-deploy the committed production source
 
+### Interpreting the reported inventory
+
+The observed state in this incident is consistent with container removal, not
+database deletion:
+
+- `/var/home/jk/bridge-ph/pimascor`, its source, and its PostgreSQL bind path
+  are present.
+- `bridge-ph-pimascor-db` is running and healthy.
+- The production API, account bootstrap, export worker, dump, and backup
+  containers are absent because their container objects were removed; their
+  generated Quadlet services remain available to recreate them.
+- `caddy` is running again because its user-level service recreated it.
+- `stat` may show `UNKNOWN` for the PostgreSQL directory owner when the
+  container's numeric PostgreSQL UID has no matching host `/etc/passwd` entry.
+  That output alone is not evidence of corruption; inspect the container
+  health and mount rather than changing ownership speculatively.
+
+The `linkwarden-*`, demo, and other site containers shown by `podman ps` are
+separate workloads. Do not remove or reset them while recovering PIMASCOR.
+
 If the production source directory is missing or incomplete, run this on the
 Mac. The transfer contains committed source and Quadlet definitions only; it
 does not transfer secrets, PostgreSQL data, uploads, or backups:
@@ -100,4 +120,3 @@ Record the incident time, inventory result, deployed commit, service statuses,
 health-check result, selected backup snapshot, quarantine checksum results, and
 owner approval. Never record Podman secret contents, Restic passwords, B2 keys,
 session cookies, or reset tokens.
-
