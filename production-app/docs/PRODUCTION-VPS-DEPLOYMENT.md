@@ -288,16 +288,27 @@ The script installs the production handler import, adds the production static
 web root and proxy network to the existing rootless Caddy Quadlet, validates
 Caddy's adapted configuration, restarts Caddy, and checks the public route.
 It refuses to edit the file if the expected site block, Quadlet, or production
-web root is absent. It also removes only the known retired
-`/home/jk/bridge-ph/accustanda-demo` bind-mount line when that host path is
-absent. It does not delete that path or alter unrelated Caddy sites.
+web root is absent. It normalizes the PIMASCOR web mount to the canonical
+`%h/bridge-ph/pimascor/web-dist` source and removes only duplicate PIMASCOR
+mounts that target the same container directory. It never removes, creates, or
+changes an unrelated Caddy site.
 
 Podman fails a container start when a bind-mount source does not exist. A
 `statfs ... no such file or directory` message with exit status 125 therefore
-indicates a stale host mount in the shared Caddy Quadlet, not a failed web
-build or invalid application Caddyfile. Re-run the installer from the
-deployed production source so it can reconcile the production mount and the
-known retired mount:
+indicates a missing host mount in the shared Caddy Quadlet, not a failed web
+build or invalid application Caddyfile. The installer preflights every shared
+Caddy host mount and names missing sources before it attempts a restart.
+
+For example, the configured Accustanda route uses
+`/srv/bridge-ph-accustandardrdrd-demo`. If its corresponding host source
+`/home/jk/bridge-ph/accustandardrdrd-demo` is absent, PIMASCOR must not remove
+that mount by itself: restore the Accustanda site at its intended host path or
+intentionally remove both its Caddy route and its Quadlet mount as a separate
+site-retirement change. Creating an empty placeholder directory only hides the
+configuration error and is not an acceptable recovery.
+
+After the owning site is corrected, re-run the installer from the deployed
+production source:
 
 ```bash
 cd /var/home/jk/bridge-ph/pimascor/source && ./infra/scripts/install-production-caddy.sh
@@ -305,9 +316,7 @@ systemctl --user status --no-pager caddy.service
 journalctl --user -u caddy.service --no-pager --lines=80
 ```
 
-Do not create a placeholder `accustanda-demo` directory merely to make Caddy
-start; that would hide configuration drift and could expose an unintended
-site. Inspect any other missing `Volume=` source reported by Podman and
+Inspect any other missing `Volume=` source reported by the preflight and
 correct its owning site or Quadlet explicitly.
 
 ## Backup and export

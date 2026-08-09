@@ -47,8 +47,22 @@ if ! grep -Fq "${MARKER}" "${CADDYFILE}"; then
   mv "${caddy_tmp}" "${CADDYFILE}"
 fi
 
+if awk '
+  /^Volume=.*:\/srv\/bridge-ph-pimascor(:|$)/ &&
+    $0 != "Volume=%h/bridge-ph/pimascor/web-dist:/srv/bridge-ph-pimascor:ro,Z" { found=1 }
+  END { exit(found ? 0 : 1) }
+' "${CADDY_QUADLET}"; then
+  quadlet_tmp="$(mktemp "${CADDY_QUADLET}.next.XXXXXX")"
+  awk '
+    /^Volume=.*:\/srv\/bridge-ph-pimascor(:|$)/ { next }
+    { print }
+  ' "${CADDY_QUADLET}" > "${quadlet_tmp}"
+  chmod 600 "${quadlet_tmp}"
+  mv "${quadlet_tmp}" "${CADDY_QUADLET}"
+fi
+
 if ! grep -Fq 'Network=bridge-ph-pimascor-proxy.network' "${CADDY_QUADLET}" ||
-  ! grep -Fq 'Volume=%h/bridge-ph/pimascor/web-dist:/srv/bridge-ph-pimascor:ro,Z' "${CADDY_QUADLET}"; then
+  ! grep -Fxq 'Volume=%h/bridge-ph/pimascor/web-dist:/srv/bridge-ph-pimascor:ro,Z' "${CADDY_QUADLET}"; then
   quadlet_tmp="$(mktemp "${CADDY_QUADLET}.next.XXXXXX")"
   awk '
     /^\[Service\]/ && !settings_added {
@@ -65,18 +79,32 @@ if ! grep -Fq 'Network=bridge-ph-pimascor-proxy.network' "${CADDY_QUADLET}" ||
   mv "${quadlet_tmp}" "${CADDY_QUADLET}"
 fi
 
-# The shared Caddy Quadlet may retain a legacy site mount after that site was
-# retired.  Remove only this known, absent path; never delete its host data.
-stale_legacy_source='/home/jk/bridge-ph/accustanda-demo'
-if [[ ! -e "${stale_legacy_source}" ]] &&
-  grep -Eq "^Volume=${stale_legacy_source}:" "${CADDY_QUADLET}"; then
-  quadlet_tmp="$(mktemp "${CADDY_QUADLET}.next.XXXXXX")"
-  awk -v source="${stale_legacy_source}" '
-    index($0, "Volume=" source ":") != 1 { print }
-  ' "${CADDY_QUADLET}" > "${quadlet_tmp}"
-  chmod 600 "${quadlet_tmp}"
-  mv "${quadlet_tmp}" "${CADDY_QUADLET}"
-  printf 'Removed stale Caddy bind mount for missing legacy path: %s\n' "${stale_legacy_source}"
+# Caddy is shared by several sites. Do not conceal a missing unrelated source
+# by creating an empty directory or removing a mount that its Caddy route uses.
+missing_mounts=()
+while IFS= read -r source; do
+  [[ -n "${source}" && -e "${source}" ]] || missing_mounts+=("${source}")
+done < <(
+  awk -v home="${HOME}" '
+    /^Volume=\// {
+      source=$0
+      sub(/^Volume=/, "", source)
+      sub(/:.*/, "", source)
+      print source
+    }
+    /^Volume=%h\// {
+      source=$0
+      sub(/^Volume=%h/, home, source)
+      sub(/:.*/, "", source)
+      print source
+    }
+  ' "${CADDY_QUADLET}"
+)
+if ((${#missing_mounts[@]})); then
+  printf '%s\n' 'Shared Caddy Quadlet has missing host bind-mount source(s); refusing to restart it:' >&2
+  printf '  %s\n' "${missing_mounts[@]}" >&2
+  printf '%s\n' 'Restore the owning site directory or remove its route and mount together before retrying.' >&2
+  exit 1
 fi
 
 systemctl --user daemon-reload
