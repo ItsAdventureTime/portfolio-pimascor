@@ -244,7 +244,10 @@ notifications to the requester, `Support Staff` (JK), and `Bridge Admin`
 (Alyssa). Support attachments are private B2 objects and are deleted when a
 ticket closes. Demo exposes the same portal and decision tree with synthetic
 replies and simulated non-downloadable attachments; it sends no production
-email. Both tiers expose Support through a compact responsive topbar dialog,
+email, so the demo create response supplies a synthetic portal URL for the
+in-app no-login-thread simulation. Production never returns raw portal tokens
+or URLs in API responses. Both tiers expose Support through a compact
+responsive topbar dialog,
 while emailed thread links open the dedicated thread surface. See
 `SUPPORT-TICKETS.md`.
 

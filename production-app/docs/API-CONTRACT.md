@@ -196,10 +196,13 @@ unique ticket number and sends safe notifications to Alyssa and JK. Demo uses
 the same contract with simulated replies and no email side effect. The create
 and reply routes also accept multipart form data with Markdown text and
 validated attachments. Portal routes use a recipient-specific `X-Support-Token`
-capability, not a session login; tokens expire, are revocable, and are never
-returned in API responses. Production attachment bytes are private B2 objects
-and are deleted when a ticket closes. Demo attachments are database-only
-simulation rows.
+capability, not a session login; tokens expire, are revocable, and production
+never returns raw capability tokens in API responses. Because demo intentionally
+sends no email, its authenticated create response may include a synthetic
+`portal_url` so the user can open the simulated no-login thread in-app; this
+exception is demo-only. Production attachment bytes are private B2 objects and
+are deleted when a ticket closes. Demo attachments are database-only simulation
+rows.
 
 ## Shipment profitability
 

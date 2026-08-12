@@ -37,6 +37,7 @@ from ..services.support_tickets import (
     BRIDGE_ADMIN_KEY,
     PORTAL_AUDIENCE_REQUESTER,
     PORTAL_AUDIENCE_SUPPORT,
+    REQUESTER_KEY,
     SUPPORT_STAFF_KEY,
     clean_reply_body,
     clean_ticket_category,
@@ -44,6 +45,7 @@ from ..services.support_tickets import (
     clean_ticket_reason,
     clean_ticket_subject,
     deliver_support_ticket_notifications_now,
+    portal_url,
     purge_ticket_attachments,
     resolve_portal_token,
     simulated_reply_body,
@@ -284,7 +286,8 @@ async def create_ticket(
         portal_tokens=token_values,
     )
     ticket = _load_ticket_by_id(ticket.id, db)
-    return _response(ticket, support_view=_is_admin(context))
+    url = portal_url(settings, ticket.id, token_values[REQUESTER_KEY]) if settings.deployment_tier == "demo" else None
+    return _response(ticket, support_view=_is_admin(context), url=url)
 
 
 @router.get("", response_model=list[SupportTicketResponse])

@@ -23,6 +23,7 @@ def test_authenticated_users_create_and_only_see_their_own_tickets(client):
     assert body["requester_role"] == "REQUESTER"
     assert body["status"] == "OPEN"
     assert body["replies"] == []
+    assert body["portal_url"] is None
 
     client.post("/api/v1/auth/logout", headers={"X-CSRF-Token": requester_csrf})
     gm_csrf = sign_in(client, "gm")

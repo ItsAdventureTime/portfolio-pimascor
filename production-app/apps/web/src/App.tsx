@@ -2997,6 +2997,7 @@ function SupportTicketsDialog({ role, notify, open, onClose }: { role: Role; not
   const [files, setFiles] = useState<File[]>([])
   const [replyFiles, setReplyFiles] = useState<File[]>([])
   const [busy, setBusy] = useState(false)
+  const [demoPortalUrl, setDemoPortalUrl] = useState<string | null>(null)
   const selected = tickets?.find((ticket) => ticket.id === selectedId) ?? null
   const isAdmin = role === 'Admin'
   const canRespond = isAdmin || isDemoBuild
@@ -3013,6 +3014,7 @@ function SupportTicketsDialog({ role, notify, open, onClose }: { role: Role; not
     setReply('')
     setFiles([])
     setReplyFiles([])
+    setDemoPortalUrl(null)
     onClose()
   }
 
@@ -3039,6 +3041,7 @@ function SupportTicketsDialog({ role, notify, open, onClose }: { role: Role; not
       setReason('I HAVE A QUESTION OR ANOTHER PROBLEM')
       setFiles([])
       setSelectedId(created.id)
+      setDemoPortalUrl(created.portal_url ?? null)
       await refresh()
       notify(`Ticket ${created.ticket_number} was submitted.`, 'success')
     } catch (error) {
@@ -3096,6 +3099,7 @@ function SupportTicketsDialog({ role, notify, open, onClose }: { role: Role; not
               <CircleHelp size={18} aria-hidden="true" />
               <span>{isDemoBuild ? 'Demo simulation: replies are synthetic and clearly labeled.' : 'Admin support notifications are sent to Alyssa and JK.'}</span>
             </div>
+            {isDemoBuild && demoPortalUrl ? <div className="support-dialog__actions support-dialog__portal-link"><a className="button button--secondary" href={demoPortalUrl}>Open simulated no-login thread</a><span className="support-dialog__hint">This simulates the private email link. Demo does not send production email.</span></div> : null}
             <div className="support-message">
               <span className="support-message__label">Your message</span>
               <p>{selected.message}</p>

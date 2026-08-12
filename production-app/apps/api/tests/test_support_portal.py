@@ -3,10 +3,29 @@ import secrets
 
 from sqlalchemy import select
 
+from pimascor_api.config import get_settings
 from pimascor_api.models import SupportTicket, SupportTicketPortalToken, utc_now
 from pimascor_api.security import hash_secret
 
 from .conftest import TestingSession, sign_in
+
+
+def test_demo_create_exposes_a_synthetic_portal_link_only(client):
+    settings = get_settings()
+    original_tier = settings.deployment_tier
+    settings.deployment_tier = "demo"
+    try:
+        csrf = sign_in(client, "requester")
+        response = client.post(
+            "/api/v1/support-tickets",
+            headers={"X-CSRF-Token": csrf},
+            json={"subject": "Demo portal", "message": "Open the simulated thread."},
+        )
+        assert response.status_code == 201, response.text
+        portal_url = response.json()["portal_url"]
+        assert portal_url.startswith(settings.public_app_url.rstrip("/") + "/#support-portal?")
+    finally:
+        settings.deployment_tier = original_tier
 
 
 def test_requester_portal_reads_and_replies_without_a_session(client):

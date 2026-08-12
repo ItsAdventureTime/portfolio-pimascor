@@ -31,8 +31,12 @@ closed by the API maintenance task with an apology email to the requester.
 
 The demo uses the same portal contract, but attachment rows and replies are
 explicitly simulated, no production email is sent, and simulated attachments
-are not downloadable. Demo and production each apply the same forward
-migration to their own database; they never share a database or reset path.
+are not downloadable. Because there is no demo email, the authenticated
+create response exposes a demo-only simulated `portal_url` and the dialog
+offers an **Open simulated no-login thread** action. Production never exposes
+raw portal URLs through its API. Demo and production each apply the same
+forward migration to their own database; they never share a database or reset
+path.
 
 ## API portal routes
 
@@ -86,7 +90,9 @@ support tickets cover questions, suggestions, and ordinary help requests.
   presentation using synthetic records.
 - Demo replies are simulated and clearly labeled; a submitted demo ticket
   receives a synthetic response and demo users may add follow-up messages.
-  Demo never sends production email or writes to production storage.
+  The authenticated demo create response provides a synthetic portal link so
+  the no-login thread can be exercised without an email. Demo never sends
+  production email or writes to production storage.
 - The daily reset removes demo tickets, replies, and ticket audit events.
 
 ## Suggested state model
