@@ -238,6 +238,14 @@ The account bootstrap, service restarts, web asset replacement, and backup
 timer activation are safe to repeat. Secret provisioning preserves existing
 secrets unless the explicit account-manifest replacement option is used.
 
+The production account-bootstrap container uses the API image entrypoint, so it
+also applies Alembic migrations before running the account manifest. If it
+reports `DuplicateObject: type "role" already exists`, the VPS received a
+pre-fix source tree or an invalid migration retry path. Re-run
+`deploy-production-vps.sh` from the current committed tree, confirm the
+transferred source marker, then rerun `update-production.sh`. Do not drop the
+shared PostgreSQL enum or reset the production database manually.
+
 The first production activation also creates the host backup-catalog directory,
 installs the post-success catalog hook, and installs the backup/restore helper
 scripts. Those filesystem setup steps are idempotent; later releases refresh

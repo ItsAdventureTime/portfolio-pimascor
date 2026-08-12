@@ -58,6 +58,15 @@ for migration in 20260729_0011 20260801_0012 20260803_0013 20260803_0014 2026081
     exit 1
   }
 done
+support_ticket_migration="${SOURCE_ROOT}/apps/api/migrations/versions/20260812_0015_support_tickets.py"
+grep -Fq 'role.create(bind, checkfirst=True)' "$support_ticket_migration" || {
+  printf '%s\n' 'Refusing to update: the support-ticket migration is not retry-safe for an existing PostgreSQL role enum.' >&2
+  exit 1
+}
+grep -Fq 'support_ticket_status.create(bind, checkfirst=True)' "$support_ticket_migration" || {
+  printf '%s\n' 'Refusing to update: the support-ticket status enum does not use the reviewed retry-safe creation path.' >&2
+  exit 1
+}
 [[ -x "${SOURCE_ROOT}/infra/scripts/install-production-caddy.sh" ]] || { printf '%s\n' 'Caddy installer is not executable in the deployed source.' >&2; exit 1; }
 [[ -x "${SOURCE_ROOT}/infra/scripts/production-backup-now.sh" && -x "${SOURCE_ROOT}/infra/scripts/production-restore.sh" ]] || { printf '%s\n' 'Production backup/restore helpers must be executable.' >&2; exit 1; }
 release_commit="$(tr -d '\r\n' < "${SOURCE_ROOT}/.deployment-source-commit")"
