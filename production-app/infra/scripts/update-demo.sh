@@ -15,10 +15,6 @@ SOURCE_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 RESET_BASELINE=true
 RUNTIME_ROOT="${XDG_RUNTIME_DIR:-/run/user/$(id -u)}"
 MAINTENANCE_LOCK="${RUNTIME_ROOT}/bridge-ph-pimascor-demo-maintenance.lock"
-LEGACY_ACCUSTANDARD_QUADLETS=(
-  "${XDG_RUNTIME_DIR:-/run/user/$(id -u)}/containers/systemd/accustandard-demo-db.container"
-  "${XDG_CONFIG_HOME:-${HOME}/.config}/containers/systemd/accustandard-demo-db.container"
-)
 
 [[ "$(uname -s)" != "Darwin" ]] || {
   printf '%s\n' 'This is the VPS-only updater. Run infra/scripts/deploy-demo-vps.sh from your Mac instead.' >&2
@@ -90,6 +86,7 @@ required_files=(
   "${SOURCE_ROOT}/infra/quadlet/demo/bridge-ph-pimascor-demo-egress.network"
   "${SOURCE_ROOT}/infra/quadlet/demo/bridge-ph-pimascor-demo-proxy.network"
   "${SOURCE_ROOT}/infra/systemd/bridge-ph-pimascor-demo-reset.timer"
+  "${SOURCE_ROOT}/infra/scripts/retire-legacy-accustandard-quadlet.sh"
 )
 
 for required_file in "${required_files[@]}"; do
@@ -207,23 +204,7 @@ for secret_name in \
   podman secret exists "${secret_name}" || { printf 'Missing Podman secret: %s\n' "${secret_name}" >&2; exit 1; }
 done
 
-# Retire known legacy Quadlets before any systemctl call. Removing the source
-# file first prevents the systemd/Podman generator from parsing it during the
-# disable operation and emitting the short-name warning. Preserve data volumes.
-legacy_accustandard_removed=false
-for legacy_quadlet in "${LEGACY_ACCUSTANDARD_QUADLETS[@]}"; do
-  if [[ -f "${legacy_quadlet}" ]] &&
-     grep -Fqx 'Image=postgres:16-alpine' "${legacy_quadlet}"; then
-    printf 'Retiring legacy accustandard Quadlet: %s\n' "${legacy_quadlet}"
-    rm -f -- "${legacy_quadlet}"
-    legacy_accustandard_removed=true
-  fi
-done
-if [[ "${legacy_accustandard_removed}" == true ]]; then
-  systemctl --user disable --now accustandard-demo-db.service >/dev/null 2>&1 || true
-  podman rm -f accustandard-demo-db >/dev/null 2>&1 || true
-  systemctl --user daemon-reload
-fi
+bash "${SOURCE_ROOT}/infra/scripts/retire-legacy-accustandard-quadlet.sh"
 
 install -d -m 700 \
   "${APP_ROOT}" \

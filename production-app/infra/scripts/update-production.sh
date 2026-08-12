@@ -10,10 +10,6 @@ API_HEALTH_URL="https://delegateops.business/pimascor/api/v1/health"
 SOURCE_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 RUNTIME_ROOT="${XDG_RUNTIME_DIR:-/run/user/$(id -u)}"
 MAINTENANCE_LOCK="${RUNTIME_ROOT}/bridge-ph-pimascor-maintenance.lock"
-LEGACY_ACCUSTANDARD_QUADLETS=(
-  "${XDG_RUNTIME_DIR:-/run/user/$(id -u)}/containers/systemd/accustandard-demo-db.container"
-  "${XDG_CONFIG_HOME:-${HOME}/.config}/containers/systemd/accustandard-demo-db.container"
-)
 
 [[ "$(uname -s)" != "Darwin" ]] || { printf '%s\n' 'Run this on the Fedora CoreOS VPS.' >&2; exit 1; }
 [[ "${EUID}" -ne 0 ]] || { printf '%s\n' 'Refusing to run as root; use rootless user jk.' >&2; exit 1; }
@@ -50,6 +46,7 @@ required_files=(
   "${SOURCE_ROOT}/infra/scripts/record-production-backup.sh"
   "${SOURCE_ROOT}/infra/scripts/production-backup-now.sh"
   "${SOURCE_ROOT}/infra/scripts/production-restore.sh"
+  "${SOURCE_ROOT}/infra/scripts/retire-legacy-accustandard-quadlet.sh"
 )
 for required_file in "${required_files[@]}"; do
   [[ -f "$required_file" ]] || { printf 'Missing required file: %s\n' "$required_file" >&2; exit 1; }
@@ -89,23 +86,7 @@ for secret_name in bridge_ph_pimascor_postgres_password bridge_ph_pimascor_datab
   podman secret exists "$secret_name" || { printf 'Missing production Podman secret: %s\n' "$secret_name" >&2; exit 1; }
 done
 
-# Retire known legacy Quadlets before any systemctl call. Removing the source
-# file first prevents the systemd/Podman generator from parsing it during the
-# disable operation and emitting the short-name warning. Preserve data volumes.
-legacy_accustandard_removed=false
-for legacy_quadlet in "${LEGACY_ACCUSTANDARD_QUADLETS[@]}"; do
-  if [[ -f "${legacy_quadlet}" ]] &&
-     grep -Fqx 'Image=postgres:16-alpine' "${legacy_quadlet}"; then
-    printf 'Retiring legacy accustandard Quadlet: %s\n' "${legacy_quadlet}"
-    rm -f -- "${legacy_quadlet}"
-    legacy_accustandard_removed=true
-  fi
-done
-if [[ "${legacy_accustandard_removed}" == true ]]; then
-  systemctl --user disable --now accustandard-demo-db.service >/dev/null 2>&1 || true
-  podman rm -f accustandard-demo-db >/dev/null 2>&1 || true
-  systemctl --user daemon-reload
-fi
+bash "${SOURCE_ROOT}/infra/scripts/retire-legacy-accustandard-quadlet.sh"
 
 install -d -m 700 "$APP_ROOT" "$APP_ROOT/data/postgres/18/docker" "$APP_ROOT/data/uploads-tmp" "$APP_ROOT/backup-staging" "$APP_ROOT/backup-catalog/history" "$APP_ROOT/restic-cache" "$APP_ROOT/bin" "$QUADLET_ROOT" "$TIMER_ROOT"
 quadlet_files=(bridge-ph-pimascor-data.network bridge-ph-pimascor-egress.network bridge-ph-pimascor-proxy.network bridge-ph-pimascor-db.container bridge-ph-pimascor-api.container bridge-ph-pimascor-account-bootstrap.container bridge-ph-pimascor-export-worker.container bridge-ph-pimascor-db-dump.container bridge-ph-pimascor-backup.container bridge-ph-pimascor-backup-retention.container)

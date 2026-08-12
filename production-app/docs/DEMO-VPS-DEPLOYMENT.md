@@ -178,14 +178,15 @@ Migration `20260812_0015` now reuses existing PostgreSQL enum types with
 check-first creation. Migration `20260812_0016` adds the secure support portal,
 recipient token hashes, category/reason fields, and simulated attachment
 metadata. The short-name image warning from the unrelated legacy
-`accustandard-*` Quadlet is handled separately. The updater retires the known
-`accustandard-demo-db.container` from the persistent user Quadlet directory or
-the user runtime Quadlet directory only when it contains the exact short image
-declaration `Image=postgres:16-alpine`. It removes the Quadlet file before
-calling `systemctl --user`, preventing the generator from parsing it during
-cleanup; then it stops/removes the obsolete container without deleting its
-data volume. This cleanup intentionally treats that exact path/image pair as
-the retired legacy unit; preserve any separately named legacy unit manually.
+`accustandard-*` Quadlet is handled separately. The updater recursively searches
+the documented rootless Quadlet search paths for `accustandard-demo-db.container`.
+When a matching file contains the exact short image declaration
+`Image=postgres:16-alpine`, it removes the Quadlet before calling
+`systemctl --user`, preventing the generator from parsing it during cleanup;
+then it stops/removes the obsolete container without deleting its data volume.
+If the matching file is not owned by the service user, or its parent directory
+is not writable, the updater prints its exact path and stops instead of
+attempting an unauthorized delete.
 The active PIMASCOR demo and production Quadlets use fully qualified
 PostgreSQL image references.
 
