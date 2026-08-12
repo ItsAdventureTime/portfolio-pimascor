@@ -179,12 +179,15 @@ check-first creation. Migration `20260812_0016` adds the secure support portal,
 recipient token hashes, category/reason fields, and simulated attachment
 metadata. The short-name image warning from the unrelated legacy
 `accustandard-*` Quadlet is handled separately. The updater retires the known
-legacy `~/.config/containers/systemd/accustandard-demo-db.container` only when
-it contains the exact short image declaration `Image=postgres:16-alpine`.
-It stops/removes that obsolete Quadlet and container, but does not delete its
-data volume. The cleanup is limited to that exact path and image declaration;
-review any other legacy unit manually. The active PIMASCOR demo and production
-Quadlets use fully qualified PostgreSQL image references.
+`accustandard-demo-db.container` from the persistent user Quadlet directory or
+the user runtime Quadlet directory only when it contains the exact short image
+declaration `Image=postgres:16-alpine`. It removes the Quadlet file before
+calling `systemctl --user`, preventing the generator from parsing it during
+cleanup; then it stops/removes the obsolete container without deleting its
+data volume. This cleanup intentionally treats that exact path/image pair as
+the retired legacy unit; preserve any separately named legacy unit manually.
+The active PIMASCOR demo and production Quadlets use fully qualified
+PostgreSQL image references.
 
 ## Bunny CDN purge, only after verification
 

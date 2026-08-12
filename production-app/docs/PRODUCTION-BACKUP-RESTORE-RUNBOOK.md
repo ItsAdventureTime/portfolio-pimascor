@@ -3,11 +3,13 @@
 This runbook applies only to `~/bridge-ph/pimascor`. It is separate from the
 demo runtime and from the Git continuity runbook.
 
-The production updater retires the known legacy
-`~/.config/containers/systemd/accustandard-demo-db.container` when it matches
-the old `Image=postgres:16-alpine` declaration. This removes the unrelated
-Podman short-name warning without deleting its data volume. The active
-production Quadlets use fully qualified image references.
+The production updater retires the known legacy `accustandard-demo-db.container`
+from the persistent or runtime user Quadlet directory when it matches the old
+`Image=postgres:16-alpine` declaration. It removes the Quadlet before invoking
+`systemctl --user`, preventing the generator from warning during cleanup, and
+does not delete its data volume. This cleanup intentionally treats that exact
+path/image pair as the retired legacy unit. Active production Quadlets use
+fully qualified image references.
 
 ## Responsibilities
 

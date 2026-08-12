@@ -10,7 +10,10 @@ API_HEALTH_URL="https://delegateops.business/pimascor/api/v1/health"
 SOURCE_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 RUNTIME_ROOT="${XDG_RUNTIME_DIR:-/run/user/$(id -u)}"
 MAINTENANCE_LOCK="${RUNTIME_ROOT}/bridge-ph-pimascor-maintenance.lock"
-LEGACY_ACCUSTANDARD_QUADLET="${HOME}/.config/containers/systemd/accustandard-demo-db.container"
+LEGACY_ACCUSTANDARD_QUADLETS=(
+  "${XDG_RUNTIME_DIR:-/run/user/$(id -u)}/containers/systemd/accustandard-demo-db.container"
+  "${XDG_CONFIG_HOME:-${HOME}/.config}/containers/systemd/accustandard-demo-db.container"
+)
 
 [[ "$(uname -s)" != "Darwin" ]] || { printf '%s\n' 'Run this on the Fedora CoreOS VPS.' >&2; exit 1; }
 [[ "${EUID}" -ne 0 ]] || { printf '%s\n' 'Refusing to run as root; use rootless user jk.' >&2; exit 1; }
@@ -86,14 +89,20 @@ for secret_name in bridge_ph_pimascor_postgres_password bridge_ph_pimascor_datab
   podman secret exists "$secret_name" || { printf 'Missing production Podman secret: %s\n' "$secret_name" >&2; exit 1; }
 done
 
-# Retire the known legacy Quadlet that emits a short-name warning on every
-# user-systemd generator run. Guard on the exact file path and image
-# declaration, and preserve the legacy data volume.
-if [[ -f "${LEGACY_ACCUSTANDARD_QUADLET}" ]] &&
-   grep -Fqx 'Image=postgres:16-alpine' "${LEGACY_ACCUSTANDARD_QUADLET}"; then
-  printf '%s\n' 'Retiring the known legacy accustandard demo database Quadlet...'
+# Retire known legacy Quadlets before any systemctl call. Removing the source
+# file first prevents the systemd/Podman generator from parsing it during the
+# disable operation and emitting the short-name warning. Preserve data volumes.
+legacy_accustandard_removed=false
+for legacy_quadlet in "${LEGACY_ACCUSTANDARD_QUADLETS[@]}"; do
+  if [[ -f "${legacy_quadlet}" ]] &&
+     grep -Fqx 'Image=postgres:16-alpine' "${legacy_quadlet}"; then
+    printf 'Retiring legacy accustandard Quadlet: %s\n' "${legacy_quadlet}"
+    rm -f -- "${legacy_quadlet}"
+    legacy_accustandard_removed=true
+  fi
+done
+if [[ "${legacy_accustandard_removed}" == true ]]; then
   systemctl --user disable --now accustandard-demo-db.service >/dev/null 2>&1 || true
-  rm -f -- "${LEGACY_ACCUSTANDARD_QUADLET}"
   podman rm -f accustandard-demo-db >/dev/null 2>&1 || true
   systemctl --user daemon-reload
 fi
