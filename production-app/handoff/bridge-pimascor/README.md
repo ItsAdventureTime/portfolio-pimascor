@@ -21,9 +21,10 @@ Bash deployment scripts, credentials, production data, or secret values.
 The generated ZIP archive and local review screenshots are not repository
 artifacts. Keep them on an approved local or controlled transfer location only.
 
-The PDFs under `client-packet/` are generated delivery snapshots. They are not
-authoritative after their generation date; update the Markdown sources and
-regenerate the packet before a new handoff.
+The PDFs previously under `client-packet/` were generated delivery snapshots.
+They are archived under the repository-root `not-needed/` boundary because
+they are stale and must not be treated as current production guidance. Update
+the Markdown sources and regenerate a new packet before a new handoff.
 
 ## Keep with the VPS operator
 
@@ -52,12 +53,17 @@ items are not claims that the live VPS has already passed those tests.
 
 | Person | Email | Application role |
 | --- | --- | --- |
-| Marcelo Sabando | `processor1@pimascor.com` | Requester |
-| Christian Arcangel | `processor2@pimascor.com` | Requester |
-| Jaycee Dimandal | `processor3@pimascor.com` | Requester |
+| Marcelo Sabando | `processor1@pimascor.com` | Processor / Requester |
+| Christian Arcangel | `processor2@pimascor.com` | Processor / Requester |
+| Jaycee Dimandal | `processor3@pimascor.com` | Processor / Requester |
 | Michelle Umpacuman | `operations@pimascor.com` | Bookkeeper/Mich |
 | Carmel C. Urot | `carmel.urot@gmail.com` | GM |
 | Atty. Daniel C. Subido | `dan.c.subido@gmail.com` | DCS / CEO / Chairman |
+
+Bridge Accounting is a separate business label mapped to the Admin capability
+set until a distinct technical role is approved. Both Processor/Requester and
+Bridge Accounting may view their permitted own-shipment profitability data;
+Admin-level Bridge Accounting access includes all-shipment profitability.
 
 DCS/CEO/Chairman is one person represented by the technical `DCS` role. DCS
 retains the approved emergency approval/override authority and must provide an

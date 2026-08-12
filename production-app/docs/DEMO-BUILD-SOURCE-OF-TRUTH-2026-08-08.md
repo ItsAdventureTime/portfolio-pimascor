@@ -39,18 +39,23 @@ source form. Production carries these rules through
   workspace.
 
 - Admin, GM, DCS, and Mich can evaluate Shipment Profitability and the authorized
-  Accounting Export workflows. Requester is not given Shipment Profitability in
-  the current demo baseline.
+  Accounting Export workflows. Requester can view only their own Shipment
+  Profitability data. Bridge Accounting uses the Admin capability set and can
+  view all authorized data while remaining a distinct business label.
 - GM payment overrides are exceptional, require a reason of at least ten
   characters, and create `GM_PAYMENT_OVERRIDE_*` audit events.
 - Signed quotations and uploaded supporting files use the protected viewer when
-  a real stored object exists. Authorized staff may download through the audited
-  download route; Requester remains view-only for protected payment evidence.
+  a real stored object exists. Demo is inline-view-only: no document download
+  UI or download route is available. Requester remains view-only for protected
+  payment evidence.
 - The revised quotation reference remains a dynamic visual/terms reference, not
   a static data source.
 - Complete local-record archive generation remains disabled in the demo. The
   production export worker and its B2/Resend secrets are not copied into demo
   Quadlets.
+- Support tickets use the shared support form and ticket-number workflow, but
+  replies are simulated, messages are synthetic, and no production email is
+  sent. See `SUPPORT-TICKETS.md`.
 
 ## Reconciliation rule
 

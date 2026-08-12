@@ -24,6 +24,7 @@ from .models import (
     PaymentStatus,
     QuotationStatus,
     Role,
+    SupportTicketStatus,
 )
 
 
@@ -599,6 +600,67 @@ class IncidentResponse(ApiModel):
 class IncidentDecisionRequest(BaseModel):
     decision: IncidentDecision
     note: str | None = Field(default=None, max_length=500)
+
+
+class SupportTicketCreate(BaseModel):
+    subject: str = Field(min_length=2, max_length=200)
+    message: str = Field(min_length=2, max_length=10000)
+
+
+class SupportTicketUserResponse(ApiModel):
+    id: str
+    username: str
+    display_name: str
+    role: Role
+
+
+class SupportTicketReplyResponse(ApiModel):
+    id: str
+    body: str
+    author: SupportTicketUserResponse
+    is_internal: bool
+    is_simulated: bool
+    created_at: datetime
+
+
+class SupportTicketResponse(ApiModel):
+    id: str
+    ticket_number: str
+    subject: str
+    message: str
+    requester: SupportTicketUserResponse
+    requester_role: Role
+    deployment_tier: str
+    status: SupportTicketStatus
+    assigned_to: SupportTicketUserResponse | None
+    replies: list[SupportTicketReplyResponse]
+    version: int
+    resolved_at: datetime | None
+    closed_at: datetime | None
+    created_at: datetime
+    updated_at: datetime
+    email_admin_sent_at: datetime | None
+    email_developer_sent_at: datetime | None
+
+
+class SupportTicketAssignment(BaseModel):
+    assigned_to_id: str | None = None
+    expected_version: int | None = Field(default=None, gt=0)
+
+
+class SupportTicketReplyCreate(BaseModel):
+    body: str = Field(min_length=2, max_length=10000)
+    is_internal: bool = False
+    expected_version: int | None = Field(default=None, gt=0)
+
+
+class SupportTicketStatusUpdate(BaseModel):
+    status: SupportTicketStatus
+    expected_version: int | None = Field(default=None, gt=0)
+
+
+class SupportTicketAction(BaseModel):
+    expected_version: int | None = Field(default=None, gt=0)
 
 
 class FundingSourceResponse(ApiModel):

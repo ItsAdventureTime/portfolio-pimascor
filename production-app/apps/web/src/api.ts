@@ -1,4 +1,4 @@
-import type { ApiActivityCategory, ApiAdminActivity, ApiBackupCatalogItem, ApiBilling, ApiBudgetRequest, ApiClient, ApiClientPayment, ApiCreditMemo, ApiDataExport, ApiDocument, ApiExpenseRequest, ApiExpenseType, ApiFundingSource, ApiIncident, ApiIncidentReport, ApiLiquidation, ApiPaymentQueueItem, ApiQuotation, ApiReleaseUpdate, ApiShipmentProfitability, ApiTaxProfile, ApiUser } from './types'
+import type { ApiActivityCategory, ApiAdminActivity, ApiBackupCatalogItem, ApiBilling, ApiBudgetRequest, ApiClient, ApiClientPayment, ApiCreditMemo, ApiDataExport, ApiDocument, ApiExpenseRequest, ApiExpenseType, ApiFundingSource, ApiIncident, ApiIncidentReport, ApiLiquidation, ApiPaymentQueueItem, ApiQuotation, ApiReleaseUpdate, ApiShipmentProfitability, ApiSupportTicket, ApiSupportTicketStatus, ApiTaxProfile, ApiUser } from './types'
 
 const API_BASE = import.meta.env.VITE_API_URL ?? 'http://127.0.0.1:8000/api/v1'
 const CSRF_COOKIE_NAME = import.meta.env.VITE_CSRF_COOKIE_NAME ?? 'pimascor_csrf'
@@ -525,6 +525,30 @@ export function uploadLiquidationEvidence(id: string, expectedVersion: number, k
 
 export function getDocuments() {
   return request<ApiDocument[]>('/documents')
+}
+
+export function getSupportTickets() {
+  return request<ApiSupportTicket[]>('/support-tickets')
+}
+
+export function createSupportTicket(subject: string, message: string) {
+  return request<ApiSupportTicket>('/support-tickets', {
+    method: 'POST',
+    body: JSON.stringify({ subject, message }),
+  })
+}
+
+export function addSupportTicketMessage(id: string, body: string, options: { is_internal?: boolean; expected_version?: number } = {}) {
+  return request<ApiSupportTicket>(`/support-tickets/${encodeURIComponent(id)}/replies`, {
+    method: 'POST',
+    body: JSON.stringify({ body, ...options }),
+  })
+}
+
+export function updateSupportTicket(id: string, input: { status?: ApiSupportTicketStatus; assigned_to_id?: string | null; expected_version?: number }) {
+  const { status, ...rest } = input
+  if (status) return request<ApiSupportTicket>(`/support-tickets/${encodeURIComponent(id)}/status`, { method: 'PATCH', body: JSON.stringify({ status, ...rest }) })
+  return request<ApiSupportTicket>(`/support-tickets/${encodeURIComponent(id)}/assignment`, { method: 'PATCH', body: JSON.stringify(rest) })
 }
 
 export function getDataExports() {

@@ -145,6 +145,14 @@ class IncidentDecision(str, enum.Enum):
     DISMISSED = "DISMISSED"
 
 
+class SupportTicketStatus(str, enum.Enum):
+    OPEN = "OPEN"
+    IN_PROGRESS = "IN_PROGRESS"
+    WAITING_FOR_REQUESTER = "WAITING_FOR_REQUESTER"
+    RESOLVED = "RESOLVED"
+    CLOSED = "CLOSED"
+
+
 class DataExportStatus(str, enum.Enum):
     QUEUED = "QUEUED"
     PROCESSING = "PROCESSING"
@@ -807,3 +815,54 @@ class IncidentReport(Base):
     )
 
     actor: Mapped[User | None] = relationship()
+
+
+class SupportTicket(Base):
+    __tablename__ = "support_tickets"
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=uuid_string)
+    ticket_number: Mapped[str] = mapped_column(String(40), unique=True, index=True)
+    subject: Mapped[str] = mapped_column(String(200))
+    message: Mapped[str] = mapped_column(Text)
+    requester_id: Mapped[str] = mapped_column(ForeignKey("users.id"), index=True)
+    requester_role: Mapped[Role] = mapped_column(Enum(Role), index=True)
+    deployment_tier: Mapped[str] = mapped_column(String(20), index=True)
+    status: Mapped[SupportTicketStatus] = mapped_column(
+        Enum(SupportTicketStatus), default=SupportTicketStatus.OPEN, index=True
+    )
+    assigned_to_id: Mapped[str | None] = mapped_column(ForeignKey("users.id"), index=True)
+    version: Mapped[int] = mapped_column(Integer, default=1)
+    resolved_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    closed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    email_admin_sent_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    email_developer_sent_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now, index=True)
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default=utc_now, onupdate=utc_now
+    )
+
+    requester: Mapped[User] = relationship(foreign_keys=[requester_id])
+    assigned_to: Mapped[User | None] = relationship(foreign_keys=[assigned_to_id])
+    replies: Mapped[list[SupportTicketReply]] = relationship(
+        back_populates="ticket",
+        cascade="all, delete-orphan",
+        order_by="SupportTicketReply.created_at",
+    )
+
+
+class SupportTicketReply(Base):
+    __tablename__ = "support_ticket_replies"
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=uuid_string)
+    ticket_id: Mapped[str] = mapped_column(ForeignKey("support_tickets.id"), index=True)
+    author_user_id: Mapped[str] = mapped_column(ForeignKey("users.id"), index=True)
+    author_role: Mapped[Role] = mapped_column(Enum(Role), index=True)
+    body: Mapped[str] = mapped_column(Text)
+    is_internal: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
+    is_simulated: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
+    email_admin_sent_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    email_developer_sent_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now, index=True)
+
+    ticket: Mapped[SupportTicket] = relationship(back_populates="replies")
+    author: Mapped[User] = relationship()

@@ -12,14 +12,14 @@ workflow reference where it does not conflict with that newer demo document.
 
 This baseline reconciles:
 
-1. `01_BRIDGE_Operational_Dashboard_Meeting_AI_Context.md` — evaluation meeting findings.
-2. `02_BRIDGE_Access_Workflow_Requirements_AI_Context.md` — post-meeting role and workflow corrections.
-3. `context-v2.zip` — screenshots of the legacy Apps Script and revised demo used during the evaluation.
-4. The locally supplied screenshot set and annotated workflow corrections
+1. Historical meeting and access-context inputs — retained outside the active
+   documentation surface and no longer used as implementation authority.
+2. Historical prototype screenshots and archives — visual provenance only, not
+   runtime data or an implementation dependency.
+3. The locally supplied screenshot set and annotated workflow corrections
    (kept outside the remote repository) — visual evidence only, not runtime
    data or an implementation dependency.
-5. `Operational Dashboard and Accounting Progress Meeting.md` — the
-   109-minute owner evaluation reviewed on 24 July 2026.
+4. `MEETING-DECISIONS-2026-07-24.md` — the controlling owner decision record.
 
 `MEETING-DECISIONS-2026-07-24.md` wins if an older project document disagrees.
 The person's name is always **Mich**, never “Mitch.” Items that the source
@@ -73,7 +73,11 @@ Permissions are enforced by the API, not only by hidden navigation.
 | Accounting workspace | Yes | No | No | No | No |
 | Bridge PH Activity Monitor | Yes | No | No | No | No |
 
-The distinct Bridge Accounting role is deferred until its exact duties are approved. It must not be silently merged into Mich.
+Bridge Accounting is a distinct business label mapped to the Admin capability
+set until a separate technical role is explicitly approved. It therefore has
+Admin-level access, including all-shipment profitability, but remains
+attributable as Bridge Accounting in business documentation and support
+communications. It must not be silently merged into Mich.
 
 ## Sales quotation and contract
 
@@ -241,7 +245,9 @@ The distinct Bridge Accounting role is deferred until its exact duties are appro
 
 - Liquidation evidence is connected to private Backblaze B2 object upload and authorized inline viewing. Seeded legacy demonstration rows without object metadata remain visibly labeled as metadata-only.
 - Billing output is a dedicated, isolated, professional browser print/PDF document using A4 paged-media rules. It is not a legally approved tax document.
-- Accounting account mapping, product-specific import mappings, and the Bridge Accounting role await owner decisions.
+- Accounting account mapping and product-specific import mappings await Bridge
+  Accounting sign-off. Bridge Accounting is currently a distinct business label
+  mapped to the Admin capability set, not a separate technical role.
 - Automated QuickBooks transfer, native App Store/Play Store applications, and
   an on-premises NAS mirror are follow-up deployment projects. The current
   deliverable is a responsive installable PWA with private object storage.

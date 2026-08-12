@@ -171,6 +171,25 @@ POST  /credit-memos/{id}/decision
 
 Mich/Admin creates and edits drafts. The API calculates VAT/CWT from active tax profiles and snapshots rates and amounts per line. `POST /billing/{id}/submit` moves a draft to Pending Approval. GM and Admin can call `POST /billing/{id}/decision`. Finalize requires both Approved status and `confirmation: "FINALIZE"`. A finalized record is immutable. Admin-only void requires a reason and preserves the record. A replacement request receives a temporary proposal reference; the official `-R#` replacement reference is assigned only after GM or Admin approval. It cannot be finalized while the original remains finalized. Credit Memos always require GM or Admin approval before affecting the collectible balance. Requesters see only finalized Billing for their own Budget Requests.
 
+## Support tickets
+
+```text
+GET  /support-tickets
+POST /support-tickets
+GET  /support-tickets/{id}
+PATCH /support-tickets/{id}/assignment
+PATCH /support-tickets/{id}/status
+POST /support-tickets/{id}/replies
+POST /support-tickets/{id}/reopen
+POST /support-tickets/{id}/resolve
+POST /support-tickets/{id}/close
+```
+
+Authenticated users create tickets and view their own tickets. Admin-level
+users assign, reply, reopen, resolve, and close tickets. Production creates a
+unique ticket number and sends safe notifications to Alyssa and JK. Demo uses
+the same contract with simulated replies and no email side effect.
+
 ## Shipment profitability
 
 `GET /dashboard/shipment-profitability?month=YYYY-MM` returns role-filtered shipment rows and totals for the selected month. Selling is approved Budget Request selling, actual spending is Liquidation actual total, and profit is selling less actual spending. It also returns margin, Liquidation status, finalized-Billing collection status, outstanding amount, and aging days. Admin, GM, and DCS additionally receive a monthly Request for Payment summary split into OPEX, Marketing, Loan Payment, and Other totals and counts; other roles receive `null`.

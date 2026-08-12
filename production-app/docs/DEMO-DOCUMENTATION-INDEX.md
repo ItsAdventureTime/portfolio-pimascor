@@ -5,6 +5,9 @@ working on the synthetic demo only. It follows the Diátaxis separation of
 tutorials, how-to guides, reference material, and explanations. Production
 instructions remain separate and must not be inferred from this index.
 
+Start with [the consistency remediation plan](CONSISTENCY-REMEDIATION-PLAN.md)
+for the phased review and maintenance workflow.
+
 All demo changes are committed with local `git`, then published to the private
 GitHub HTTPS remote using `gh`. VPS transfer/activation SSH is a separate
 deployment operation.
@@ -63,6 +66,7 @@ inferring behavior from screenshots.
   contracts; apply the newer demo overrides first.
 - `DATA-EXPORTS.md` — CSV and full-archive behavior; full archives stay
   disabled in demo.
+- `SUPPORT-TICKETS.md` — shared production ticket workflow and demo simulation.
 - `API-CONTRACT.md` and `DATA-MODEL.md` — API/state boundaries.
 - `../apps/api/README.md` and `../apps/web/README.md` — service-specific
   build, reset, and local-development references.

@@ -89,7 +89,15 @@ Actual expense description, amount, and order.
 
 ### liquidation_evidence
 
-Receipt, return proof, or reimbursement proof; original filename, private object key, content type, byte size, SHA-256, uploader, and time. New uploads bind to a real private Backblaze object. Authorized users receive inline, no-store views; the application disables downloads. Legacy seeded rows without integrity metadata are labeled metadata-only.
+Receipt, return proof, or reimbursement proof; original filename, private object key, content type, byte size, SHA-256, uploader, and time. New uploads bind to a real private Backblaze object. Production authorized users receive inline, no-store views and may use the separately authorized audited download endpoint; demo remains inline-only. Legacy seeded rows without integrity metadata are labeled metadata-only.
+
+### support_tickets and support_ticket_messages
+
+Support questions, suggestions, and ordinary help requests use durable tickets
+with a unique ticket number, requester, role, subject, status, assignment,
+timestamps, and audit history. Messages and Admin replies are append-only.
+Production sends safe notification emails to Alyssa and JK; demo uses synthetic
+records and simulated replies without production email or storage.
 
 ## Billing and collection
 

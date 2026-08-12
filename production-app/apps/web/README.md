@@ -64,6 +64,11 @@ the problem, suggests recovery, and offers exactly two choices: dismiss locally
 without reporting, or report privacy-minimized context to Bridge PH Admin and the
 Developer for investigation.
 
-Local form errors and important warnings use `ActionMessageDialog.tsx`: a centered,
-focus-managed `alertdialog` with a specific corrective action. Successful and
-ordinary informational confirmations remain non-blocking status toasts.
+Local form errors, warnings, successful confirmations, and ordinary informational
+results use `ActionMessageDialog.tsx`: a centered, focus-managed `alertdialog`
+with a specific corrective action or deliberate Close and continue action. The
+application does not use disappearing status toasts.
+
+Support questions, suggestions, and ordinary help requests use the ticket form
+defined in `../docs/SUPPORT-TICKETS.md`. Production creates durable tickets and
+emails Alyssa and JK; demo uses simulated replies without email.

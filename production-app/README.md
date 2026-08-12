@@ -20,6 +20,7 @@ This directory is the working root for the new PIMASCOR Operational Control Syst
 - `docs/QUALITY-ASSURANCE.md`: required role, responsive, browser-engine, and deployment acceptance evidence
 - `docs/PRODUCTION-BACKUP-RESTORE-RUNBOOK.md`: encrypted backup catalog and owner-only CLI dry-run restore procedure
 - `docs/DEMO-BUILD-SOURCE-OF-TRUTH-2026-08-08.md`: newest demo-only Admin entry and role-evaluation rules
+- `docs/SUPPORT-TICKETS.md`: production support tickets and demo simulation contract
 - `docs/DEMO-DOCUMENTATION-INDEX.md`: starting point and file map for demo-only work
 - `docs/CODEX-OPERATIONAL-WORKFLOW-FOUNDATION-PROMPT.md`: downloadable Codex foundation prompt for adapting the system to another industry
 - `apps/web/`: React and Vite PWA with connected Shipment Profitability, GM-controlled Billing, professional A4 printing, view-only confidential documents, and the Admin-only Bridge PH Activity Monitor
@@ -47,7 +48,7 @@ The application currently uses two local processes. This is development setup, n
 
 This repository includes reviewed Containerfiles, Quadlet templates, Caddy path handlers, and a manual Fedora CoreOS runbook. Hosted deployments use no `.env` files: non-secret values stay in `.container` files and credentials are mounted from Podman secrets. PostgreSQL 18 binds the exact `data/postgres/18/docker` directory. Caddy is the only public container. The public API uses the production security profile and Quadlet health checks. The 03:00 Asia/Manila maintenance job deletes objects below `pimascor/demo/documents/`, replaces disposable demo data locally, preserves accounts, and uses no backup restore. Production keeps separate credentials, the `pimascor/` object prefix, and the `pimascor/backups/restic/` repository.
 
-The current production requirements source of truth is `docs/MEETING-DECISIONS-2026-07-24.md`, followed by `docs/REQUIREMENTS-V2.md` for implementation detail. The current demo-only source of truth is `docs/DEMO-BUILD-SOURCE-OF-TRUTH-2026-08-08.md`; it supersedes older demo wording and generated handoff snapshots. The meeting record supersedes older prototype assumptions. For deployment and operational claims, follow `docs/FACTUAL-BASIS.md`; never present an unverified VPS state as completed.
+The current production requirements source of truth is `docs/MEETING-DECISIONS-2026-07-24.md`, followed by `docs/REQUIREMENTS-V2.md` for implementation detail. The current demo-only source of truth is `docs/DEMO-BUILD-SOURCE-OF-TRUTH-2026-08-08.md`; it supersedes older demo wording and generated handoff snapshots. The meeting record supersedes older prototype assumptions. For deployment and operational claims, follow `docs/FACTUAL-BASIS.md`; never present an unverified VPS state as completed. Historical source prompts and generated snapshots are archived under the repository-root `not-needed/` boundary and are not active guidance.
 
 For demo work, start with `docs/DEMO-DOCUMENTATION-INDEX.md`. Do not use the
 production runbook, production Quadlets, or production secrets for the demo.

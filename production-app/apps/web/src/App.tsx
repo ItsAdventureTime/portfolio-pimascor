@@ -58,8 +58,8 @@ import {
   toneForStatus,
 } from './data'
 import type { BudgetRequest, PageId, Role, Tone } from './types'
-import type { ApiActivityCategory, ApiAdminActivity, ApiBackupCatalogItem, ApiBilling, ApiBudgetRequest, ApiClient, ApiClientPayment, ApiCreditMemo, ApiDataExport, ApiDocument, ApiExpenseRequest, ApiExpenseType, ApiFundingSource, ApiLiquidation, ApiPaymentQueueItem, ApiQuotation, ApiQuotationLine, ApiReleaseUpdate, ApiShipmentProfitability, ApiTaxProfile, ApiUser } from './types'
-import { ApiError, acknowledgeReleaseUpdate, closeLiquidation, completeActivation, completePasswordReset, createAdditionalBudget, createBillingDraft, createBillingReplacement, createBudgetRequest, createClientPayment, createCreditMemo, createExpenseRequest, createFundingSource, createQuotation, createTaxProfile, decideBilling, decideBudgetRequest, decideCreditMemo, decideExpenseRequest, decideQuotation, downloadDataExport, downloadDocument, emitApiIncident, finalizeBilling, getAdminActivity, getBackups, getBilling, getBudgetApprovalQueue, getBudgetRequests, getBudgetReviewQueue, getClientPayments, getClients, getCreditMemos, getDataExports, getDocumentBlob, getDocuments, getExpenseApprovalQueue, getExpenseRequests, getFundingSources, getLiquidations, getMe, getPayments, getQuotations, getReceivables, getReleaseUpdate, getShipmentProfitability, getTaxProfiles, overrideBudgetAsDcs, overrideQuotationAsDcs, recordPayment, recordQuotationAcceptance, requestDataExport, returnBudgetFromReview, reviewBudgetRequest, saveLiquidation, signOut, startActivation, startDemoSession, startPassword, startPasswordReset, submitBilling, submitBudgetRequest, submitExpenseRequest, submitLiquidation, submitQuotation, updateBillingDraft, updateBudgetRequest, updateFundingSource, updatePayment, uploadLiquidationEvidence, uploadPaymentProof, verifyEmailCode, voidBilling } from './api'
+ import type { ApiActivityCategory, ApiAdminActivity, ApiBackupCatalogItem, ApiBilling, ApiBudgetRequest, ApiClient, ApiClientPayment, ApiCreditMemo, ApiDataExport, ApiDocument, ApiExpenseRequest, ApiExpenseType, ApiFundingSource, ApiLiquidation, ApiPaymentQueueItem, ApiQuotation, ApiQuotationLine, ApiReleaseUpdate, ApiShipmentProfitability, ApiSupportTicket, ApiSupportTicketStatus, ApiTaxProfile, ApiUser } from './types'
+ import { ApiError, acknowledgeReleaseUpdate, addSupportTicketMessage, closeLiquidation, completeActivation, completePasswordReset, createAdditionalBudget, createBillingDraft, createBillingReplacement, createBudgetRequest, createClientPayment, createCreditMemo, createExpenseRequest, createFundingSource, createQuotation, createSupportTicket, createTaxProfile, decideBilling, decideBudgetRequest, decideCreditMemo, decideExpenseRequest, decideQuotation, downloadDataExport, downloadDocument, emitApiIncident, finalizeBilling, getAdminActivity, getBackups, getBilling, getBudgetApprovalQueue, getBudgetRequests, getBudgetReviewQueue, getClientPayments, getClients, getCreditMemos, getDataExports, getDocumentBlob, getDocuments, getExpenseApprovalQueue, getExpenseRequests, getFundingSources, getLiquidations, getMe, getPayments, getQuotations, getReceivables, getReleaseUpdate, getShipmentProfitability, getSupportTickets, getTaxProfiles, overrideBudgetAsDcs, overrideQuotationAsDcs, recordPayment, recordQuotationAcceptance, requestDataExport, returnBudgetFromReview, reviewBudgetRequest, saveLiquidation, signOut, startActivation, startDemoSession, startPassword, startPasswordReset, submitBilling, submitBudgetRequest, submitExpenseRequest, submitLiquidation, submitQuotation, updateBillingDraft, updateBudgetRequest, updateFundingSource, updatePayment, updateSupportTicket, uploadLiquidationEvidence, uploadPaymentProof, verifyEmailCode, voidBilling } from './api'
 import { IncidentCenter } from './IncidentCenter'
 import { ActionMessageDialog, type ActionMessage } from './ActionMessageDialog'
 
@@ -132,7 +132,7 @@ const isDemoBuild = deploymentTier === 'demo'
 const navigation: { label: string; items: NavItem[] }[] = [
   {
     label: 'Control room',
-    items: [{ id: 'dashboard', label: 'Shipment Profitability', icon: LayoutDashboard, roles: ['Admin', 'GM', 'DCS', 'Mich'] }],
+  items: [{ id: 'dashboard', label: 'Shipment Profitability', icon: LayoutDashboard, roles: ['Admin', 'Requester', 'GM', 'DCS', 'Mich'] }],
   },
   {
     label: 'Shipments',
@@ -157,6 +157,7 @@ const navigation: { label: string; items: NavItem[] }[] = [
     items: [
       { id: 'accounting', label: 'Accounting Export', icon: BookOpen, roles: ['Admin', 'GM', 'DCS', 'Mich'] },
       { id: 'clients-documents', label: 'Clients & Documents', icon: FolderOpen, roles: ['Admin', 'GM', 'DCS', 'Mich'] },
+      { id: 'support', label: 'Support', icon: CircleHelp, roles: ['Admin', 'Requester', 'GM', 'DCS', 'Mich'] },
       { id: 'admin', label: 'Administration', icon: Settings, roles: ['Admin'] },
     ],
   },
@@ -1078,7 +1079,7 @@ function QuotationsPage({ role, notify }: { role: Role; notify: Notify }) {
       {rows === null ? <EmptyState icon={RefreshCw} title="Loading quotations" detail="Opening the quotation register." /> : <div className="table-wrap"><table><thead><tr><th>Quotation</th><th>Client / shipment</th><th>Currency totals</th><th>Prepared by</th><th>Status</th><th></th></tr></thead><tbody>{rows.map((item) => { const php = item.lines.filter((line) => line.currency === 'PHP').reduce((sum, line) => sum + Number(line.amount), 0); const usd = item.lines.filter((line) => line.currency === 'USD').reduce((sum, line) => sum + Number(line.amount), 0); return <tr key={item.id}><td data-label="Quotation"><strong>{item.reference}</strong><small>{new Date(item.created_at).toLocaleDateString('en-PH')}</small></td><td data-label="Client / shipment"><strong>{item.client.name}</strong><small>{item.shipment_reference}</small></td><td data-label="Currency totals" className="number"><strong>{moneyInCurrency(php, 'PHP')}</strong><small>{moneyInCurrency(usd, 'USD')}</small></td><td data-label="Prepared by">{item.created_by.display_name}</td><td data-label="Status"><Status>{item.status.replaceAll('_', ' ')}</Status></td><td><Button tone="ghost" onClick={() => openQuotation(item)}>Open</Button></td></tr> })}</tbody></table></div>}
     </Card>
     <Drawer className="drawer--document" open={Boolean(selected)} onClose={() => setSelected(null)} eyebrow="Sales quotation / shipment contract" title={selected?.reference ?? ''}>{selected ? <div className="record-stack"><div className="billing-preview-toolbar" role="group" aria-label="Quotation print preview zoom controls"><strong>Print preview</strong><button type="button" onClick={() => setPreviewZoom((value) => Math.max(40, value - 10))} aria-label="Zoom out">−</button><label><span className="visually-hidden">Preview zoom</span><input type="range" min="40" max="160" step="10" value={previewZoom} onChange={(event) => setPreviewZoom(Number(event.target.value))} /></label><output aria-live="polite">{previewZoom}%</output><button type="button" onClick={() => setPreviewZoom((value) => Math.min(160, value + 10))} aria-label="Zoom in">+</button><button type="button" className="billing-preview-toolbar__reset" onClick={() => setPreviewZoom(window.innerWidth <= 760 ? 50 : 85)}>Fit</button></div><div className="billing-preview-stage" tabIndex={0} aria-label="Scrollable Sales Quotation print preview"><div className="billing-preview-stage__document" style={{ zoom: `${previewZoom}%` }}><QuotationPrintDocument quotation={selected} /></div></div>{selected.signed_file_name ? <DocumentItem name={selected.signed_file_name} meta={`Client accepted by ${selected.client_signatory} • ${selected.client_accepted_at}`} available={Boolean(selected.signed_size_bytes && selected.signed_sha256)} onOpen={() => setViewingDocument({ id: `quotation:${selected.id}`, name: selected.signed_file_name!, contentType: selected.signed_content_type })} /> : null}{(role === 'Requester' || role === 'Admin') && (selected.status === 'DRAFT' || selected.status === 'REJECTED') ? <Button onClick={() => submit(selected)} disabled={busy}>Submit to GM</Button> : null}{(role === 'GM' || role === 'Admin' || role === 'DCS') && selected.status === 'PENDING_APPROVAL' ? <><label>Decision note<textarea rows={3} value={note} onChange={(event) => setNote(event.target.value)} placeholder={role === 'DCS' ? 'Required reason for exceptional override' : 'Required when returning'} /></label><div className="drawer-actions">{role !== 'DCS' ? <Button tone="danger" onClick={() => decide(selected, false)}>Return</Button> : null}<Button onClick={() => decide(selected, true)}>{role === 'DCS' ? 'Use DCS Override' : 'Approve Quotation'}</Button></div></> : null}{(role === 'Requester' || role === 'Admin') && selected.status === 'APPROVED' ? <form className="form-stack" onSubmit={accept}><SectionHeader title="Record client acceptance" description="Attach the signed or otherwise accepted quotation before creating the Budget Request." /><label>Acceptance date<input name="accepted_on" type="date" defaultValue={new Date().toISOString().slice(0, 10)} required /></label><label>Client signatory<input name="client_signatory" required /></label><label>Signed quotation<input name="document" type="file" accept=".pdf,.jpg,.jpeg,.png" required /></label><Button type="submit" disabled={busy}>Save Client-Accepted Contract</Button></form> : null}<div className="drawer-actions"><Button tone="secondary" icon={FileText} onClick={printQuotationDocument}>Print Quotation / Save PDF</Button></div></div> : null}</Drawer>
-    <ConfidentialDocumentViewer item={viewingDocument} onClose={() => setViewingDocument(null)} canDownload={['Admin', 'GM', 'DCS', 'Mich'].includes(role)} />
+    <ConfidentialDocumentViewer item={viewingDocument} onClose={() => setViewingDocument(null)} canDownload={!isDemoBuild && ['Admin', 'GM', 'DCS', 'Mich'].includes(role)} />
     {selected ? createPortal(<div className="print-quotation-host"><QuotationPrintDocument quotation={selected} printCopy /></div>, document.body) : null}
     <Modal open={creating} onClose={() => setCreating(false)} title="Create Sales Quotation"><form className="form-stack quotation-form" onSubmit={create}><label>Client<select name="client_id" required>{clients.map((client) => <option value={client.id} key={client.id}>{client.name}</option>)}</select></label><label>Shipment reference<input name="shipment_reference" placeholder="Example: ACT-172" required /></label><div className="form-grid form-grid--three"><label>Mode of transport<input name="mode_of_transport" placeholder="SEA / AIR" /></label><label>Container<input name="container_type" placeholder="FCL / LCL" /></label><label>Incoterms<input name="incoterms" placeholder="EXW / FOB / FCA" /></label><label>Origin<input name="origin" /></label><label>Destination<input name="destination" /></label><label>Cargo details<input name="cargo_details" placeholder="Weight / dimensions" /></label></div><SectionHeader title="Charge schedule" description="Use USD for origin/international freight and PHP for destination/customs items. Mark Bureau of Customs charges separately for the print summary." />{quotationLines.map((line, index) => <div className="quotation-line-editor" key={`${line.section}-${index}`}><label>Description<input value={line.description} onChange={(event) => setQuotationLines((current) => current.map((item, row) => row === index ? { ...item, description: event.target.value } : item))} required /></label><label>Section<select value={line.section} onChange={(event) => setQuotationLines((current) => current.map((item, row) => row === index ? { ...item, section: event.target.value as QuotationLineDraft['section'], currency: event.target.value === 'ORIGIN_FREIGHT' ? 'USD' : 'PHP' } : item))}><option value="ORIGIN_FREIGHT">Origin &amp; freight</option><option value="DESTINATION_CLEARANCE">Destination &amp; clearance</option></select></label><label>Currency<select value={line.currency} onChange={(event) => setQuotationLines((current) => current.map((item, row) => row === index ? { ...item, currency: event.target.value as 'PHP' | 'USD' } : item))}><option value="USD">USD</option><option value="PHP">PHP</option></select></label><label>Amount<input type="number" min="0.01" step="0.01" value={line.amount} onChange={(event) => setQuotationLines((current) => current.map((item, row) => row === index ? { ...item, amount: event.target.value } : item))} required /></label><label>Billing<select value={line.billed_by} onChange={(event) => setQuotationLines((current) => current.map((item, row) => row === index ? { ...item, billed_by: event.target.value as 'PIMASCOR' | 'BOC' } : item))}><option value="PIMASCOR">PIMASCOR</option><option value="BOC">BOC</option></select></label><button type="button" className="icon-button" aria-label="Remove quotation charge" onClick={() => setQuotationLines((current) => current.filter((_, row) => row !== index))}><X size={16} /></button></div>)}<div className="drawer-actions"><Button type="button" tone="secondary" onClick={() => setQuotationLines((current) => [...current, { section: 'ORIGIN_FREIGHT', description: '', currency: 'USD', amount: '', billed_by: 'PIMASCOR' }])}>Add USD origin charge</Button><Button type="button" tone="secondary" onClick={() => setQuotationLines((current) => [...current, { section: 'DESTINATION_CLEARANCE', description: '', currency: 'PHP', amount: '', billed_by: 'PIMASCOR' }])}>Add PHP local charge</Button></div><label>Terms and conditions<textarea name="terms_and_conditions" rows={5} minLength={10} required defaultValue="Duties and taxes are pass-through costs subject to actual assessment. Storage, demurrage, detention, and stripping charges are excluded unless agreed in writing." /></label><label>Payment terms<input name="payment_terms" defaultValue="Duties and taxes prior to BOC lodgment; service fees upon delivery." /></label><label>Quotation validity (hours)<input name="validity_hours" type="number" min="1" max="720" defaultValue="48" required /></label><div className="modal-actions"><Button tone="secondary" onClick={() => setCreating(false)}>Cancel</Button><button className="button button--secondary" type="submit">Save as Draft</button><button className="button button--primary" type="submit" data-action="submit">Submit to GM</button></div></form></Modal>
   </div>
@@ -1751,7 +1752,7 @@ function LiquidationPage({ role, notify, navigate }: { role: Role; notify: Notif
           {(role === 'Mich' || role === 'Admin') ? <form className="form-stack" onSubmit={addProofAndClose}><SectionHeader title="Mich review and variance closure" description="A variance stays open until the matching proof is recorded. The Liquidation status is derived automatically; users do not select it." />{selected.evidence.map((item) => <DocumentItem key={item.id} name={item.file_name} meta={`${item.kind.replaceAll('_', ' ')} • ${item.size_bytes ? formatBytes(item.size_bytes) : 'Demo metadata'}`} available={Boolean(item.size_bytes)} onOpen={() => setViewingDocument({ id: item.id, name: item.file_name, contentType: item.content_type })} />)}{Number(selected.released_total) !== Number(selected.actual_total) ? <label>{Number(selected.released_total) > Number(selected.actual_total) ? 'Requester proof of deposit / returned funds' : 'PIMASCOR proof of reimbursement'}<input type="file" accept=".pdf,.jpg,.jpeg,.png" required={!selected.evidence.some((item) => item.kind === (Number(selected.released_total) > Number(selected.actual_total) ? 'RETURN_PROOF' : 'REIMBURSEMENT_PROOF'))} onChange={(event) => setProofFile(event.target.files?.[0] ?? null)} /></label> : null}<div className="callout callout--warning"><ShieldCheck size={18} /><span>Before closing, compare the digital files with the original physical receipts, especially duties-and-taxes documents.</span></div><label className="checkbox-label"><input name="originals_received_confirmed" type="checkbox" required />I confirm that Mich received and checked the original physical supporting documents.</label><label>Optional photo of originals received<input name="originals_photo" type="file" accept=".pdf,.jpg,.jpeg,.png" /></label><label>Closure note<textarea name="note" rows={3} required placeholder="Record what Mich verified." /></label><div className="drawer-actions"><Button type="submit" icon={CheckCircle2} disabled={busy || selected.status === 'DRAFT' || selected.status === 'CLOSED'}>Close Variance and Liquidation</Button></div></form> : null}
         </div> : null}
       </Drawer>
-      <ConfidentialDocumentViewer item={viewingDocument} onClose={() => setViewingDocument(null)} canDownload={['Admin', 'GM', 'DCS', 'Mich'].includes(role)} />
+      <ConfidentialDocumentViewer item={viewingDocument} onClose={() => setViewingDocument(null)} canDownload={!isDemoBuild && ['Admin', 'GM', 'DCS', 'Mich'].includes(role)} />
     </div>
   )
 }
@@ -2532,7 +2533,7 @@ function ClientsDocumentsPage({ role }: { role: Role }) {
           return visible.length ? <div className="document-list">{visible.map((item) => <DocumentItem key={item.id} name={item.file_name} meta={`${item.kind.replaceAll('_', ' ')} • ${item.reference} • ${item.client_name} • ${item.size_bytes ? formatBytes(item.size_bytes) : 'Demo metadata only'}`} available={item.available} onOpen={() => setViewingDocument({ id: item.id, name: item.file_name, contentType: item.content_type })} />)}</div> : <EmptyState icon={Search} title="No matching documents" detail="Try a filename, client, shipment, payment, or transaction reference." />
         })()}
       </Card>}
-      <ConfidentialDocumentViewer item={viewingDocument} onClose={() => setViewingDocument(null)} canDownload={['Admin', 'GM', 'DCS', 'Mich'].includes(role)} />
+      <ConfidentialDocumentViewer item={viewingDocument} onClose={() => setViewingDocument(null)} canDownload={!isDemoBuild && ['Admin', 'GM', 'DCS', 'Mich'].includes(role)} />
     </div>
   )
 }
@@ -2986,6 +2987,90 @@ function DocumentItem({ name, meta, available = false, onOpen }: { name: string;
   return available && onOpen ? <button className="document-item" type="button" onClick={onOpen} title="View confidential document; downloading is disabled">{content}</button> : <div className="document-item" title="Metadata record only; no stored object is available">{content}</div>
 }
 
+function SupportTicketsPage({ role, notify }: { role: Role; notify: Notify }) {
+  const [tickets, setTickets] = useState<ApiSupportTicket[] | null>(null)
+  const [selectedId, setSelectedId] = useState<string | null>(null)
+  const [subject, setSubject] = useState('')
+  const [message, setMessage] = useState('')
+  const [reply, setReply] = useState('')
+  const [busy, setBusy] = useState(false)
+  const selected = tickets?.find((ticket) => ticket.id === selectedId) ?? null
+  const isAdmin = role === 'Admin'
+  const canRespond = isAdmin || isDemoBuild
+
+  const refresh = useCallback(async () => {
+    try {
+      setTickets(await getSupportTickets())
+    } catch (error) {
+      notifyLocalFailure(error, 'Could not load support tickets.', notify)
+    }
+  }, [notify])
+
+  useEffect(() => { void refresh() }, [refresh])
+
+  async function submitTicket(event: FormEvent) {
+    event.preventDefault()
+    setBusy(true)
+    try {
+      const created = await createSupportTicket(subject, message)
+      setSubject('')
+      setMessage('')
+      setSelectedId(created.id)
+      await refresh()
+      notify(`Ticket ${created.ticket_number} was submitted.`, 'success')
+    } catch (error) {
+      notifyLocalFailure(error, 'Could not submit the support ticket.', notify)
+    } finally { setBusy(false) }
+  }
+
+  async function submitReply(event: FormEvent) {
+    event.preventDefault()
+    if (!selected) return
+    setBusy(true)
+    try {
+      await addSupportTicketMessage(selected.id, reply, { is_internal: false, expected_version: selected.version })
+      setReply('')
+      await refresh()
+      notify(isDemoBuild ? 'A simulated support reply was added.' : 'Your support reply was added.', 'success')
+    } catch (error) {
+      notifyLocalFailure(error, 'Could not add the support reply.', notify)
+    } finally { setBusy(false) }
+  }
+
+  async function changeStatus(status: ApiSupportTicketStatus) {
+    if (!selected) return
+    setBusy(true)
+    try {
+      await updateSupportTicket(selected.id, { status, expected_version: selected.version })
+      await refresh()
+      notify(`Ticket status changed to ${status.replaceAll('_', ' ').toLowerCase()}.`, 'success')
+    } catch (error) {
+      notifyLocalFailure(error, 'Could not update the support ticket.', notify)
+    } finally { setBusy(false) }
+  }
+
+  return <div className="record-stack">
+    <Card><SectionHeader eyebrow="Questions, suggestions, and problems" title="Contact Admin support" description={isDemoBuild ? 'This demo uses synthetic tickets and simulated replies. It never sends production email.' : 'Submit a question or problem and keep the assigned ticket number for follow-up.'} />
+      <form className="form-stack" onSubmit={submitTicket}>
+        <label>Subject<input value={subject} onChange={(event) => setSubject(event.target.value)} minLength={2} maxLength={200} required /></label>
+        <label>Message<textarea value={message} onChange={(event) => setMessage(event.target.value)} minLength={2} maxLength={10000} rows={5} required /></label>
+        <Button type="submit" icon={Paperclip} disabled={busy}>Submit support ticket</Button>
+      </form>
+    </Card>
+    <Card><SectionHeader title="Your tickets" description="Messages remain attached to their ticket history." action={<Button tone="ghost" icon={RefreshCw} onClick={() => void refresh()}>Refresh</Button>} />
+      {tickets === null ? <EmptyState icon={RefreshCw} title="Loading tickets" detail="Opening the support register." /> : tickets.length === 0 ? <EmptyState icon={CircleHelp} title="No tickets yet" detail="Submit a question, suggestion, or problem above." /> : <div className="table-wrap"><table><thead><tr><th>Ticket</th><th>Subject</th><th>Status</th><th>Updated</th></tr></thead><tbody>{tickets.map((ticket) => <tr key={ticket.id} className={selectedId === ticket.id ? 'table-row--selected' : ''} onClick={() => setSelectedId(ticket.id)}><td data-label="Ticket"><button className="link-button" type="button" onClick={() => setSelectedId(ticket.id)}>{ticket.ticket_number}</button></td><td data-label="Subject">{ticket.subject}</td><td data-label="Status"><Status>{ticket.status.replaceAll('_', ' ')}</Status></td><td data-label="Updated">{new Date(ticket.updated_at).toLocaleString('en-PH')}</td></tr>)}</tbody></table></div>}
+    </Card>
+    {selected ? <Drawer className="drawer--document" open onClose={() => setSelectedId(null)} eyebrow={selected.ticket_number} title={selected.subject}>
+      <div className="record-stack"><div className="callout callout--info"><CircleHelp size={18} /><span>{isDemoBuild ? 'Demo simulation: replies are synthetic and clearly labeled.' : 'Admin support notifications are sent to the configured Bridge PH recipients.'}</span></div><p>{selected.message}</p><small>Submitted by {selected.requester.display_name} · {new Date(selected.created_at).toLocaleString('en-PH')}</small>
+        <SectionHeader title="Conversation" description="Replies are append-only." />
+        {selected.replies.length ? selected.replies.map((item) => <div className="callout" key={item.id}><strong>{item.author.display_name}{item.is_simulated ? ' · Simulated reply' : ''}</strong><p>{item.body}</p><small>{new Date(item.created_at).toLocaleString('en-PH')}</small></div>) : <EmptyState icon={Clock3} title="Awaiting response" detail="Admin support has not replied yet." />}
+        {canRespond ? <form className="form-stack" onSubmit={submitReply}><label>Reply<textarea value={reply} onChange={(event) => setReply(event.target.value)} minLength={2} maxLength={10000} rows={4} required /></label><Button type="submit" disabled={busy}>Add reply</Button></form> : <div className="callout callout--info"><Clock3 size={18} /><span>Only Admin can reply in production. You can submit a new ticket above.</span></div>}
+        {isAdmin ? <div className="drawer-actions"><Button tone="secondary" disabled={busy} onClick={() => void changeStatus('IN_PROGRESS')}>Start</Button><Button tone="secondary" disabled={busy} onClick={() => void changeStatus('WAITING_FOR_REQUESTER')}>Wait for requester</Button><Button disabled={busy} onClick={() => void changeStatus('RESOLVED')}>Resolve</Button><Button tone="ghost" disabled={busy} onClick={() => void changeStatus('CLOSED')}>Close</Button></div> : null}
+      </div>
+    </Drawer> : null}
+  </div>
+}
+
 function App() {
   const [page, setPage] = useState<PageId>(pageFromHash)
   const [role, setRole] = useState<Role>('Admin')
@@ -3147,6 +3232,7 @@ function App() {
     case 'loan-payments': content = <ExpensePage key={role} type="Loan Payment" role={role} notify={notify} />; break
     case 'accounting': content = <AccountingPage key={role} role={role} />; break
     case 'clients-documents': content = <ClientsDocumentsPage key={role} role={role} />; break
+    case 'support': content = <SupportTicketsPage key={role} role={role} notify={notify} />; break
     case 'admin': content = <AdminPage key={role} role={role} notify={notify} onPreviewRole={previewRole} />; break
     default: content = <DashboardPage key={role} role={role} displayName={authUser.display_name} navigate={navigate} />
   }

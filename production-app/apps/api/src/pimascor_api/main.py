@@ -10,7 +10,7 @@ from fastapi.responses import JSONResponse
 from .config import get_settings
 from .db import Base, SessionLocal, engine
 from .models import IncidentReport, IncidentSeverity, IncidentSource
-from .routers import admin_activity, auth, backups, budget_requests, data_exports, documents, expense_requests, health, incidents, operations, payments, quotations
+from .routers import admin_activity, auth, backups, budget_requests, data_exports, documents, expense_requests, health, incidents, operations, payments, quotations, support_tickets
 from .services.audit import record_audit
 from .services.incidents import incident_reference, safe_trace_summary
 
@@ -263,3 +263,4 @@ app.include_router(data_exports.router, prefix=settings.api_prefix)
 app.include_router(backups.router, prefix=settings.api_prefix)
 app.include_router(admin_activity.router, prefix=settings.api_prefix)
 app.include_router(incidents.router, prefix=settings.api_prefix)
+app.include_router(support_tickets.router, prefix=settings.api_prefix)

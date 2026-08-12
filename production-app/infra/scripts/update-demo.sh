@@ -75,6 +75,7 @@ required_files=(
   "${SOURCE_ROOT}/apps/api/migrations/versions/20260724_0009_meeting_workflow_controls.py"
   "${SOURCE_ROOT}/apps/api/migrations/versions/20260729_0010_sales_quotation_print_fields.py"
   "${SOURCE_ROOT}/apps/api/migrations/versions/20260729_0011_data_exports.py"
+  "${SOURCE_ROOT}/apps/api/migrations/versions/20260812_0015_support_tickets.py"
   "${SOURCE_ROOT}/apps/api/src/pimascor_api/incident_admin.py"
   "${SOURCE_ROOT}/apps/web/Containerfile"
   "${SOURCE_ROOT}/infra/quadlet/demo/bridge-ph-pimascor-demo-api.container"

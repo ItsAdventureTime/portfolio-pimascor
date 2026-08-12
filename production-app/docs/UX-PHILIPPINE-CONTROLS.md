@@ -48,7 +48,7 @@ References: [OWASP Logging Cheat Sheet](https://cheatsheetseries.owasp.org/cheat
 
 - Uploads happen inside the related workflow rather than as context-free files.
 - The object key uses lowercase prefixes plus opaque record IDs; the original filename remains in PostgreSQL for display and audit.
-- The API checks PDF/JPEG/PNG signatures, limits each file to 100 MB, hashes in bounded chunks, uses managed multipart transfer, records SHA-256, and provides an audited same-origin inline, no-store stream. Download UI is absent and the download endpoint is denied.
+- The API checks PDF/JPEG/PNG signatures, limits each file to 100 MB, hashes in bounded chunks, uses managed multipart transfer, records SHA-256, and provides an audited same-origin inline, no-store stream. Production provides separately authorized audited downloads; demo has no download UI or route and remains inline-only.
 - S3 prefixes are virtual, so no empty folders are created before the first upload.
 
 References: [Backblaze S3-compatible API](https://www.backblaze.com/docs/en/cloud-storage-call-the-s3-compatible-api), [Backblaze application-key capabilities](https://www.backblaze.com/docs/cloud-storage-s3-compatible-app-keys), and [Amazon S3 object-key guidance](https://docs.aws.amazon.com/AmazonS3/latest/userguide/object-keys.html).

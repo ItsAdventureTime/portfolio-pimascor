@@ -12,7 +12,8 @@ Podman/Caddy services.
 
 ## What this release deploys
 
-- The API image, including Alembic migration `20260729_0011`.
+- The API image and the demo-approved Alembic migration chain, with a demo
+  release gate distinct from the production migration gate.
 - The compiled demo PWA.
 - The reviewed demo Quadlet definitions and reset timer.
 - Accounting exports as separate **Billing CSV** and **Collections CSV**.
@@ -116,8 +117,10 @@ as evidence that the VPS has been updated.
 2. It transfers the reviewed source tree and this runbook through the private
    SSH connection. Git synchronization is handled separately through the
    private remote documented in [Local and private Git workflow](GIT-WORKFLOW.md).
-3. The VPS updater confirms that migration `20260729_0011` and its required demo
-   safeguards are present.
+3. The VPS updater confirms the documented demo migration release gate and its
+   required demo safeguards are present. The demo database has its own Alembic
+   state and is migrated independently; no production database or migration
+   state is reused.
 4. The remote update runs as the confirmed non-root `jk` account; the update
    script refuses root and checks that Podman is rootless.
 

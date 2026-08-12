@@ -4,6 +4,9 @@ This index is the starting point for any agent, operator, reviewer, or future
 maintainer working on production. Demo documentation is intentionally separate
 and must not be used as a production deployment instruction.
 
+Start with [the consistency remediation plan](CONSISTENCY-REMEDIATION-PLAN.md)
+for the phased review and maintenance workflow.
+
 For demo-only work, start with `DEMO-DOCUMENTATION-INDEX.md`; it defines the
 demo authority, runbook sequence, generated-artifact boundary, and exclusions.
 
@@ -31,6 +34,7 @@ demo authority, runbook sequence, generated-artifact boundary, and exclusions.
   rootless Podman container removal, with bind-mount and secret checks.
 - `PASSWORD-RECOVERY.md` — activation and self-service recovery controls.
 - `DATA-EXPORTS.md` — CSV/full archive behavior and retention.
+- `SUPPORT-TICKETS.md` — user support tickets, Admin replies, and notifications.
 - `INCIDENT-REPORTING.md` — reporting and response expectations.
 - `QUALITY-ASSURANCE.md` — source and deployed acceptance evidence.
 - `PHASE-0-REVIEW.md` — sign-off checklist; unchecked items require evidence.

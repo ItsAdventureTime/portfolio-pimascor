@@ -32,6 +32,7 @@ required_files=(
   "${SOURCE_ROOT}/apps/api/migrations/versions/20260801_0012_account_activation.py"
   "${SOURCE_ROOT}/apps/api/migrations/versions/20260803_0013_password_reset_requests.py"
   "${SOURCE_ROOT}/apps/api/migrations/versions/20260803_0014_release_tracking.py"
+  "${SOURCE_ROOT}/apps/api/migrations/versions/20260812_0015_support_tickets.py"
   "${SOURCE_ROOT}/apps/web/Containerfile"
   "${SOURCE_ROOT}/infra/quadlet/production/bridge-ph-pimascor-api.container"
   "${SOURCE_ROOT}/infra/quadlet/production/bridge-ph-pimascor-account-bootstrap.container"

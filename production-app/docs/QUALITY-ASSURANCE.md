@@ -13,7 +13,7 @@ Run these from the repository before transfer:
 
 ```bash
 (cd apps/api && uv sync --extra dev && uv run pytest -q)
-(cd apps/web && pnpm build)
+(cd apps/web && npm run build)
 ```
 
 `uv sync` resolves the exact pinned package versions from `pyproject.toml` and
@@ -29,10 +29,10 @@ or a command history.
 
 | Role | Required proof |
 | --- | --- |
-| Requester | Can create and submit only its own draft Budget Request, cannot view DCS payment proof or Shipment Profitability, and receives a forbidden result for another Requester's draft. |
+| Requester | Can create and submit only its own draft Budget Request, can view only own Shipment Profitability, cannot view DCS payment proof, and receives a forbidden result for another Requester's draft. |
 | Mich | Can review a submitted Budget, manage permitted Billing/Liquidation work, and cannot make GM or DCS decisions. |
-| GM | Can approve or return pending approval queues, but receives `403` for DCS Payment actions and cannot record payment or payment proof. |
-| DCS | Owns ordinary DCS Payment actions and the emergency/contingency override of a GM-owned approval, with an attributable reason and active configured funding source; cannot create arbitrary sources. |
+| GM | Can approve or return pending approval queues and can perform an exceptional DCS Payment override with a reason of at least ten characters; ordinary payment remains DCS-owned. |
+| DCS | Owns ordinary DCS Payment actions and retains emergency/contingency override authority for a GM-owned approval, with an attributable reason and active configured funding source; cannot create arbitrary sources. |
 | Admin | Can administer funding sources, tax profiles, and activity; still cannot bypass CSRF, evidence, version, finalization, or confirmation controls. |
 
 The demo login must visibly offer **Enter demo as Admin** without credential
@@ -154,7 +154,7 @@ phone breakpoints, the sign-in card now appears before the supporting hero
 content; recovery and first-time activation controls remained reachable, and
 the browser console stayed clear of errors and warnings.
 
-The API test run still reports Starlette's upstream deprecation warning for its
+  The API test run still reports Starlette's upstream deprecation warning for its
 legacy `httpx` TestClient import. It is test-tooling-only and does not affect
 the deployed API; keep it visible until the upstream-compatible client path is
 available in the pinned dependency set.

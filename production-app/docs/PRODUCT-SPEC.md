@@ -34,7 +34,7 @@ PIMASCOR is an internal operational and financial control system for PIMASCOR/Br
 | Billing | Prepare/submit/finalize approved | Own final | Approve | Read | Prepare/submit/finalize approved |
 | Client Payments | All | No | Read | Read | Record/allocate |
 | Request for Payment | All | No | Read | Read | Create |
-| Accounting | Yes | No | No | No | No |
+| Accounting / Bridge Accounting | Yes | No | No | No | No |
 | Administration | Yes | No | No | No | No |
 
 Direct URLs receive the same authorization check as navigation. A hidden menu item is not a security boundary.
@@ -195,7 +195,7 @@ complete data table.
 
 ## Search and notifications
 
-Current global search is a navigational demonstration. Production requires indexed, permission-filtered results from reference, shipment, client, Billing, and payment records. Notifications must become persistent and attributable before “mark all read” is considered complete.
+Current global search is a navigational demonstration. Production requires indexed, permission-filtered results from reference, shipment, client, Billing, payment, and support-ticket records. Notifications must become persistent and attributable before “mark all read” is considered complete.
 
 Every action result, status update, form validation error, and workflow warning opens
 a centered modal dialog with a dimmed/blurred background, a plain explanation, an
@@ -212,7 +212,10 @@ incident dialog with **Dismiss** and **Report for investigation**.
 - Opaque server-side session cookie with Secure, HttpOnly, and SameSite controls.
 - Separate non-HttpOnly CSRF cookie and header for mutations.
 - Session expiry and revocation after password changes, account disable, and demo reset.
-- No role simulator in the authenticated UI.
+- No identity impersonation exists in the authenticated UI. The Admin-only
+  workspace selector is an attributable evaluation/control surface, not an
+  identity change. Bridge Accounting is a business label mapped to Admin
+  capability until a separate technical role is approved.
 
 Pocket ID or another external identity provider is a later revision after the current access matrix stabilizes.
 
@@ -231,6 +234,13 @@ no `.env` files or usable keys belong in source or Quadlets.
 ## Demo behavior
 
 The demo contains realistic but fictional data. Users may create and modify make-believe transactions. At 03:00 Asia/Manila, the reset job locally replaces mutable business/configuration records with the code-defined baseline and revokes sessions while preserving user accounts/password hashes. The demo has no backup or S3 restore dependency.
+
+## Support tickets
+
+Production uses durable support tickets with unique ticket numbers, Admin
+assignment/replies, requester-scoped visibility, audit history, and email
+notifications to Alyssa and JK. Demo exposes the same path with synthetic
+records and simulated replies only. See `SUPPORT-TICKETS.md`.
 
 ## Production blockers
 

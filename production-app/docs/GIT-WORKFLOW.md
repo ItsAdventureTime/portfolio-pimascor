@@ -35,8 +35,8 @@ databases, and runtime output remain prohibited.
    `infra/scripts/deploy-demo-vps.sh` and then run the documented VPS
    activation command.
 
-The responsibility is intentionally split: local Git creates the signed
-commit; GitHub CLI authenticates and verifies publication to the HTTPS remote.
+The responsibility is intentionally split: local Git creates the commit;
+GitHub CLI authenticates and verifies publication to the HTTPS remote.
 GitHub CLI has no separate `gh commit` operation, so do not invent one or put
 tokens into a URL. `gh auth setup-git` configures Git's credential helper, and
 the guarded HTTPS push publishes the already-created local commit.
@@ -50,20 +50,12 @@ remains the commit and push transport for this private repository. `gh repo
 sync` is not a replacement for publishing local commits; it synchronizes a
 repository from another repository or parent branch.
 
-### Signature requirement
+### Commit authentication
 
-Commits must be SSH-signed with the signing key registered on the GitHub
-account. Confirm the local commit with `git log --show-signature -1`, then
-confirm the remote API reports `commit.verification.verified=true`. `gh auth
-setup-git` supplies GitHub HTTPS credentials; it does not create or sign commits. If
-the configured 1Password SSH signer is locked or unavailable, unlock it before
-committing. Do not fall back to an unsigned commit merely to make the push
-succeed.
-
-The SSH signing key is used only to verify commit authorship. It is not an SSH
-transport, VPS login credential, or GitHub remote. GitHub synchronization uses
-the HTTPS `origin` together with the authenticated GitHub CLI credential helper;
-no GitHub SSH key is required for fetch or push.
+No SSH key or SSH signing setup is required for this project. Local Git creates
+the commit, and GitHub CLI authenticates the HTTPS remote through its credential
+helper. Verify the published commit with `gh api`; do not put credentials in a
+URL or repository file.
 
 Removing a file from the current tree does not remove it from prior commits.
 If a confirmed secret or NDA file was committed historically, stop and use the
@@ -76,7 +68,7 @@ Run from the repository root after checks and after committing:
 
 ```bash
 git add <reviewed-files>
-git commit -S -m "type(scope): concise change"
+git commit -m "type(scope): concise change"
 git remote get-url origin
 git status --short
 git remote set-url origin https://github.com/ItsAdventureTime/bridge-pimascor.git

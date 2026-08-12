@@ -38,3 +38,7 @@
 
 # Approved NDA/client material is synchronized to the authorized private mirror.
 # Credentials, secrets, databases, logs, and runtime state remain excluded.
+
+# Explicitly archived material is outside the active analysis/documentation set.
+not-needed/**
+!not-needed/README.md

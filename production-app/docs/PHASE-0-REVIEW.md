@@ -66,7 +66,7 @@ Use separate real demo accounts for every role. Check an item only after the nam
 
 ## Shipment Profitability
 
-- [ ] Every role lands on the connected dashboard.
+- [ ] Every role lands on the connected dashboard; Requester data is own-shipment only.
 - [ ] Selling and actual spending match the Budget Request and Liquidation.
 - [ ] Profit, margin, Liquidation, collection, outstanding amount, and aging are correct per shipment.
 - [ ] The bar comparison has an equivalent exact-value table and remains readable on mobile.
@@ -74,7 +74,7 @@ Use separate real demo accounts for every role. Check an item only after the nam
 ## Confidential documents
 
 - [ ] Authorized users can view a private document through the inline viewer.
-- [ ] No document download control appears and `/documents/{id}/download` is denied.
+- [ ] Production authorized staff can use the separately audited download route; demo has no download control and `/documents/{id}/download` is denied.
 
 ## Usability and accessibility
 
@@ -106,14 +106,14 @@ Use separate real demo accounts for every role. Check an item only after the nam
 - [ ] API service reports healthy through the Quadlet runtime health check; the API image contains no redundant Docker-format `HEALTHCHECK`.
 - [ ] PostgreSQL uses the exact `data/postgres/18/docker` bind mount and restarts without a rootless permission error.
 - [ ] Forward migration succeeds on a copied database before the live update.
-- [ ] Migration `20260723_0008` is current and incident reports appear under Administration → Activity Monitor → App problems.
+- [ ] Demo and production use separate migration release gates; the deployed build reaches its own documented migration head and incident reports appear under Administration → Activity Monitor → App problems.
 - [ ] Admin and Developer receive separate incident emails through the Resend Podman secret; neither email includes secrets, full bank details, document contents, or form entries.
 - [ ] Admin email uses plain operational/accounting language; Developer email contains a reproducible technical summary and a ready-to-copy Codex investigation prompt.
 - [ ] Local rollback web files and previous API image remain until acceptance.
 
 ## Decisions required before production
 
-- [ ] Bridge Accounting role and ownership.
+- [x] Bridge Accounting is a distinct business label mapped to the Admin capability set; a separate technical role remains optional.
 - [ ] VAT/CWT/EWT, chart of accounts, journal, official tax-document terminology, and void/replacement rules.
 - [ ] Malware scanning and approved document retention.
 - [ ] Archival PDF requirements.

@@ -86,9 +86,9 @@ Shipment workflows now include persistent Liquidation, Billing, and Client Payme
   over-allocation and preserves partial balances.
 - DCS and Admin choose the actual payment source only from the active administrator-controlled funding-source table.
 
-Liquidation receipts and variance proofs are transferred to private Backblaze B2 through its S3-compatible API. The API verifies PDF/JPEG/PNG signatures in bounded chunks, enforces a 100 MB per-file limit, records SHA-256 and byte size, uses managed multipart transfer, opaque object keys, an authorized document index, and an audited same-origin inline, no-store stream. The download route is denied. Large request bodies spool to a private host directory instead of remaining in API memory. Malware scanning and a management-approved retention policy remain production gates.
+Liquidation receipts and variance proofs are transferred to private Backblaze B2 through its S3-compatible API. The API verifies PDF/JPEG/PNG signatures in bounded chunks, enforces a 100 MB per-file limit, records SHA-256 and byte size, uses managed multipart transfer, opaque object keys, an authorized document index, and an audited same-origin inline, no-store stream. Production also exposes a separately authorized audited download route for Mich, GM, DCS, and Admin; the demo disables that route and remains inline-only. Large request bodies spool to a private host directory instead of remaining in API memory. Malware scanning and a management-approved retention policy remain production gates.
 
-`GET /dashboard/shipment-profitability` calculates selling, actual spending, profit, margin, Liquidation status, collection status, outstanding receivables, and aging from persistent records. Requesters receive only their own shipments.
+`GET /dashboard/shipment-profitability` calculates selling, actual spending, profit, margin, Liquidation status, collection status, outstanding receivables, and aging from persistent records. Requesters receive only their own shipments. Bridge Accounting uses the Admin capability set and is attributable under that business label.
 
 ## Demo reset
 

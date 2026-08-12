@@ -15,6 +15,7 @@ export type PageId =
   | 'loan-payments'
   | 'accounting'
   | 'clients-documents'
+  | 'support'
   | 'admin'
   | 'login'
 
@@ -514,4 +515,42 @@ export interface ApiShipmentProfitability {
     receivables_aging_days: number | null
     outstanding_receivable: string
   }[]
+}
+
+export type ApiSupportTicketStatus = 'OPEN' | 'IN_PROGRESS' | 'WAITING_FOR_REQUESTER' | 'RESOLVED' | 'CLOSED'
+
+export interface ApiSupportUser {
+  id: string
+  username: string
+  display_name: string
+  role: ApiUser['role']
+}
+
+export interface ApiSupportReply {
+  id: string
+  body: string
+  author: ApiSupportUser
+  is_internal: boolean
+  is_simulated: boolean
+  created_at: string
+}
+
+export interface ApiSupportTicket {
+  id: string
+  ticket_number: string
+  subject: string
+  message: string
+  requester: ApiSupportUser
+  requester_role: ApiUser['role']
+  deployment_tier: string
+  status: ApiSupportTicketStatus
+  assigned_to: ApiSupportUser | null
+  replies: ApiSupportReply[]
+  version: number
+  resolved_at: string | null
+  closed_at: string | null
+  created_at: string
+  updated_at: string
+  email_admin_sent_at: string | null
+  email_developer_sent_at: string | null
 }

@@ -5,7 +5,10 @@ Current target: team demo at `https://delegateops.business/pimascor/demo/`
 
 ## 1. Source of truth
 
-Implementation follows `docs/REQUIREMENTS-V2.md`, which reconciles the July 2026 evaluation records and screenshots. The correct name is **Mich**.
+Implementation follows `docs/MEETING-DECISIONS-2026-07-24.md` and
+`docs/REQUIREMENTS-V2.md`. Historical prompts, screenshots, and generated
+handoff snapshots are archived outside the active documentation surface. The
+correct name is **Mich**.
 
 Operational and deployment assertions follow `docs/FACTUAL-BASIS.md`; an
 unverified server, storage, CDN, or migration state is recorded as unknown.
@@ -27,7 +30,8 @@ Think of React as the reception forms, FastAPI as trained staff checking each re
 
 ## 4. Information architecture
 
-1. Shipment Profitability, shown after sign-in to every role; Requesters see only owned shipments.
+1. Shipment Profitability, shown after sign-in to every role; Requesters see
+   only owned shipments. Bridge Accounting uses the Admin capability set.
 2. Budget Requests / My Budget Requests.
 3. Approval.
 4. DCS for Payment.
@@ -69,7 +73,8 @@ Additional Budgets remain linked to the original shipment and corresponding Liqu
 - Failed password/email-code signals without submitted secrets. Admin actions remain recorded and can be included explicitly.
 - Private B2 document upload, responsive type-specific view-only previews with
   loading/retry states and byte-range support, 100 MB validation, and integrity
-  metadata; download controls are disabled.
+  metadata. Production authorized staff can use audited downloads; demo is
+  inline-only and has no download route.
 - 03:00 code-defined demo reset with no backup restore.
 - Rootless Quadlets, guarded updater, local rollback material, and PostgreSQL ownership/health fixes.
 - Centered persistent action feedback with no corner toasts, animated dashboard
@@ -77,7 +82,8 @@ Additional Budgets remain linked to the original shipment and corresponding Liqu
 
 ## 8. Verification
 
-- Full API suite: 45 tests passing.
+- Historical July evidence reported 45 API tests. Current release evidence is
+  maintained in `docs/QUALITY-ASSURANCE.md`; do not reuse historical counts.
 - TypeScript compilation and optimized Vite build passing.
 - Desktop 1280px and mobile 390px browser checks: no horizontal overflow or console warnings.
 - Role walkthrough remains required on the hosted demo.

@@ -44,6 +44,8 @@ from .models import (
     Role,
     SalesQuotation,
     SalesQuotationLine,
+    SupportTicket,
+    SupportTicketReply,
     TaxProfile,
     User,
     UserStatus,
@@ -145,6 +147,8 @@ def reset_demo() -> None:
         mich = role_user(db, Role.MICH)
 
         for model in (
+            SupportTicketReply,
+            SupportTicket,
             IncidentReport,
             CreditMemo,
             PaymentAllocation,
