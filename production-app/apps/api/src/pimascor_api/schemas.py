@@ -603,6 +603,8 @@ class IncidentDecisionRequest(BaseModel):
 
 
 class SupportTicketCreate(BaseModel):
+    category: str = Field(default="OTHER", min_length=2, max_length=80)
+    reason: str = Field(default="OTHER", min_length=2, max_length=160)
     subject: str = Field(min_length=2, max_length=200)
     message: str = Field(min_length=2, max_length=10000)
 
@@ -621,18 +623,35 @@ class SupportTicketReplyResponse(ApiModel):
     is_internal: bool
     is_simulated: bool
     created_at: datetime
+    attachments: list["SupportTicketAttachmentResponse"] = Field(default_factory=list)
+
+
+class SupportTicketAttachmentResponse(ApiModel):
+    id: str
+    file_name: str
+    content_type: str
+    size_bytes: int
+    sha256: str
+    uploaded_by_label: str
+    simulated: bool
+    created_at: datetime
+    available: bool
 
 
 class SupportTicketResponse(ApiModel):
     id: str
     ticket_number: str
     subject: str
+    category: str
+    reason: str
     message: str
+    message_attachments: list[SupportTicketAttachmentResponse] = Field(default_factory=list)
     requester: SupportTicketUserResponse
     requester_role: Role
     deployment_tier: str
     status: SupportTicketStatus
     assigned_to: SupportTicketUserResponse | None
+    assigned_to_key: str | None
     replies: list[SupportTicketReplyResponse]
     version: int
     resolved_at: datetime | None
@@ -641,10 +660,12 @@ class SupportTicketResponse(ApiModel):
     updated_at: datetime
     email_admin_sent_at: datetime | None
     email_developer_sent_at: datetime | None
+    portal_url: str | None = None
 
 
 class SupportTicketAssignment(BaseModel):
     assigned_to_id: str | None = None
+    assigned_to_key: Literal["support_staff", "bridge_admin"] | None = None
     expected_version: int | None = Field(default=None, gt=0)
 
 
@@ -652,6 +673,14 @@ class SupportTicketReplyCreate(BaseModel):
     body: str = Field(min_length=2, max_length=10000)
     is_internal: bool = False
     expected_version: int | None = Field(default=None, gt=0)
+
+
+class SupportPortalResponse(SupportTicketResponse):
+    viewer_label: str
+    viewer_audience: Literal["requester", "support"]
+    can_reply: bool
+    can_manage: bool
+    token_expires_at: datetime
 
 
 class SupportTicketStatusUpdate(BaseModel):

@@ -1,5 +1,53 @@
 # Support tickets and owner messages
 
+## Secure support portal (current)
+
+Support tickets are durable records in PostgreSQL. Each production ticket
+creates three separate capability links: one for the requester, one labelled
+`Support Staff` for JK, and one labelled `Bridge Admin` for Alyssa
+(`alyssa.d@bridge-ph.com`). The links are sent by Resend to the requester and
+the two support recipients. They do not require an application login.
+
+The raw token is generated with high entropy, stored only as a SHA-256 hash,
+expires after the configured portal TTL, is revoked when a replacement link is
+issued, and is accepted through `X-Support-Token`. Email links place the token
+in the URL fragment; the web app removes it from browser history immediately.
+Do not copy a capability link into a ticket, log, screenshot, analytics event,
+or chat. The API responds with `Referrer-Policy: no-referrer`.
+Portal attachment responses are private and sent with `Cache-Control: no-store`.
+
+The portal supports Markdown text, a guided category/reason decision tree,
+five attachments per message, and 25 MB per attachment. Production accepts
+PDF, JPEG, PNG, WebP, TXT, Markdown, and CSV files after extension and magic
+signature validation. Attachment bytes use the private production Backblaze
+B2 prefix `support-tickets/`; generated object keys never use the original
+filename. Attachments are marked deleted and removed from B2 when a ticket is
+closed. A maintenance pass retries any failed object deletion.
+
+Support can assign a ticket to `Support Staff` or `Bridge Admin`, mark it
+`Resolved`, or mark it `Closed`. Opening a new ticket from a support link moves
+it from `Open` to `In progress`. Tickets with no update for seven days are
+closed by the API maintenance task with an apology email to the requester.
+
+The demo uses the same portal contract, but attachment rows and replies are
+explicitly simulated, no production email is sent, and simulated attachments
+are not downloadable. Demo and production each apply the same forward
+migration to their own database; they never share a database or reset path.
+
+## API portal routes
+
+```text
+GET  /support-tickets/portal/{ticket_id}
+POST /support-tickets/portal/{ticket_id}/replies
+POST /support-tickets/portal/{ticket_id}/assignment
+POST /support-tickets/portal/{ticket_id}/status
+GET  /support-tickets/portal/attachments/{attachment_id}
+```
+
+The authenticated routes remain available for the signed-in workspace. The
+portal routes require only the recipient-specific capability token. All
+portal writes are version-checked and audited.
+
 This document defines the shared support-message contract for production and
 demo. It is a user-facing support workflow, not the application incident
 reporting path. Incident reporting remains for detected application failures;

@@ -1,4 +1,4 @@
-import type { ApiActivityCategory, ApiAdminActivity, ApiBackupCatalogItem, ApiBilling, ApiBudgetRequest, ApiClient, ApiClientPayment, ApiCreditMemo, ApiDataExport, ApiDocument, ApiExpenseRequest, ApiExpenseType, ApiFundingSource, ApiIncident, ApiIncidentReport, ApiLiquidation, ApiPaymentQueueItem, ApiQuotation, ApiReleaseUpdate, ApiShipmentProfitability, ApiSupportTicket, ApiSupportTicketStatus, ApiTaxProfile, ApiUser } from './types'
+import type { ApiActivityCategory, ApiAdminActivity, ApiBackupCatalogItem, ApiBilling, ApiBudgetRequest, ApiClient, ApiClientPayment, ApiCreditMemo, ApiDataExport, ApiDocument, ApiExpenseRequest, ApiExpenseType, ApiFundingSource, ApiIncident, ApiIncidentReport, ApiLiquidation, ApiPaymentQueueItem, ApiQuotation, ApiReleaseUpdate, ApiShipmentProfitability, ApiSupportPortal, ApiSupportTicket, ApiSupportTicketStatus, ApiTaxProfile, ApiUser } from './types'
 
 const API_BASE = import.meta.env.VITE_API_URL ?? 'http://127.0.0.1:8000/api/v1'
 const CSRF_COOKIE_NAME = import.meta.env.VITE_CSRF_COOKIE_NAME ?? 'pimascor_csrf'
@@ -83,7 +83,7 @@ async function requestResponse(path: string, options: RequestInit = {}) {
     response = await fetch(`${API_BASE}${path}`, {
       ...options,
       headers,
-      credentials: 'include',
+      credentials: options.credentials ?? 'include',
     })
   } catch {
     const method = options.method ?? 'GET'
@@ -127,6 +127,50 @@ async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
   const response = await requestResponse(path, options)
   if (response.status === 204) return undefined as T
   return response.json() as Promise<T>
+}
+
+async function requestSupportPortal<T>(path: string, token: string, options: RequestInit = {}): Promise<T> {
+  const headers = new Headers(options.headers)
+  headers.set('X-Support-Token', token)
+  const response = await requestResponse(path, { ...options, headers, credentials: 'omit' })
+  if (response.status === 204) return undefined as T
+  return response.json() as Promise<T>
+}
+
+export function readSupportPortalLink(): { ticketId: string; token: string } | null {
+  if (typeof window === 'undefined' || !window.location.hash.startsWith('#support-portal?')) return null
+  const params = new URLSearchParams(window.location.hash.slice('#support-portal?'.length))
+  const ticketId = params.get('ticket')
+  const token = params.get('token')
+  if (!ticketId || !token || token.length > 200) return null
+  window.history.replaceState(null, document.title, `${window.location.pathname}${window.location.search}`)
+  return { ticketId, token }
+}
+
+export function getSupportPortal(ticketId: string, token: string) {
+  return requestSupportPortal<ApiSupportPortal>(`/support-tickets/portal/${encodeURIComponent(ticketId)}`, token)
+}
+
+export function addSupportPortalReply(ticketId: string, token: string, body: string, options: { is_internal?: boolean; expected_version?: number; files?: File[] } = {}) {
+  const form = new FormData()
+  form.append('body', body)
+  if (options.is_internal !== undefined) form.append('is_internal', String(options.is_internal))
+  if (options.expected_version !== undefined) form.append('expected_version', String(options.expected_version))
+  for (const file of options.files ?? []) form.append('attachments', file, file.name)
+  return requestSupportPortal<ApiSupportPortal>(`/support-tickets/portal/${encodeURIComponent(ticketId)}/replies`, token, { method: 'POST', body: form })
+}
+
+export function updateSupportPortalStatus(ticketId: string, token: string, status: ApiSupportTicketStatus, expected_version?: number) {
+  return requestSupportPortal<ApiSupportPortal>(`/support-tickets/portal/${encodeURIComponent(ticketId)}/status`, token, { method: 'POST', body: JSON.stringify({ status, expected_version }) })
+}
+
+export function assignSupportPortalTicket(ticketId: string, token: string, assigned_to_key: 'support_staff' | 'bridge_admin', expected_version?: number) {
+  return requestSupportPortal<ApiSupportPortal>(`/support-tickets/portal/${encodeURIComponent(ticketId)}/assignment`, token, { method: 'POST', body: JSON.stringify({ assigned_to_key, expected_version }) })
+}
+
+export async function downloadSupportPortalAttachment(attachmentId: string, token: string) {
+  const response = await requestResponse(`/support-tickets/portal/attachments/${encodeURIComponent(attachmentId)}`, { headers: { 'X-Support-Token': token }, credentials: 'omit' })
+  return response.blob()
 }
 
 export function reportIncident(input: ApiIncidentReport) {
@@ -531,21 +575,38 @@ export function getSupportTickets() {
   return request<ApiSupportTicket[]>('/support-tickets')
 }
 
-export function createSupportTicket(subject: string, message: string) {
+export function createSupportTicket(subject: string, message: string, options: { category?: string; reason?: string; files?: File[] } = {}) {
+  if (options.files?.length) {
+    const form = new FormData()
+    form.append('category', options.category ?? 'OTHER')
+    form.append('reason', options.reason ?? 'OTHER')
+    form.append('subject', subject)
+    form.append('message', message)
+    for (const file of options.files) form.append('attachments', file, file.name)
+    return request<ApiSupportTicket>('/support-tickets', { method: 'POST', body: form })
+  }
   return request<ApiSupportTicket>('/support-tickets', {
     method: 'POST',
-    body: JSON.stringify({ subject, message }),
+    body: JSON.stringify({ category: options.category ?? 'OTHER', reason: options.reason ?? 'OTHER', subject, message }),
   })
 }
 
-export function addSupportTicketMessage(id: string, body: string, options: { is_internal?: boolean; expected_version?: number } = {}) {
+export function addSupportTicketMessage(id: string, body: string, options: { is_internal?: boolean; expected_version?: number; files?: File[] } = {}) {
+  if (options.files?.length) {
+    const form = new FormData()
+    form.append('body', body)
+    if (options.is_internal !== undefined) form.append('is_internal', String(options.is_internal))
+    if (options.expected_version !== undefined) form.append('expected_version', String(options.expected_version))
+    for (const file of options.files) form.append('attachments', file, file.name)
+    return request<ApiSupportTicket>(`/support-tickets/${encodeURIComponent(id)}/replies`, { method: 'POST', body: form })
+  }
   return request<ApiSupportTicket>(`/support-tickets/${encodeURIComponent(id)}/replies`, {
     method: 'POST',
     body: JSON.stringify({ body, ...options }),
   })
 }
 
-export function updateSupportTicket(id: string, input: { status?: ApiSupportTicketStatus; assigned_to_id?: string | null; expected_version?: number }) {
+export function updateSupportTicket(id: string, input: { status?: ApiSupportTicketStatus; assigned_to_id?: string | null; assigned_to_key?: 'support_staff' | 'bridge_admin' | null; expected_version?: number }) {
   const { status, ...rest } = input
   if (status) return request<ApiSupportTicket>(`/support-tickets/${encodeURIComponent(id)}/status`, { method: 'PATCH', body: JSON.stringify({ status, ...rest }) })
   return request<ApiSupportTicket>(`/support-tickets/${encodeURIComponent(id)}/assignment`, { method: 'PATCH', body: JSON.stringify(rest) })

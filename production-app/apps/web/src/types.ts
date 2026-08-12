@@ -532,18 +532,35 @@ export interface ApiSupportReply {
   is_internal: boolean
   is_simulated: boolean
   created_at: string
+  attachments: ApiSupportAttachment[]
+}
+
+export interface ApiSupportAttachment {
+  id: string
+  file_name: string
+  content_type: string
+  size_bytes: number
+  sha256: string
+  uploaded_by_label: string
+  simulated: boolean
+  created_at: string
+  available: boolean
 }
 
 export interface ApiSupportTicket {
   id: string
   ticket_number: string
   subject: string
+  category: string
+  reason: string
   message: string
+  message_attachments: ApiSupportAttachment[]
   requester: ApiSupportUser
   requester_role: ApiUser['role']
   deployment_tier: string
   status: ApiSupportTicketStatus
   assigned_to: ApiSupportUser | null
+  assigned_to_key: 'support_staff' | 'bridge_admin' | null
   replies: ApiSupportReply[]
   version: number
   resolved_at: string | null
@@ -552,4 +569,13 @@ export interface ApiSupportTicket {
   updated_at: string
   email_admin_sent_at: string | null
   email_developer_sent_at: string | null
+  portal_url?: string | null
+}
+
+export interface ApiSupportPortal extends ApiSupportTicket {
+  viewer_label: string
+  viewer_audience: 'requester' | 'support'
+  can_reply: boolean
+  can_manage: boolean
+  token_expires_at: string
 }

@@ -29,6 +29,16 @@ ALLOWED_SIGNATURES = {
     ".jpeg": ("image/jpeg", lambda value: value.startswith(b"\xff\xd8\xff")),
     ".png": ("image/png", lambda value: value.startswith(b"\x89PNG\r\n\x1a\n")),
 }
+SUPPORT_ATTACHMENT_SIGNATURES = {
+    ".pdf": ("application/pdf", lambda value: value.startswith(b"%PDF-")),
+    ".jpg": ("image/jpeg", lambda value: value.startswith(b"\xff\xd8\xff")),
+    ".jpeg": ("image/jpeg", lambda value: value.startswith(b"\xff\xd8\xff")),
+    ".png": ("image/png", lambda value: value.startswith(b"\x89PNG\r\n\x1a\n")),
+    ".webp": ("image/webp", lambda value: value.startswith(b"RIFF") and value[8:12] == b"WEBP"),
+    ".txt": ("text/plain", lambda value: b"\x00" not in value),
+    ".md": ("text/markdown", lambda value: b"\x00" not in value),
+    ".csv": ("text/csv", lambda value: b"\x00" not in value),
+}
 
 
 def storage_configured() -> bool:
@@ -91,6 +101,38 @@ async def read_verified_document(upload: UploadFile) -> tuple[str, str, str, int
     return original_name[:240], content_type, digest.hexdigest(), size_bytes
 
 
+async def read_verified_support_attachment(
+    upload: UploadFile,
+    *,
+    max_bytes: int,
+) -> tuple[str, str, str, int]:
+    original_name = Path(upload.filename or "").name.strip()
+    extension = Path(original_name).suffix.lower()
+    if not original_name or extension not in SUPPORT_ATTACHMENT_SIGNATURES:
+        raise HTTPException(
+            status_code=422,
+            detail="Use a PDF, JPEG, PNG, WebP, TXT, Markdown, or CSV attachment",
+        )
+    first_chunk = await upload.read(VALIDATION_CHUNK_BYTES)
+    if not first_chunk:
+        raise HTTPException(status_code=422, detail="The attachment is empty")
+    content_type, signature_check = SUPPORT_ATTACHMENT_SIGNATURES[extension]
+    if not signature_check(first_chunk):
+        raise HTTPException(status_code=422, detail="The file contents do not match its extension")
+
+    digest = hashlib.sha256(first_chunk)
+    size_bytes = len(first_chunk)
+    if size_bytes > max_bytes:
+        raise HTTPException(status_code=413, detail="Each support attachment must be 25 MB or smaller")
+    while chunk := await upload.read(VALIDATION_CHUNK_BYTES):
+        size_bytes += len(chunk)
+        if size_bytes > max_bytes:
+            raise HTTPException(status_code=413, detail="Each support attachment must be 25 MB or smaller")
+        digest.update(chunk)
+    await upload.seek(0)
+    return original_name[:240], content_type, digest.hexdigest(), size_bytes
+
+
 def build_document_key(*, evidence_id: str, liquidation_id: str, extension: str, uploaded_at) -> str:
     settings = get_settings()
     prefix = (settings.b2_object_prefix or "").strip("/")
@@ -115,6 +157,17 @@ def build_payment_proof_key(*, source_type: str, record_id: str, extension: str,
     safe_source = re.sub(r"[^a-zA-Z0-9-]", "", source_type)
     safe_id = re.sub(r"[^a-zA-Z0-9-]", "", record_id) or str(uuid4())
     return f"{prefix}/documents/payments/{safe_source}/{safe_id}/{uploaded_at:%Y/%m}/proof{extension.lower()}"
+
+
+def build_support_attachment_key(*, ticket_id: str, attachment_id: str, extension: str, uploaded_at) -> str:
+    settings = get_settings()
+    prefix = (settings.b2_object_prefix or "").strip("/")
+    safe_ticket_id = re.sub(r"[^a-zA-Z0-9-]", "", ticket_id) or str(uuid4())
+    safe_attachment_id = re.sub(r"[^a-zA-Z0-9-]", "", attachment_id) or str(uuid4())
+    return (
+        f"{prefix}/support-tickets/{safe_ticket_id}/{uploaded_at:%Y/%m}/"
+        f"{safe_attachment_id}{extension.lower()}"
+    )
 
 
 def put_document(
@@ -149,17 +202,18 @@ def delete_demo_documents() -> None:
     if not storage_configured():
         return
     settings = get_settings()
-    prefix = f"{settings.b2_object_prefix.strip('/')}/documents/"
     client = s3_client()
-    token = None
-    while True:
-        kwargs = {"Bucket": settings.b2_bucket, "Prefix": prefix}
-        if token:
-            kwargs["ContinuationToken"] = token
-        page = client.list_objects_v2(**kwargs)
-        objects = [{"Key": item["Key"]} for item in page.get("Contents", [])]
-        if objects:
-            client.delete_objects(Bucket=settings.b2_bucket, Delete={"Objects": objects, "Quiet": True})
-        if not page.get("IsTruncated"):
-            break
-        token = page.get("NextContinuationToken")
+    for suffix in ("documents/", "support-tickets/"):
+        prefix = f"{settings.b2_object_prefix.strip('/')}/{suffix}"
+        token = None
+        while True:
+            kwargs = {"Bucket": settings.b2_bucket, "Prefix": prefix}
+            if token:
+                kwargs["ContinuationToken"] = token
+            page = client.list_objects_v2(**kwargs)
+            objects = [{"Key": item["Key"]} for item in page.get("Contents", [])]
+            if objects:
+                client.delete_objects(Bucket=settings.b2_bucket, Delete={"Objects": objects, "Quiet": True})
+            if not page.get("IsTruncated"):
+                break
+            token = page.get("NextContinuationToken")

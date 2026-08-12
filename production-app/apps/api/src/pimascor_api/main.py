@@ -1,3 +1,4 @@
+import asyncio
 import logging
 import uuid
 from contextlib import asynccontextmanager
@@ -13,6 +14,7 @@ from .models import IncidentReport, IncidentSeverity, IncidentSource
 from .routers import admin_activity, auth, backups, budget_requests, data_exports, documents, expense_requests, health, incidents, operations, payments, quotations, support_tickets
 from .services.audit import record_audit
 from .services.incidents import incident_reference, safe_trace_summary
+from .services.support_tickets import auto_close_stale_tickets
 
 
 settings = get_settings()
@@ -23,7 +25,30 @@ logger = logging.getLogger("pimascor.api")
 async def lifespan(_: FastAPI):
     if settings.app_env in ("development", "test"):
         Base.metadata.create_all(bind=engine)
-    yield
+    maintenance_task = None
+    if settings.app_env == "production":
+        async def maintain_support_tickets() -> None:
+            while True:
+                try:
+                    await asyncio.to_thread(_run_support_maintenance)
+                except asyncio.CancelledError:
+                    raise
+                except Exception:
+                    logger.exception("Support ticket maintenance failed")
+                await asyncio.sleep(15 * 60)
+
+        maintenance_task = asyncio.create_task(maintain_support_tickets())
+    try:
+        yield
+    finally:
+        if maintenance_task is not None:
+            maintenance_task.cancel()
+            await asyncio.gather(maintenance_task, return_exceptions=True)
+
+
+def _run_support_maintenance() -> None:
+    with SessionLocal.begin() as db:
+        auto_close_stale_tickets(db, settings)
 
 
 app = FastAPI(
@@ -39,7 +64,13 @@ app.add_middleware(
     allow_origins=settings.frontend_origins,
     allow_credentials=True,
     allow_methods=["GET", "POST", "PATCH", "DELETE", "OPTIONS"],
-    allow_headers=["Content-Type", "X-CSRF-Token", "Idempotency-Key", "X-Correlation-ID"],
+    allow_headers=[
+        "Content-Type",
+        "X-CSRF-Token",
+        "X-Support-Token",
+        "Idempotency-Key",
+        "X-Correlation-ID",
+    ],
 )
 
 
@@ -49,7 +80,7 @@ async def correlation_id(request: Request, call_next):
     response = await call_next(request)
     response.headers["X-Correlation-ID"] = request.state.correlation_id
     response.headers["X-Content-Type-Options"] = "nosniff"
-    response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
+    response.headers["Referrer-Policy"] = "no-referrer"
     response.headers["Permissions-Policy"] = "camera=(), microphone=(), geolocation=()"
     return response
 

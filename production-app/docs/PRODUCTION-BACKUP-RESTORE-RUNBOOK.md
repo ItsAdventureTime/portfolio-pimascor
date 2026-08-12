@@ -15,9 +15,18 @@ demo runtime and from the Git continuity runbook.
 ## What is backed up
 
 Each successful run includes the PostgreSQL custom-format dump, production
-uploads, and production Quadlets. The local dump is removed only after the
-Restic service completes successfully. The B2 object prefix and encrypted
-repository are production-only.
+upload spool, and production Quadlets. The PostgreSQL dump includes
+`support_tickets`, replies, portal-token hashes, assignment/status history,
+and attachment metadata. The local dump is removed only after the Restic
+service completes successfully.
+
+Support attachment bytes live in the private Backblaze B2 production prefix;
+they are not copied into the host-side Restic snapshot. This is intentional:
+attachments are short-lived support evidence and are deleted from B2 when a
+ticket closes. A restore therefore recovers the ticket conversation and
+metadata, but not an already-removed attachment object. If policy later
+requires attachment recovery, add a separately encrypted B2 object backup and
+restore rehearsal before claiming that capability.
 
 The current release provides fixed scheduled base backups and Restic
 deduplication. It does not claim continuous WAL/PITR until PostgreSQL WAL

@@ -237,11 +237,15 @@ The demo contains realistic but fictional data. Users may create and modify make
 
 ## Support tickets
 
-Production uses durable support tickets with unique ticket numbers, Admin
-assignment/replies, requester-scoped visibility, audit history, and email
-notifications to Alyssa and JK. Demo exposes the same path with synthetic
-records and simulated replies only. Both tiers expose Support through a compact
-responsive topbar dialog, not a full-page navigation destination. See
+Production uses durable support tickets with unique ticket numbers, guided
+category/reason selection, Markdown messages, requester/support assignment,
+audit history, secure recipient-specific no-login portal links, and email
+notifications to the requester, `Support Staff` (JK), and `Bridge Admin`
+(Alyssa). Support attachments are private B2 objects and are deleted when a
+ticket closes. Demo exposes the same portal and decision tree with synthetic
+replies and simulated non-downloadable attachments; it sends no production
+email. Both tiers expose Support through a compact responsive topbar dialog,
+while emailed thread links open the dedicated thread surface. See
 `SUPPORT-TICKETS.md`.
 
 ## Production blockers

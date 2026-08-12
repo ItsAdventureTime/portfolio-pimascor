@@ -91,13 +91,21 @@ Actual expense description, amount, and order.
 
 Receipt, return proof, or reimbursement proof; original filename, private object key, content type, byte size, SHA-256, uploader, and time. New uploads bind to a real private Backblaze object. Production authorized users receive inline, no-store views and may use the separately authorized audited download endpoint; demo remains inline-only. Legacy seeded rows without integrity metadata are labeled metadata-only.
 
-### support_tickets and support_ticket_messages
+### support_tickets, support_ticket_replies, portal tokens, and attachments
 
 Support questions, suggestions, and ordinary help requests use durable tickets
-with a unique ticket number, requester, role, subject, status, assignment,
-timestamps, and audit history. Messages and Admin replies are append-only.
-Production sends safe notification emails to Alyssa and JK; demo uses synthetic
-records and simulated replies without production email or storage.
+with a unique ticket number, category/reason, requester, role, subject, status,
+assignment, timestamps, version, closure reason, and audit history. Replies are
+append-only and retain Markdown source, author label, visibility, and whether a
+demo reply was simulated.
+
+`support_ticket_portal_tokens` stores only SHA-256 token hashes, recipient
+audience/key/email/label, expiry, use count, last use, and revocation time.
+`support_ticket_attachments` stores ticket/reply ownership, safe original
+display name, validated content type, byte size, SHA-256, private B2 object
+key, demo flag, and deletion time. Production attachment bytes are in private
+Backblaze B2 and are deleted when the ticket closes; demo rows are simulated
+and the nightly demo reset removes both rows and object-prefix files.
 
 ## Billing and collection
 

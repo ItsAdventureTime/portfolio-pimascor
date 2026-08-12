@@ -823,6 +823,8 @@ class SupportTicket(Base):
     id: Mapped[str] = mapped_column(String(36), primary_key=True, default=uuid_string)
     ticket_number: Mapped[str] = mapped_column(String(40), unique=True, index=True)
     subject: Mapped[str] = mapped_column(String(200))
+    category: Mapped[str] = mapped_column(String(80), default="OTHER")
+    reason: Mapped[str] = mapped_column(String(160), default="OTHER")
     message: Mapped[str] = mapped_column(Text)
     requester_id: Mapped[str] = mapped_column(ForeignKey("users.id"), index=True)
     requester_role: Mapped[Role] = mapped_column(Enum(Role), index=True)
@@ -831,9 +833,11 @@ class SupportTicket(Base):
         Enum(SupportTicketStatus), default=SupportTicketStatus.OPEN, index=True
     )
     assigned_to_id: Mapped[str | None] = mapped_column(ForeignKey("users.id"), index=True)
+    assigned_to_key: Mapped[str | None] = mapped_column(String(40), index=True)
     version: Mapped[int] = mapped_column(Integer, default=1)
     resolved_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     closed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    closure_reason: Mapped[str | None] = mapped_column(String(80))
     email_admin_sent_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     email_developer_sent_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now, index=True)
@@ -848,6 +852,15 @@ class SupportTicket(Base):
         cascade="all, delete-orphan",
         order_by="SupportTicketReply.created_at",
     )
+    portal_tokens: Mapped[list[SupportTicketPortalToken]] = relationship(
+        back_populates="ticket",
+        cascade="all, delete-orphan",
+    )
+    attachments: Mapped[list[SupportTicketAttachment]] = relationship(
+        back_populates="ticket",
+        cascade="all, delete-orphan",
+        order_by="SupportTicketAttachment.created_at",
+    )
 
 
 class SupportTicketReply(Base):
@@ -855,8 +868,9 @@ class SupportTicketReply(Base):
 
     id: Mapped[str] = mapped_column(String(36), primary_key=True, default=uuid_string)
     ticket_id: Mapped[str] = mapped_column(ForeignKey("support_tickets.id"), index=True)
-    author_user_id: Mapped[str] = mapped_column(ForeignKey("users.id"), index=True)
+    author_user_id: Mapped[str | None] = mapped_column(ForeignKey("users.id"), index=True)
     author_role: Mapped[Role] = mapped_column(Enum(Role), index=True)
+    author_label: Mapped[str | None] = mapped_column(String(80))
     body: Mapped[str] = mapped_column(Text)
     is_internal: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
     is_simulated: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
@@ -865,4 +879,52 @@ class SupportTicketReply(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now, index=True)
 
     ticket: Mapped[SupportTicket] = relationship(back_populates="replies")
-    author: Mapped[User] = relationship()
+    author: Mapped[User | None] = relationship()
+    attachments: Mapped[list[SupportTicketAttachment]] = relationship(
+        back_populates="reply",
+        cascade="all, delete-orphan",
+        order_by="SupportTicketAttachment.created_at",
+    )
+
+
+class SupportTicketPortalToken(Base):
+    __tablename__ = "support_ticket_portal_tokens"
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=uuid_string)
+    ticket_id: Mapped[str] = mapped_column(ForeignKey("support_tickets.id"), index=True)
+    token_hash: Mapped[str] = mapped_column(String(64), unique=True, index=True)
+    audience: Mapped[str] = mapped_column(String(20), index=True)
+    recipient_key: Mapped[str] = mapped_column(String(40), index=True)
+    recipient_email: Mapped[str] = mapped_column(String(320))
+    recipient_label: Mapped[str] = mapped_column(String(80))
+    recipient_user_id: Mapped[str | None] = mapped_column(ForeignKey("users.id"), index=True)
+    expires_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), index=True)
+    last_used_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    use_count: Mapped[int] = mapped_column(Integer, default=0)
+    revoked_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now)
+
+    ticket: Mapped[SupportTicket] = relationship(back_populates="portal_tokens")
+    recipient_user: Mapped[User | None] = relationship()
+
+
+class SupportTicketAttachment(Base):
+    __tablename__ = "support_ticket_attachments"
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=uuid_string)
+    ticket_id: Mapped[str] = mapped_column(ForeignKey("support_tickets.id"), index=True)
+    reply_id: Mapped[str | None] = mapped_column(ForeignKey("support_ticket_replies.id"), index=True)
+    uploaded_by_user_id: Mapped[str | None] = mapped_column(ForeignKey("users.id"), index=True)
+    uploaded_by_label: Mapped[str] = mapped_column(String(80))
+    file_name: Mapped[str] = mapped_column(String(240))
+    content_type: Mapped[str] = mapped_column(String(120))
+    storage_key: Mapped[str | None] = mapped_column(String(500))
+    size_bytes: Mapped[int] = mapped_column(Integer)
+    sha256: Mapped[str] = mapped_column(String(64))
+    simulated: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
+    deleted_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now, index=True)
+
+    ticket: Mapped[SupportTicket] = relationship(back_populates="attachments")
+    reply: Mapped[SupportTicketReply | None] = relationship(back_populates="attachments")
+    uploaded_by_user: Mapped[User | None] = relationship()

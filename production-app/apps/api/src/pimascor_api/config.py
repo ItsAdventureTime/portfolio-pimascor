@@ -35,6 +35,10 @@ class Settings(BaseSettings):
     incident_email_enabled: bool = True
     incident_admin_email: str = "alyssa.d@bridge-ph.com"
     incident_developer_email: str = "jk@delegateops.business"
+    support_auto_close_days: int = 7
+    support_portal_token_ttl_days: int = 30
+    support_max_attachments_per_message: int = 5
+    support_max_attachment_bytes: int = 25 * 1024 * 1024
 
     b2_endpoint_url: str | None = None
     b2_region: str | None = None

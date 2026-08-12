@@ -76,6 +76,7 @@ required_files=(
   "${SOURCE_ROOT}/apps/api/migrations/versions/20260729_0010_sales_quotation_print_fields.py"
   "${SOURCE_ROOT}/apps/api/migrations/versions/20260729_0011_data_exports.py"
   "${SOURCE_ROOT}/apps/api/migrations/versions/20260812_0015_support_tickets.py"
+  "${SOURCE_ROOT}/apps/api/migrations/versions/20260812_0016_support_portal.py"
   "${SOURCE_ROOT}/apps/api/src/pimascor_api/incident_admin.py"
   "${SOURCE_ROOT}/apps/web/Containerfile"
   "${SOURCE_ROOT}/infra/quadlet/demo/bridge-ph-pimascor-demo-api.container"
@@ -170,6 +171,10 @@ grep -Fq 'role.create(bind, checkfirst=True)' "${SOURCE_ROOT}/apps/api/migration
 }
 grep -Fq 'support_ticket_status.create(bind, checkfirst=True)' "${SOURCE_ROOT}/apps/api/migrations/versions/20260812_0015_support_tickets.py" || {
   printf 'Refusing to update: the support-ticket status enum does not use the reviewed retry-safe creation path.\n' >&2
+  exit 1
+}
+grep -Fq 'revision: str = "20260812_0016"' "${SOURCE_ROOT}/apps/api/migrations/versions/20260812_0016_support_portal.py" || {
+  printf 'Refusing to update: the support-portal migration is missing or has an unexpected revision ID.\n' >&2
   exit 1
 }
 grep -Fqx 'Environment=INCIDENT_ADMIN_EMAIL=alyssa.d@bridge-ph.com' "${api_quadlet}" || {

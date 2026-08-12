@@ -183,12 +183,23 @@ POST /support-tickets/{id}/replies
 POST /support-tickets/{id}/reopen
 POST /support-tickets/{id}/resolve
 POST /support-tickets/{id}/close
+GET  /support-tickets/portal/{id}
+POST /support-tickets/portal/{id}/replies
+POST /support-tickets/portal/{id}/assignment
+POST /support-tickets/portal/{id}/status
+GET  /support-tickets/portal/attachments/{attachment_id}
 ```
 
 Authenticated users create tickets and view their own tickets. Admin-level
 users assign, reply, reopen, resolve, and close tickets. Production creates a
 unique ticket number and sends safe notifications to Alyssa and JK. Demo uses
-the same contract with simulated replies and no email side effect.
+the same contract with simulated replies and no email side effect. The create
+and reply routes also accept multipart form data with Markdown text and
+validated attachments. Portal routes use a recipient-specific `X-Support-Token`
+capability, not a session login; tokens expire, are revocable, and are never
+returned in API responses. Production attachment bytes are private B2 objects
+and are deleted when a ticket closes. Demo attachments are database-only
+simulation rows.
 
 ## Shipment profitability
 

@@ -61,6 +61,7 @@ import type { BudgetRequest, PageId, Role, Tone } from './types'
  import { ApiError, acknowledgeReleaseUpdate, addSupportTicketMessage, closeLiquidation, completeActivation, completePasswordReset, createAdditionalBudget, createBillingDraft, createBillingReplacement, createBudgetRequest, createClientPayment, createCreditMemo, createExpenseRequest, createFundingSource, createQuotation, createSupportTicket, createTaxProfile, decideBilling, decideBudgetRequest, decideCreditMemo, decideExpenseRequest, decideQuotation, downloadDataExport, downloadDocument, emitApiIncident, finalizeBilling, getAdminActivity, getBackups, getBilling, getBudgetApprovalQueue, getBudgetRequests, getBudgetReviewQueue, getClientPayments, getClients, getCreditMemos, getDataExports, getDocumentBlob, getDocuments, getExpenseApprovalQueue, getExpenseRequests, getFundingSources, getLiquidations, getMe, getPayments, getQuotations, getReceivables, getReleaseUpdate, getShipmentProfitability, getSupportTickets, getTaxProfiles, overrideBudgetAsDcs, overrideQuotationAsDcs, recordPayment, recordQuotationAcceptance, requestDataExport, returnBudgetFromReview, reviewBudgetRequest, saveLiquidation, signOut, startActivation, startDemoSession, startPassword, startPasswordReset, submitBilling, submitBudgetRequest, submitExpenseRequest, submitLiquidation, submitQuotation, updateBillingDraft, updateBudgetRequest, updateFundingSource, updatePayment, updateSupportTicket, uploadLiquidationEvidence, uploadPaymentProof, verifyEmailCode, voidBilling } from './api'
 import { IncidentCenter } from './IncidentCenter'
 import { ActionMessageDialog, type ActionMessage } from './ActionMessageDialog'
+import { SupportPortalPage, readSupportPortalLink } from './SupportPortal'
 
 type Notify = (message: string, tone?: Tone, solution?: string) => void
 
@@ -2988,17 +2989,30 @@ function DocumentItem({ name, meta, available = false, onOpen }: { name: string;
 function SupportTicketsDialog({ role, notify, open, onClose }: { role: Role; notify: Notify; open: boolean; onClose: () => void }) {
   const [tickets, setTickets] = useState<ApiSupportTicket[] | null>(null)
   const [selectedId, setSelectedId] = useState<string | null>(null)
+  const [category, setCategory] = useState('OTHER')
+  const [reason, setReason] = useState('I HAVE A QUESTION OR ANOTHER PROBLEM')
   const [subject, setSubject] = useState('')
   const [message, setMessage] = useState('')
   const [reply, setReply] = useState('')
+  const [files, setFiles] = useState<File[]>([])
+  const [replyFiles, setReplyFiles] = useState<File[]>([])
   const [busy, setBusy] = useState(false)
   const selected = tickets?.find((ticket) => ticket.id === selectedId) ?? null
   const isAdmin = role === 'Admin'
   const canRespond = isAdmin || isDemoBuild
+  const reasonOptions: Record<string, string[]> = {
+    ACCESS: ['I cannot access a workspace', 'A role or permission looks wrong'],
+    DATA: ['A record or number looks incorrect', 'I need a report or export'],
+    WORKFLOW: ['A workflow is not behaving as expected', 'I need help completing a task'],
+    SUGGESTION: ['I have a product improvement idea', 'I want to share feedback'],
+    OTHER: ['I have a question or another problem'],
+  }
 
   function close() {
     setSelectedId(null)
     setReply('')
+    setFiles([])
+    setReplyFiles([])
     onClose()
   }
 
@@ -3018,9 +3032,12 @@ function SupportTicketsDialog({ role, notify, open, onClose }: { role: Role; not
     event.preventDefault()
     setBusy(true)
     try {
-      const created = await createSupportTicket(subject, message)
+      const created = await createSupportTicket(subject, message, { category, reason, files })
       setSubject('')
       setMessage('')
+      setCategory('OTHER')
+      setReason('I HAVE A QUESTION OR ANOTHER PROBLEM')
+      setFiles([])
       setSelectedId(created.id)
       await refresh()
       notify(`Ticket ${created.ticket_number} was submitted.`, 'success')
@@ -3034,8 +3051,9 @@ function SupportTicketsDialog({ role, notify, open, onClose }: { role: Role; not
     if (!selected) return
     setBusy(true)
     try {
-      await addSupportTicketMessage(selected.id, reply, { is_internal: false, expected_version: selected.version })
+      await addSupportTicketMessage(selected.id, reply, { is_internal: false, expected_version: selected.version, files: replyFiles })
       setReply('')
+      setReplyFiles([])
       await refresh()
       notify(isDemoBuild ? 'A simulated support reply was added.' : 'Your support reply was added.', 'success')
     } catch (error) {
@@ -3072,7 +3090,7 @@ function SupportTicketsDialog({ role, notify, open, onClose }: { role: Role; not
               <Status>{selected.status.replaceAll('_', ' ')}</Status>
             </div>
             <div className="support-dialog__meta">
-              Submitted by {selected.requester.display_name} · {new Date(selected.created_at).toLocaleString('en-PH')}
+              {selected.category.replaceAll('_', ' ')} · {selected.reason.replaceAll('_', ' ')} · Submitted by {selected.requester.display_name} · {new Date(selected.created_at).toLocaleString('en-PH')}
             </div>
             <div className="callout callout--info support-dialog__notice">
               <CircleHelp size={18} aria-hidden="true" />
@@ -3093,7 +3111,8 @@ function SupportTicketsDialog({ role, notify, open, onClose }: { role: Role; not
               )) : <EmptyState icon={Clock3} title="Awaiting response" detail="Admin support has not replied yet." />}
             </div>
             {canRespond ? <form className="support-form" onSubmit={submitReply}>
-              <label>Reply<textarea value={reply} onChange={(event) => setReply(event.target.value)} minLength={2} maxLength={10000} rows={4} required /></label>
+              <label>Reply (Markdown supported)<textarea value={reply} onChange={(event) => setReply(event.target.value)} minLength={2} maxLength={10000} rows={4} required /></label>
+              <label className="support-file-input">Attach screenshots or files<input type="file" multiple accept=".pdf,.jpg,.jpeg,.png,.webp,.txt,.md,.csv" onChange={(event) => setReplyFiles(Array.from(event.target.files ?? []))} /></label>
               <div className="support-dialog__actions"><Button type="submit" disabled={busy}>Add reply</Button></div>
             </form> : <div className="callout callout--info support-dialog__notice"><Clock3 size={18} aria-hidden="true" /><span>Only Admin can reply in production. To add more context, start a new ticket.</span></div>}
             {isAdmin ? <div className="support-dialog__actions"><Button tone="secondary" disabled={busy} onClick={() => void changeStatus('IN_PROGRESS')}>Start</Button><Button tone="secondary" disabled={busy} onClick={() => void changeStatus('WAITING_FOR_REQUESTER')}>Wait for requester</Button><Button disabled={busy} onClick={() => void changeStatus('RESOLVED')}>Resolve</Button><Button tone="ghost" disabled={busy} onClick={() => void changeStatus('CLOSED')}>Close</Button></div> : null}
@@ -3110,8 +3129,10 @@ function SupportTicketsDialog({ role, notify, open, onClose }: { role: Role; not
             </div>
           </div>
           <form className="support-form" onSubmit={submitTicket}>
+            <div className="support-form__grid"><label>Category<select value={category} onChange={(event) => { const next = event.target.value; setCategory(next); setReason((reasonOptions[next] ?? reasonOptions.OTHER)[0].toUpperCase()) }}><option value="WORKFLOW">Workflow help</option><option value="ACCESS">Access and permissions</option><option value="DATA">Data or reports</option><option value="SUGGESTION">Suggestion or feedback</option><option value="OTHER">Other question</option></select></label><label>What best describes it?<select value={reason} onChange={(event) => setReason(event.target.value)}>{(reasonOptions[category] ?? reasonOptions.OTHER).map((item) => <option key={item} value={item.toUpperCase()}>{item}</option>)}</select></label></div>
             <label>Subject<input value={subject} onChange={(event) => setSubject(event.target.value)} minLength={2} maxLength={200} placeholder="What do you need help with?" required /></label>
-            <label>Message<textarea value={message} onChange={(event) => setMessage(event.target.value)} minLength={2} maxLength={10000} rows={4} placeholder="Tell Admin support what happened or what you suggest." required /></label>
+            <label>Message (Markdown supported)<textarea value={message} onChange={(event) => setMessage(event.target.value)} minLength={2} maxLength={10000} rows={4} placeholder="Tell Admin support what happened or what you suggest." required /></label>
+            <label className="support-file-input">Attach screenshots or files<input type="file" multiple accept=".pdf,.jpg,.jpeg,.png,.webp,.txt,.md,.csv" onChange={(event) => setFiles(Array.from(event.target.files ?? []))} /></label>
             <div className="support-dialog__actions"><Button type="submit" icon={ArrowRight} disabled={busy}>Send support message</Button></div>
           </form>
           <div className="support-dialog__tickets">
@@ -3132,7 +3153,7 @@ function SupportTicketsDialog({ role, notify, open, onClose }: { role: Role; not
   )
 }
 
-function App() {
+function WorkspaceApp() {
   const [page, setPage] = useState<PageId>(pageFromHash)
   const [role, setRole] = useState<Role>('Admin')
   const [authUser, setAuthUser] = useState<ApiUser | null | undefined>(undefined)
@@ -3362,6 +3383,11 @@ function App() {
 
     </div>
   )
+}
+
+function App() {
+  const [portalLink] = useState(() => readSupportPortalLink())
+  return portalLink ? <SupportPortalPage link={portalLink} /> : <WorkspaceApp />
 }
 
 export default App
