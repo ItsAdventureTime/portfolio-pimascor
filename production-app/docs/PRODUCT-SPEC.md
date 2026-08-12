@@ -240,7 +240,9 @@ The demo contains realistic but fictional data. Users may create and modify make
 Production uses durable support tickets with unique ticket numbers, Admin
 assignment/replies, requester-scoped visibility, audit history, and email
 notifications to Alyssa and JK. Demo exposes the same path with synthetic
-records and simulated replies only. See `SUPPORT-TICKETS.md`.
+records and simulated replies only. Both tiers expose Support through a compact
+responsive topbar dialog, not a full-page navigation destination. See
+`SUPPORT-TICKETS.md`.
 
 ## Production blockers
 

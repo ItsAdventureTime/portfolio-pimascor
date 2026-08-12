@@ -15,7 +15,6 @@ export type PageId =
   | 'loan-payments'
   | 'accounting'
   | 'clients-documents'
-  | 'support'
   | 'admin'
   | 'login'
 

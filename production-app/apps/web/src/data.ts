@@ -15,7 +15,6 @@ export const pageMeta: Record<PageId, { title: string; description: string }> = 
   'loan-payments': { title: 'Loan Payments', description: 'Request, approve, and pay company loan obligations.' },
   accounting: { title: 'Accounting Export', description: 'Export attributable operational events for accountant-reviewed mapping.' },
   'clients-documents': { title: 'Clients & Documents', description: 'Find client records and protected supporting documents.' },
-  support: { title: 'Support', description: 'Ask questions, share suggestions, and track help requests with a ticket number.' },
   admin: { title: 'Administration', description: 'Manage people, permissions, funding sources, and system controls.' },
   login: { title: 'Sign in', description: 'Secure access to PIMASCOR Operational Control.' },
 }

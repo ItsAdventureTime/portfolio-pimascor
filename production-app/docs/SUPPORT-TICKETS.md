@@ -5,9 +5,21 @@ demo. It is a user-facing support workflow, not the application incident
 reporting path. Incident reporting remains for detected application failures;
 support tickets cover questions, suggestions, and ordinary help requests.
 
+## Shared UI behavior
+
+- Support is opened from the persistent **Support** action in the workspace
+  top bar. It is not a full-page destination or a primary navigation item.
+- Desktop uses a compact centered dialog. Mobile uses the same responsive
+  dialog at near-full width with touch-sized controls and a scrollable ticket
+  list.
+- Ticket details and the conversation stay inside the same dialog. Users can
+  return to their ticket list without opening a second full-height panel.
+- The dialog has clear labels, keeps background interaction inactive, traps
+  keyboard focus, closes with `Escape`, and returns focus to the Support action.
+
 ## Production behavior
 
-- Any authenticated user can submit a support message from the application.
+- Any authenticated user can submit a support message from the Support dialog.
 - The API creates a durable ticket with a unique human-readable ticket number,
   subject, message, requester, role, deployment tier, timestamps, status, and
   audit history.
@@ -22,8 +34,8 @@ support tickets cover questions, suggestions, and ordinary help requests.
 
 ## Demo behavior
 
-- Demo exposes the same form, ticket number, status, and reply presentation
-  using synthetic records.
+- Demo exposes the same Support dialog, form, ticket number, status, and reply
+  presentation using synthetic records.
 - Demo replies are simulated and clearly labeled; a submitted demo ticket
   receives a synthetic response and demo users may add follow-up messages.
   Demo never sends production email or writes to production storage.

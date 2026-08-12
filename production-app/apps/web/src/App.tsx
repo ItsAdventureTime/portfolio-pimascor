@@ -31,7 +31,6 @@ import {
   Menu,
   PanelLeftClose,
   PanelLeftOpen,
-  Paperclip,
   Pencil,
   Plus,
   ReceiptText,
@@ -157,7 +156,6 @@ const navigation: { label: string; items: NavItem[] }[] = [
     items: [
       { id: 'accounting', label: 'Accounting Export', icon: BookOpen, roles: ['Admin', 'GM', 'DCS', 'Mich'] },
       { id: 'clients-documents', label: 'Clients & Documents', icon: FolderOpen, roles: ['Admin', 'GM', 'DCS', 'Mich'] },
-      { id: 'support', label: 'Support', icon: CircleHelp, roles: ['Admin', 'Requester', 'GM', 'DCS', 'Mich'] },
       { id: 'admin', label: 'Administration', icon: Settings, roles: ['Admin'] },
     ],
   },
@@ -479,14 +477,14 @@ function Drawer({ title, eyebrow, open, onClose, children, className = '' }: { t
   )
 }
 
-function Modal({ title, open, onClose, children }: { title: string; open: boolean; onClose: () => void; children: ReactNode }) {
+function Modal({ title, open, onClose, children, className = '' }: { title: string; open: boolean; onClose: () => void; children: ReactNode; className?: string }) {
   const dialogRef = useRef<HTMLDivElement>(null)
   useDialogKeyboard(open, onClose, dialogRef)
 
   if (!open) return null
   return (
     <div className="overlay overlay--center" role="presentation" onMouseDown={(event) => event.target === event.currentTarget && onClose()}>
-      <div ref={dialogRef} className="modal" role="dialog" aria-modal="true" aria-label={title} tabIndex={-1}>
+      <div ref={dialogRef} className={`modal ${className}`} role="dialog" aria-modal="true" aria-label={title} tabIndex={-1}>
         <div className="drawer__header">
           <h2>{title}</h2>
           <button className="icon-button" onClick={onClose} aria-label="Close dialog"><X size={20} /></button>
@@ -2987,7 +2985,7 @@ function DocumentItem({ name, meta, available = false, onOpen }: { name: string;
   return available && onOpen ? <button className="document-item" type="button" onClick={onOpen} title="View confidential document; downloading is disabled">{content}</button> : <div className="document-item" title="Metadata record only; no stored object is available">{content}</div>
 }
 
-function SupportTicketsPage({ role, notify }: { role: Role; notify: Notify }) {
+function SupportTicketsDialog({ role, notify, open, onClose }: { role: Role; notify: Notify; open: boolean; onClose: () => void }) {
   const [tickets, setTickets] = useState<ApiSupportTicket[] | null>(null)
   const [selectedId, setSelectedId] = useState<string | null>(null)
   const [subject, setSubject] = useState('')
@@ -2998,6 +2996,12 @@ function SupportTicketsPage({ role, notify }: { role: Role; notify: Notify }) {
   const isAdmin = role === 'Admin'
   const canRespond = isAdmin || isDemoBuild
 
+  function close() {
+    setSelectedId(null)
+    setReply('')
+    onClose()
+  }
+
   const refresh = useCallback(async () => {
     try {
       setTickets(await getSupportTickets())
@@ -3006,7 +3010,9 @@ function SupportTicketsPage({ role, notify }: { role: Role; notify: Notify }) {
     }
   }, [notify])
 
-  useEffect(() => { void refresh() }, [refresh])
+  useEffect(() => {
+    if (open) void refresh()
+  }, [open, refresh])
 
   async function submitTicket(event: FormEvent) {
     event.preventDefault()
@@ -3049,26 +3055,81 @@ function SupportTicketsPage({ role, notify }: { role: Role; notify: Notify }) {
     } finally { setBusy(false) }
   }
 
-  return <div className="record-stack">
-    <Card><SectionHeader eyebrow="Questions, suggestions, and problems" title="Contact Admin support" description={isDemoBuild ? 'This demo uses synthetic tickets and simulated replies. It never sends production email.' : 'Submit a question or problem and keep the assigned ticket number for follow-up.'} />
-      <form className="form-stack" onSubmit={submitTicket}>
-        <label>Subject<input value={subject} onChange={(event) => setSubject(event.target.value)} minLength={2} maxLength={200} required /></label>
-        <label>Message<textarea value={message} onChange={(event) => setMessage(event.target.value)} minLength={2} maxLength={10000} rows={5} required /></label>
-        <Button type="submit" icon={Paperclip} disabled={busy}>Submit support ticket</Button>
-      </form>
-    </Card>
-    <Card><SectionHeader title="Your tickets" description="Messages remain attached to their ticket history." action={<Button tone="ghost" icon={RefreshCw} onClick={() => void refresh()}>Refresh</Button>} />
-      {tickets === null ? <EmptyState icon={RefreshCw} title="Loading tickets" detail="Opening the support register." /> : tickets.length === 0 ? <EmptyState icon={CircleHelp} title="No tickets yet" detail="Submit a question, suggestion, or problem above." /> : <div className="table-wrap"><table><thead><tr><th>Ticket</th><th>Subject</th><th>Status</th><th>Updated</th></tr></thead><tbody>{tickets.map((ticket) => <tr key={ticket.id} className={selectedId === ticket.id ? 'table-row--selected' : ''} onClick={() => setSelectedId(ticket.id)}><td data-label="Ticket"><button className="link-button" type="button" onClick={() => setSelectedId(ticket.id)}>{ticket.ticket_number}</button></td><td data-label="Subject">{ticket.subject}</td><td data-label="Status"><Status>{ticket.status.replaceAll('_', ' ')}</Status></td><td data-label="Updated">{new Date(ticket.updated_at).toLocaleString('en-PH')}</td></tr>)}</tbody></table></div>}
-    </Card>
-    {selected ? <Drawer className="drawer--document" open onClose={() => setSelectedId(null)} eyebrow={selected.ticket_number} title={selected.subject}>
-      <div className="record-stack"><div className="callout callout--info"><CircleHelp size={18} /><span>{isDemoBuild ? 'Demo simulation: replies are synthetic and clearly labeled.' : 'Admin support notifications are sent to the configured Bridge PH recipients.'}</span></div><p>{selected.message}</p><small>Submitted by {selected.requester.display_name} · {new Date(selected.created_at).toLocaleString('en-PH')}</small>
-        <SectionHeader title="Conversation" description="Replies are append-only." />
-        {selected.replies.length ? selected.replies.map((item) => <div className="callout" key={item.id}><strong>{item.author.display_name}{item.is_simulated ? ' · Simulated reply' : ''}</strong><p>{item.body}</p><small>{new Date(item.created_at).toLocaleString('en-PH')}</small></div>) : <EmptyState icon={Clock3} title="Awaiting response" detail="Admin support has not replied yet." />}
-        {canRespond ? <form className="form-stack" onSubmit={submitReply}><label>Reply<textarea value={reply} onChange={(event) => setReply(event.target.value)} minLength={2} maxLength={10000} rows={4} required /></label><Button type="submit" disabled={busy}>Add reply</Button></form> : <div className="callout callout--info"><Clock3 size={18} /><span>Only Admin can reply in production. You can submit a new ticket above.</span></div>}
-        {isAdmin ? <div className="drawer-actions"><Button tone="secondary" disabled={busy} onClick={() => void changeStatus('IN_PROGRESS')}>Start</Button><Button tone="secondary" disabled={busy} onClick={() => void changeStatus('WAITING_FOR_REQUESTER')}>Wait for requester</Button><Button disabled={busy} onClick={() => void changeStatus('RESOLVED')}>Resolve</Button><Button tone="ghost" disabled={busy} onClick={() => void changeStatus('CLOSED')}>Close</Button></div> : null}
-      </div>
-    </Drawer> : null}
-  </div>
+  return (
+    <Modal open={open} onClose={close} title="Support" className="support-modal">
+      {selected ? (
+        <div className="support-dialog">
+          <button className="support-back" type="button" onClick={() => setSelectedId(null)}>
+            <ChevronRight size={16} aria-hidden="true" />
+            Back to your tickets
+          </button>
+          <div className="support-detail">
+            <div className="support-detail__heading">
+              <div>
+                <p className="eyebrow">{selected.ticket_number}</p>
+                <h3>{selected.subject}</h3>
+              </div>
+              <Status>{selected.status.replaceAll('_', ' ')}</Status>
+            </div>
+            <div className="support-dialog__meta">
+              Submitted by {selected.requester.display_name} · {new Date(selected.created_at).toLocaleString('en-PH')}
+            </div>
+            <div className="callout callout--info support-dialog__notice">
+              <CircleHelp size={18} aria-hidden="true" />
+              <span>{isDemoBuild ? 'Demo simulation: replies are synthetic and clearly labeled.' : 'Admin support notifications are sent to Alyssa and JK.'}</span>
+            </div>
+            <div className="support-message">
+              <span className="support-message__label">Your message</span>
+              <p>{selected.message}</p>
+            </div>
+            <SectionHeader title="Conversation" description="Replies stay attached to this ticket." />
+            <div className="support-conversation">
+              {selected.replies.length ? selected.replies.map((item) => (
+                <div className="support-conversation__item" key={item.id}>
+                  <div><strong>{item.author.display_name}</strong>{item.is_simulated ? <span>Simulated reply</span> : null}</div>
+                  <p>{item.body}</p>
+                  <small>{new Date(item.created_at).toLocaleString('en-PH')}</small>
+                </div>
+              )) : <EmptyState icon={Clock3} title="Awaiting response" detail="Admin support has not replied yet." />}
+            </div>
+            {canRespond ? <form className="support-form" onSubmit={submitReply}>
+              <label>Reply<textarea value={reply} onChange={(event) => setReply(event.target.value)} minLength={2} maxLength={10000} rows={4} required /></label>
+              <div className="support-dialog__actions"><Button type="submit" disabled={busy}>Add reply</Button></div>
+            </form> : <div className="callout callout--info support-dialog__notice"><Clock3 size={18} aria-hidden="true" /><span>Only Admin can reply in production. To add more context, start a new ticket.</span></div>}
+            {isAdmin ? <div className="support-dialog__actions"><Button tone="secondary" disabled={busy} onClick={() => void changeStatus('IN_PROGRESS')}>Start</Button><Button tone="secondary" disabled={busy} onClick={() => void changeStatus('WAITING_FOR_REQUESTER')}>Wait for requester</Button><Button disabled={busy} onClick={() => void changeStatus('RESOLVED')}>Resolve</Button><Button tone="ghost" disabled={busy} onClick={() => void changeStatus('CLOSED')}>Close</Button></div> : null}
+          </div>
+        </div>
+      ) : (
+        <div className="support-dialog">
+          <div className="support-dialog__intro">
+            <CircleHelp size={21} aria-hidden="true" />
+            <div>
+              <p className="eyebrow">Questions, suggestions, and problems</p>
+              <h3>Contact Admin support</h3>
+              <p>{isDemoBuild ? 'Demo only: tickets and replies are simulated. No production email is sent.' : 'Send a question, suggestion, or problem. We will give you a ticket number for follow-up.'}</p>
+            </div>
+          </div>
+          <form className="support-form" onSubmit={submitTicket}>
+            <label>Subject<input value={subject} onChange={(event) => setSubject(event.target.value)} minLength={2} maxLength={200} placeholder="What do you need help with?" required /></label>
+            <label>Message<textarea value={message} onChange={(event) => setMessage(event.target.value)} minLength={2} maxLength={10000} rows={4} placeholder="Tell Admin support what happened or what you suggest." required /></label>
+            <div className="support-dialog__actions"><Button type="submit" icon={ArrowRight} disabled={busy}>Send support message</Button></div>
+          </form>
+          <div className="support-dialog__tickets">
+            <div className="support-dialog__section-heading">
+              <div><p className="eyebrow">Your tickets</p><h3>Recent support requests</h3><p>Messages stay attached to their ticket history.</p></div>
+              <Button tone="ghost" icon={RefreshCw} onClick={() => void refresh()}>Refresh</Button>
+            </div>
+            {tickets === null ? <EmptyState icon={RefreshCw} title="Loading tickets" detail="Opening the support register." /> : tickets.length === 0 ? <EmptyState icon={CircleHelp} title="No tickets yet" detail="Send a question, suggestion, or problem above." /> : <div className="support-ticket-list">
+              {tickets.map((ticket) => <button className="support-ticket-card" type="button" key={ticket.id} onClick={() => setSelectedId(ticket.id)} aria-label={`Open ${ticket.ticket_number}: ${ticket.subject}`}>
+                <span><span className="support-ticket-card__meta"><strong>{ticket.ticket_number}</strong><Status>{ticket.status.replaceAll('_', ' ')}</Status></span><span className="support-ticket-card__subject">{ticket.subject}</span><small>Updated {new Date(ticket.updated_at).toLocaleString('en-PH')}</small></span>
+                <ChevronRight className="support-ticket-card__arrow" size={18} aria-hidden="true" />
+              </button>)}
+            </div>}
+          </div>
+        </div>
+      )}
+    </Modal>
+  )
 }
 
 function App() {
@@ -3078,6 +3139,7 @@ function App() {
   const [sidebarOpen, setSidebarOpen] = useState(true)
   const [mobileNav, setMobileNav] = useState(false)
   const [searchOpen, setSearchOpen] = useState(false)
+  const [supportOpen, setSupportOpen] = useState(false)
   const [notificationsOpen, setNotificationsOpen] = useState(false)
   const [profileOpen, setProfileOpen] = useState(false)
   const profileButtonRef = useRef<HTMLButtonElement>(null)
@@ -3170,6 +3232,7 @@ function App() {
     setPage(nextPage)
     setMobileNav(false)
     setSearchOpen(false)
+    setSupportOpen(false)
     setProfileOpen(false)
   }
 
@@ -3232,7 +3295,6 @@ function App() {
     case 'loan-payments': content = <ExpensePage key={role} type="Loan Payment" role={role} notify={notify} />; break
     case 'accounting': content = <AccountingPage key={role} role={role} />; break
     case 'clients-documents': content = <ClientsDocumentsPage key={role} role={role} />; break
-    case 'support': content = <SupportTicketsPage key={role} role={role} notify={notify} />; break
     case 'admin': content = <AdminPage key={role} role={role} notify={notify} onPreviewRole={previewRole} />; break
     default: content = <DashboardPage key={role} role={role} displayName={authUser.display_name} navigate={navigate} />
   }
@@ -3267,6 +3329,7 @@ function App() {
           <div className="topbar__title"><button className="icon-button mobile-menu" onClick={() => setMobileNav(true)} aria-label="Open navigation"><Menu size={21} /></button><div><p>{pageMeta[resolvedPage].title}</p><span>{pageMeta[resolvedPage].description}</span></div></div>
           <div className="topbar__actions">
             <button className="global-search" onClick={() => setSearchOpen(true)}><Search size={17} /><span>Search anything</span><kbd>⌘ K</kbd></button>
+            <button className="support-trigger" type="button" onClick={() => setSupportOpen(true)} aria-haspopup="dialog" aria-expanded={supportOpen} title="Open support"><CircleHelp size={18} aria-hidden="true" /><span>Support</span></button>
             <button className="icon-button notification-button" onClick={() => setNotificationsOpen((current) => !current)} aria-label="Notifications"><Bell size={20} />{notificationsRead ? null : <span>3</span>}</button>
             <div className="profile-menu-wrap" ref={profileWrapRef}>
               <button ref={profileButtonRef} className="profile-button" type="button" aria-haspopup={signedInRole === 'Admin' ? 'menu' : undefined} aria-expanded={signedInRole === 'Admin' ? profileOpen : undefined} aria-controls={signedInRole === 'Admin' ? profileMenuId : undefined} onClick={signedInRole === 'Admin' ? () => setProfileOpen((current) => !current) : undefined}><span>{authUser.display_name.split(' ').map((part) => part[0]).slice(0, 2).join('').toUpperCase()}</span><div><strong>{authUser.display_name}</strong><small>{isRolePreview ? `Admin • operating as ${role}` : role}</small></div>{signedInRole === 'Admin' ? <ChevronDown size={15} /> : null}</button>
@@ -3274,7 +3337,7 @@ function App() {
                 {signedInRole === 'Admin' ? <button type="button" role="menuitem" onClick={() => { setProfileOpen(false); isRolePreview ? returnToAdmin() : navigate('admin') }}>{isRolePreview ? 'Return to Admin controls' : 'Open Administration'}</button> : null}
               </div> : null}
             </div>
-            <button className="icon-button" aria-label="Sign out" title="Sign out" onClick={() => signOut().catch(() => undefined).finally(() => { setAuthUser(null); window.location.hash = 'login' })}><LogOut size={19} /></button>
+            <button className="icon-button" aria-label="Sign out" title="Sign out" onClick={() => signOut().catch(() => undefined).finally(() => { setSupportOpen(false); setAuthUser(null); window.location.hash = 'login' })}><LogOut size={19} /></button>
           </div>
           {notificationsOpen ? <div className="notification-panel"><SectionHeader eyebrow={notificationsRead ? 'No unread items' : '3 unread'} title="Notifications" action={notificationsRead ? undefined : <button className="text-button" onClick={() => setNotificationsRead(true)}>Mark all read</button>} />{attentionByRole[role].slice(0, 3).map((item) => <button key={item.id} onClick={() => { navigate(item.page); setNotificationsOpen(false) }}><span className={`notification-dot notification-dot--${item.tone}`} /><span><strong>{item.title}</strong><small>{item.detail}</small></span><span>{item.age}</span></button>)}</div> : null}
         </header>
@@ -3294,6 +3357,8 @@ function App() {
           ['PAY-0726-044', 'Client payment • PHP 50,000', 'collections'],
         ].map(([title, detail, target]) => <button key={title} onClick={() => navigate(target as PageId)}><span><Search size={16} /></span><div><strong>{title}</strong><small>{detail}</small></div><ChevronRight size={17} /></button>)}</div>
       </Modal>
+
+      <SupportTicketsDialog role={role} notify={notify} open={supportOpen} onClose={() => setSupportOpen(false)} />
 
     </div>
   )

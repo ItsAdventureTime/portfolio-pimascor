@@ -69,6 +69,8 @@ results use `ActionMessageDialog.tsx`: a centered, focus-managed `alertdialog`
 with a specific corrective action or deliberate Close and continue action. The
 application does not use disappearing status toasts.
 
-Support questions, suggestions, and ordinary help requests use the ticket form
-defined in `../docs/SUPPORT-TICKETS.md`. Production creates durable tickets and
-emails Alyssa and JK; demo uses simulated replies without email.
+Support questions, suggestions, and ordinary help requests use the compact,
+responsive topbar dialog defined in `../docs/SUPPORT-TICKETS.md`. It keeps
+ticket details in the same dialog instead of taking over a full page. Production
+creates durable tickets and emails Alyssa and JK; demo uses simulated replies
+without email.

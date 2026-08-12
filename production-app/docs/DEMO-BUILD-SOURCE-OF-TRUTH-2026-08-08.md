@@ -53,9 +53,9 @@ source form. Production carries these rules through
 - Complete local-record archive generation remains disabled in the demo. The
   production export worker and its B2/Resend secrets are not copied into demo
   Quadlets.
-- Support tickets use the shared support form and ticket-number workflow, but
-  replies are simulated, messages are synthetic, and no production email is
-  sent. See `SUPPORT-TICKETS.md`.
+- Support tickets use the shared compact topbar dialog and ticket-number
+  workflow, but replies are simulated, messages are synthetic, and no
+  production email is sent. See `SUPPORT-TICKETS.md`.
 
 ## Reconciliation rule
 
