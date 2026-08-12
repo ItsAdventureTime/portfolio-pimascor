@@ -278,6 +278,7 @@ fi
 
 release_stamp="$(date -u +%Y%m%dT%H%M%SZ)"
 rollback_image="localhost/bridge-ph-pimascor-demo-api:rollback-${release_stamp}"
+release_image="localhost/bridge-ph-pimascor-demo-api:release-${release_commit}"
 rollback_image_created=false
 if podman image exists localhost/bridge-ph-pimascor-demo-api:demo; then
   podman tag localhost/bridge-ph-pimascor-demo-api:demo "${rollback_image}"
@@ -285,7 +286,7 @@ if podman image exists localhost/bridge-ph-pimascor-demo-api:demo; then
 fi
 
 printf 'Building the revised API image...\n'
-podman build --pull=always --tag localhost/bridge-ph-pimascor-demo-api:demo "${SOURCE_ROOT}/apps/api"
+podman build --pull=always --tag "${release_image}" "${SOURCE_ROOT}/apps/api"
 
 install -d -m 700 "${WEB_ROOT}"
 web_stage="$(mktemp -d "${WEB_ROOT}/web-dist.next.XXXXXX")"
@@ -333,6 +334,20 @@ find "${WEB_ROOT}/web-dist" -mindepth 1 -maxdepth 1 -exec rm -rf -- {} +
 cp -a "${web_stage}/." "${WEB_ROOT}/web-dist/"
 rm -rf -- "${web_stage}"
 
+rollback_release() {
+  printf '%s\n' 'Demo release activation failed; restoring the previous API image and web assets.' >&2
+  if [[ "${rollback_image_created}" == true ]]; then
+    podman tag "${rollback_image}" localhost/bridge-ph-pimascor-demo-api:demo
+  fi
+  if [[ -d "${previous_web}" ]]; then
+    find "${WEB_ROOT}/web-dist" -mindepth 1 -maxdepth 1 -exec rm -rf -- {} +
+    cp -a "${previous_web}/." "${WEB_ROOT}/web-dist/"
+  fi
+  systemctl --user restart bridge-ph-pimascor-demo-api.service >/dev/null 2>&1 || true
+  printf 'Rollback diagnostics: API=%s web=%s\n' "${rollback_image_created}" "${previous_web}" >&2
+}
+podman tag "${release_image}" localhost/bridge-ph-pimascor-demo-api:demo
+
 if [[ "${RESET_BASELINE}" == true ]]; then
   printf 'Applying migrations and reloading the approved synthetic demo baseline...\n'
   api_action=(start bridge-ph-pimascor-demo-reset.service)
@@ -355,6 +370,7 @@ if ! systemctl --user "${api_action[@]}"; then
     -u bridge-ph-pimascor-demo-api.service \
     -u bridge-ph-pimascor-demo-reset.service \
     -n 120 --no-pager -o cat >&2 || true
+  rollback_release
   exit 1
 fi
 
@@ -364,17 +380,26 @@ if [[ "${RESET_BASELINE}" == true ]]; then
   systemctl --user start bridge-ph-pimascor-demo-api.service
 fi
 
-podman exec caddy caddy validate --config /etc/caddy/Caddyfile --adapter caddyfile
-systemctl --user restart caddy.service
+if ! podman exec caddy caddy validate --config /etc/caddy/Caddyfile --adapter caddyfile ||
+   ! systemctl --user restart caddy.service; then
+  printf '%s\n' 'Caddy activation failed; restoring the previous release.' >&2
+  rollback_release
+  exit 1
+fi
 
 host_index_sha="$(sha256sum "${WEB_ROOT}/web-dist/index.html" | awk '{print $1}')"
 caddy_index_sha="$(podman exec caddy cat /srv/bridge-ph-pimascor-demo/index.html | sha256sum | awk '{print $1}')"
-[[ "${host_index_sha}" == "${caddy_index_sha}" ]] || {
+if [[ "${host_index_sha}" != "${caddy_index_sha}" ]]; then
   printf '%s\n' 'Caddy does not serve the current ~/bridge-ph/pimascor-demo/web-dist release; refusing to report a successful update.' >&2
+  rollback_release
   exit 1
-}
+fi
 
-curl --fail --show-error "${API_HEALTH_URL}"
+if ! curl --fail --show-error "${API_HEALTH_URL}"; then
+  printf '%s\n' 'Demo API health failed after cutover; restoring the previous release.' >&2
+  rollback_release
+  exit 1
+fi
 curl --fail --show-error --output /dev/null "${PUBLIC_URL}"
 
 public_index="$(curl --fail --show-error --header 'Cache-Control: no-cache' "${PUBLIC_URL}?release=${release_commit}")"

@@ -1,7 +1,10 @@
+from types import SimpleNamespace
+
 from sqlalchemy import select
 
 from pimascor_api.config import get_settings
 from pimascor_api.models import AuditEvent, SupportTicket, SupportTicketReply, User
+from pimascor_api.services import support_tickets
 
 from .conftest import TestingSession, sign_in
 
@@ -12,6 +15,17 @@ def create_ticket(client, csrf: str, subject: str = "Need help", message: str = 
         headers={"X-CSRF-Token": csrf},
         json={"subject": subject, "message": message},
     )
+
+
+def test_closing_ticket_purges_open_attachment_bytes_from_b2(monkeypatch):
+    deleted_keys = []
+    attachment = SimpleNamespace(deleted_at=None, storage_key="pimascor/production/support-tickets/a.pdf")
+    ticket = SimpleNamespace(attachments=[attachment])
+    monkeypatch.setattr(support_tickets, "delete_document", deleted_keys.append)
+
+    assert support_tickets.purge_ticket_attachments(None, ticket) is True
+    assert deleted_keys == [attachment.storage_key]
+    assert attachment.deleted_at is not None
 
 
 def test_authenticated_users_create_and_only_see_their_own_tickets(client):

@@ -26,11 +26,10 @@ npm run preview
 ## Export the hosted static site with Podman
 
 The hosted deployment does not run a frontend web-server container. The
-Containerfile uses the official `node:lts-alpine` channel only as a temporary
-build stage, then exports the compiled files for the existing Caddy container
-to serve directly. The moving LTS alias is appropriate here because Node never
-runs in the deployed application and every rebuilt artifact is validated before
-it replaces the current site:
+Containerfile uses a verified immutable Node build image digest for its
+temporary build stage, then exports the compiled files for the existing Caddy
+container to serve directly. Node never runs in the deployed application, and
+every rebuilt artifact is validated before it replaces the current site:
 
 ```sh
 podman build --pull=always --output type=local,dest="$HOME/bridge-ph/pimascor-demo/web-dist" --build-arg VITE_BASE_PATH=/pimascor/demo/ --build-arg VITE_API_URL=/pimascor/demo/api/v1 --build-arg VITE_CSRF_COOKIE_NAME=bridge_ph_pimascor_demo_csrf --build-arg VITE_DEPLOYMENT_TIER=demo .

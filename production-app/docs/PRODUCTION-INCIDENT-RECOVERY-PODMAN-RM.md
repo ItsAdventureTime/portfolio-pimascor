@@ -102,7 +102,8 @@ Use the encrypted Backblaze B2 Restic repository as the recovery source:
 ```bash
 cd /var/home/jk/bridge-ph/pimascor/source && ./infra/scripts/production-restore.sh --list
 cd /var/home/jk/bridge-ph/pimascor/source && ./infra/scripts/production-restore.sh --snapshot latest --dry-run
-cd /var/home/jk/bridge-ph/pimascor/source && ./infra/scripts/production-restore.sh --snapshot SNAPSHOT_ID --target /var/home/jk/bridge-ph/pimascor/restore-quarantine --execute
+install -d -m 700 /var/home/jk/bridge-ph/pimascor-restore-quarantine
+cd /var/home/jk/bridge-ph/pimascor/source && ./infra/scripts/production-restore.sh --snapshot SNAPSHOT_ID --target /var/home/jk/bridge-ph/pimascor-restore-quarantine --execute
 ```
 
 The restore helper refuses the live production root. Inspect the quarantine

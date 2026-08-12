@@ -9,6 +9,8 @@ CADDYFILE="${CADDY_CONF_ROOT}/Caddyfile"
 HANDLERS="${CADDY_CONF_ROOT}/pimascor-production.handlers.Caddyfile"
 MARKER='import /etc/caddy/pimascor-production.handlers.Caddyfile'
 CADDY_IMAGE=""
+PINNED_CADDY_IMAGE=""
+validation_root=""
 
 if [[ -z "${CADDY_CONF_ROOT}" ]]; then
   for candidate in "${HOME}/caddy/conf" "/home/jk/caddy/conf"; do
@@ -35,24 +37,38 @@ systemctl --user show --property=LoadState --value caddy.service | grep -Fxq 'lo
 }
 CADDY_IMAGE="$(awk -F= '/^Image=/{print $2; exit}' "${CADDY_QUADLET}")"
 [[ -n "${CADDY_IMAGE}" ]] || { printf '%s\n' 'Caddy image was not found in the shared Caddy Quadlet.' >&2; exit 1; }
+if [[ "${CADDY_IMAGE}" == *@sha256:* ]]; then
+  PINNED_CADDY_IMAGE="${CADDY_IMAGE}"
+elif [[ "${CADDY_IMAGE}" == "docker.io/library/caddy:alpine" ]]; then
+  PINNED_CADDY_IMAGE="docker.io/library/caddy@sha256:98eb57d882ccd5213d1688764db10c1ca2c58a1ca3a6717a3411ad798f7a423a"
+else
+  printf 'Caddy image must use the approved digest-pinned reference: %s\n' "${CADDY_IMAGE}" >&2
+  exit 1
+fi
 
 install -d -m 700 "${CADDY_CONF_ROOT}"
-install -m 600 "${SOURCE_ROOT}/infra/caddy/pimascor-production.handlers.Caddyfile" "${HANDLERS}"
+validation_root="$(mktemp -d "${CADDY_CONF_ROOT}.validate.XXXXXX")"
+cleanup_validation() { [[ -n "${validation_root}" && -d "${validation_root}" ]] && rm -rf -- "${validation_root}"; }
+trap cleanup_validation EXIT
+cp -a "${CADDY_CONF_ROOT}/." "${validation_root}/"
+install -m 600 "${SOURCE_ROOT}/infra/caddy/pimascor-production.handlers.Caddyfile" "${validation_root}/pimascor-production.handlers.Caddyfile"
+validation_caddyfile="${validation_root}/Caddyfile"
+validation_handlers="${validation_root}/pimascor-production.handlers.Caddyfile"
 
 # Keep one canonical import. A legacy relative import would load the same
 # production handlers twice after the absolute import below is installed.
-if grep -Eq '^[[:space:]]*import[[:space:]]+pimascor-production\.handlers\.Caddyfile[[:space:]]*$' "${CADDYFILE}"; then
-  caddy_tmp="$(mktemp "${CADDYFILE}.next.XXXXXX")"
+if grep -Eq '^[[:space:]]*import[[:space:]]+pimascor-production\.handlers\.Caddyfile[[:space:]]*$' "${validation_caddyfile}"; then
+  caddy_tmp="$(mktemp "${validation_caddyfile}.next.XXXXXX")"
   awk '
     /^[[:space:]]*import[[:space:]]+pimascor-production\.handlers\.Caddyfile[[:space:]]*$/ { next }
     { print }
-  ' "${CADDYFILE}" > "${caddy_tmp}"
+  ' "${validation_caddyfile}" > "${caddy_tmp}"
   chmod 600 "${caddy_tmp}"
-  mv "${caddy_tmp}" "${CADDYFILE}"
+  mv "${caddy_tmp}" "${validation_caddyfile}"
 fi
 
-if ! grep -Fq "${MARKER}" "${CADDYFILE}"; then
-  caddy_tmp="$(mktemp "${CADDYFILE}.next.XXXXXX")"
+if ! grep -Fq "${MARKER}" "${validation_caddyfile}"; then
+  caddy_tmp="$(mktemp "${validation_caddyfile}.next.XXXXXX")"
   awk -v marker="${MARKER}" '
     !inserted && $0 ~ /^delegateops\.business[[:space:]]*\{/ {
       print
@@ -62,22 +78,27 @@ if ! grep -Fq "${MARKER}" "${CADDYFILE}"; then
     }
     { print }
     END { if (!inserted) exit 3 }
-  ' "${CADDYFILE}" > "${caddy_tmp}"
+  ' "${validation_caddyfile}" > "${caddy_tmp}"
   chmod 600 "${caddy_tmp}"
-  mv "${caddy_tmp}" "${CADDYFILE}"
+  mv "${caddy_tmp}" "${validation_caddyfile}"
 fi
 
 # caddy fmt makes only presentation changes; caddy validate catches syntax and
 # provisioning errors before the shared edge service is restarted. Both run in
 # disposable containers so no tooling is installed on the Fedora CoreOS host.
 podman run --rm --network none \
-  --volume "${CADDY_CONF_ROOT}:/etc/caddy:Z" \
-  "${CADDY_IMAGE}" \
+  --volume "${validation_root}:/etc/caddy:Z" \
+  "${PINNED_CADDY_IMAGE}" \
   caddy fmt --overwrite /etc/caddy/Caddyfile
 podman run --rm --network none \
-  --volume "${CADDY_CONF_ROOT}:/etc/caddy:ro,Z" \
-  "${CADDY_IMAGE}" \
+  --volume "${validation_root}:/etc/caddy:ro,Z" \
+  "${PINNED_CADDY_IMAGE}" \
   caddy validate --config /etc/caddy/Caddyfile --adapter caddyfile
+
+# Install the fully validated pair only after the disposable complete config
+# passes. The live/shared configuration remains untouched on validation error.
+install -m 600 "${validation_caddyfile}" "${CADDYFILE}"
+install -m 600 "${validation_handlers}" "${HANDLERS}"
 
 if awk '
   /^Volume=.*:\/srv\/bridge-ph-pimascor(:|$)/ &&
@@ -137,6 +158,17 @@ if ((${#missing_mounts[@]})); then
   printf '  %s\n' "${missing_mounts[@]}" >&2
   printf '%s\n' 'Restore the owning site directory or remove its route and mount together before retrying.' >&2
   exit 1
+fi
+
+if [[ "${CADDY_IMAGE}" != *@sha256:* ]]; then
+  quadlet_tmp="$(mktemp "${CADDY_QUADLET}.next.XXXXXX")"
+  awk -v pinned="${PINNED_CADDY_IMAGE}" '
+    /^Image=/ { print "Image=" pinned; next }
+    { print }
+  ' "${CADDY_QUADLET}" > "${quadlet_tmp}"
+  chmod 600 "${quadlet_tmp}"
+  mv "${quadlet_tmp}" "${CADDY_QUADLET}"
+  printf 'Pinned the shared Caddy Quadlet to %s.\n' "${PINNED_CADDY_IMAGE}"
 fi
 
 systemctl --user daemon-reload

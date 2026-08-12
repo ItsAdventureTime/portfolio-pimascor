@@ -4,7 +4,7 @@ Description=Apply the approved retention policy to PIMASCOR production Backblaze
 After=bridge-ph-pimascor-backup.service
 
 [Container]
-Image=docker.io/restic/restic:latest
+Image=docker.io/restic/restic@sha256:08916bcda4a4435f9d9828ebb4e91bb7ada3d2c8a53699788930e0ae1bd4fa67
 Pull=missing
 ContainerName=bridge-ph-pimascor-backup-retention
 Network=bridge-ph-pimascor-egress.network

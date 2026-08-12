@@ -2,9 +2,8 @@
 Description=PIMASCOR production PostgreSQL database
 
 [Container]
-Image=docker.io/library/postgres:18-alpine
+Image=docker.io/library/postgres@sha256:b6a16ed0eb96e2c362811f7eeb951eac8b459e7b40be4149ea5444aa7c65569b
 Pull=missing
-AutoUpdate=registry
 ContainerName=bridge-ph-pimascor-db
 Network=bridge-ph-pimascor-data.network
 NetworkAlias=database

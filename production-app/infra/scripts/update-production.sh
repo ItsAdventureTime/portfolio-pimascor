@@ -129,30 +129,60 @@ if ! systemctl --user start bridge-ph-pimascor-db.service; then
 fi
 
 printf 'Building production API image for commit %s...\n' "$release_commit"
-podman build --pull=always --tag localhost/bridge-ph-pimascor-api:production "${SOURCE_ROOT}/apps/api"
+release_image="localhost/bridge-ph-pimascor-api:release-${release_commit}"
+rollback_image="localhost/bridge-ph-pimascor-api:rollback-${release_commit}"
+old_image_exists=false
+if podman image exists localhost/bridge-ph-pimascor-api:production; then
+  podman tag localhost/bridge-ph-pimascor-api:production "${rollback_image}"
+  old_image_exists=true
+fi
+podman build --pull=always --tag "${release_image}" "${SOURCE_ROOT}/apps/api"
 web_stage="$(mktemp -d "${WEB_ROOT}/web-dist.next.XXXXXX")"
-trap 'rm -rf -- "${web_stage}"' EXIT
+previous_web="${WEB_ROOT}/web-dist.previous.${release_commit}"
+cleanup_release() { [[ -d "${web_stage:-}" ]] && rm -rf -- "${web_stage}"; }
+trap cleanup_release EXIT
 podman build --pull=always --output "type=local,dest=${web_stage}" --build-arg VITE_BASE_PATH=/pimascor/ --build-arg VITE_API_URL=/pimascor/api/v1 --build-arg VITE_CSRF_COOKIE_NAME=bridge_ph_pimascor_csrf --build-arg VITE_DEPLOYMENT_TIER=production "${SOURCE_ROOT}/apps/web"
 test -f "${web_stage}/index.html" && test -f "${web_stage}/manifest.webmanifest" && test -f "${web_stage}/sw.js"
 install -d -m 700 "${WEB_ROOT}/web-dist"
+rm -rf -- "${previous_web}"
+cp -a "${WEB_ROOT}/web-dist" "${previous_web}"
 find "${WEB_ROOT}/web-dist" -mindepth 1 -maxdepth 1 -exec rm -rf -- {} +
 cp -a "${web_stage}/." "${WEB_ROOT}/web-dist/"
 rm -rf -- "${web_stage}"
-trap - EXIT
 
-systemctl --user restart bridge-ph-pimascor-account-bootstrap.service
-if ! systemctl --user restart bridge-ph-pimascor-api.service; then
+rollback_release() {
+  printf '%s\n' 'Release activation failed; restoring the previous API image and web assets.' >&2
+  if [[ "${old_image_exists}" == true ]]; then
+    podman tag "${rollback_image}" localhost/bridge-ph-pimascor-api:production
+  fi
+  if [[ -d "${previous_web}" ]]; then
+    find "${WEB_ROOT}/web-dist" -mindepth 1 -maxdepth 1 -exec rm -rf -- {} +
+    cp -a "${previous_web}/." "${WEB_ROOT}/web-dist/"
+  fi
+  systemctl --user restart bridge-ph-pimascor-api.service >/dev/null 2>&1 || true
+  systemctl --user restart bridge-ph-pimascor-export-worker.service >/dev/null 2>&1 || true
+  printf 'Rollback diagnostics: API=%s web=%s\n' "${old_image_exists}" "${previous_web}" >&2
+}
+podman tag "${release_image}" localhost/bridge-ph-pimascor-api:production
+if ! systemctl --user restart bridge-ph-pimascor-account-bootstrap.service ||
+   ! systemctl --user restart bridge-ph-pimascor-api.service ||
+   ! systemctl --user restart bridge-ph-pimascor-export-worker.service ||
+   ! systemctl --user is-active --quiet bridge-ph-pimascor-api.service ||
+   ! systemctl --user is-active --quiet bridge-ph-pimascor-export-worker.service; then
   printf '%s\n' 'Production API failed to start. Safe diagnostics follow; secret values are not printed.' >&2
   systemctl --user status --no-pager --full bridge-ph-pimascor-api.service >&2 || true
   journalctl --user --unit=bridge-ph-pimascor-api.service --no-pager --lines=160 >&2 || true
   podman logs --tail=160 bridge-ph-pimascor-api >&2 || true
+  rollback_release
   exit 1
 fi
-systemctl --user restart bridge-ph-pimascor-export-worker.service
-systemctl --user is-active --quiet bridge-ph-pimascor-api.service
-systemctl --user is-active --quiet bridge-ph-pimascor-export-worker.service
+if ! curl --fail --silent --show-error --max-time 15 "${API_HEALTH_URL}" >/dev/null; then
+  printf 'Production health check failed after cutover: %s\n' "${API_HEALTH_URL}" >&2
+  rollback_release
+  exit 1
+fi
 systemctl --user enable --now bridge-ph-pimascor-backup.timer bridge-ph-pimascor-backup-retention.timer
-printf 'Production release %s is active. Caddy remains unchanged; run the exact activation command printed below after its preflight.\n' "$release_commit"
+printf 'Production release %s is active with atomic API/web cutover. Caddy remains unchanged; run the exact activation command printed below after its preflight.\n' "$release_commit"
 printf 'Expected public URL: %s\n' "$PUBLIC_URL"
 printf 'Health check: %s\n' "$API_HEALTH_URL"
 printf 'Caddy activation command: cd %q && ./infra/scripts/install-production-caddy.sh\n' "$SOURCE_ROOT"

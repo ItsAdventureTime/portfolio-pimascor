@@ -2,7 +2,8 @@
 set -Eeuo pipefail
 
 REPOSITORY="s3:https://s3.us-west-001.backblazeb2.com/bridge-ph/pimascor/backups/restic"
-RESTORE_TARGET="${HOME}/bridge-ph/pimascor/restore-quarantine"
+RESTORE_TARGET="${HOME}/bridge-ph/pimascor-restore-quarantine"
+LIVE_ROOT=""
 
 [[ "$(uname -s)" != "Darwin" ]] || { printf '%s\n' 'Run this on the Fedora CoreOS VPS.' >&2; exit 1; }
 [[ "${EUID}" -ne 0 ]] || { printf '%s\n' 'Use the rootless jk account.' >&2; exit 1; }
@@ -42,7 +43,7 @@ restic_args=(
   -e AWS_DEFAULT_REGION=us-west-001
   -e "RESTIC_REPOSITORY=${REPOSITORY}"
   -e RESTIC_PASSWORD_FILE=/run/secrets/restic_password
-  docker.io/restic/restic:latest
+  docker.io/restic/restic@sha256:08916bcda4a4435f9d9828ebb4e91bb7ada3d2c8a53699788930e0ae1bd4fa67
 )
 
 if "${list_only}"; then
@@ -57,11 +58,22 @@ if ! "${execute}"; then
   exit 0
 fi
 
-[[ "${RESTORE_TARGET}" != "${HOME}/bridge-ph/pimascor" ]] || {
-  printf '%s\n' 'Refusing to restore directly over the live production root.' >&2
+LIVE_ROOT="$(realpath -m "${HOME}/bridge-ph/pimascor")"
+target_parent="$(realpath -m "$(dirname -- "${RESTORE_TARGET}")")"
+target_name="$(basename -- "${RESTORE_TARGET}")"
+target_canonical="${target_parent}/${target_name}"
+[[ "${target_canonical}" != "${LIVE_ROOT}" && "${target_canonical}" != "${LIVE_ROOT}/"* ]] || {
+  printf 'Refusing restore target inside live production root: %s\n' "${target_canonical}" >&2
   exit 1
 }
-install -d -m 700 "${RESTORE_TARGET}"
+[[ -d "${target_parent}" && ! -L "${RESTORE_TARGET}" && -d "${RESTORE_TARGET}" ]] || {
+  printf '%s\n' 'Restore target must be a pre-created, non-symlink directory.' >&2
+  exit 1
+}
+[[ -z "$(find "${RESTORE_TARGET}" -mindepth 1 -maxdepth 1 -print -quit)" ]] || {
+  printf '%s\n' 'Restore target must be empty; refusing to mix restore contents with existing files.' >&2
+  exit 1
+}
 "${restic_args[@]}" restore "${snapshot}" --target "${RESTORE_TARGET}"
 printf 'Restore completed into quarantine: %s\n' "${RESTORE_TARGET}"
 printf '%s\n' 'Review checksums and application data before any controlled cutover.'

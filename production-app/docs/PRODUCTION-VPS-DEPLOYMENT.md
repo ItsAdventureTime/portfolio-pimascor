@@ -355,9 +355,14 @@ correct its owning site or Quadlet explicitly.
 
 ## Backup and export
 
+Production and demo deployment inputs are content-digest pinned; the current
+API, web builder, PostgreSQL, Restic, and shared Caddy pins are recorded in
+`infra/README.md`. Rebuilds after image-cache pruning use those immutable
+references rather than floating tags.
+
 Production installs the PostgreSQL dump, restic backup, retention timer, and
 single export worker as separate rootless Quadlets. Full-record archives are
-CSV records plus original attachments and generated documents in an encrypted
+CSV records plus eligible original attachments and generated documents in an encrypted
 short-lived archive. The API enforces the two-request Philippine calendar-week
 limit; the worker processes the queue and expires archives.
 
@@ -365,10 +370,16 @@ limit; the worker processes the queue and expires archives.
 
 The encrypted Backblaze B2 Restic repository is the recovery source of truth.
 The scheduled service creates a consistent PostgreSQL custom-format dump,
-backs up production uploads, the dump, and production Quadlets, then records a
+backs up production uploads other than short-lived support-ticket attachment
+bytes, the dump, and production Quadlets, then records a
 non-sensitive completion entry for the Admin/DCS catalog. The transient dump is
 deleted only after the Restic service exits successfully. B2 credentials and
 the Restic password never enter the catalog or the web response.
+
+Support-ticket attachment bytes remain only in the private production B2 prefix
+while the ticket is open. They are not in Restic and are intentionally deleted
+from B2 when the ticket closes; this is product policy, not a backup gap to be
+repaired by adding retention.
 
 The current base-backup schedule is four fixed runs per day. It is deliberately
 not an adaptive 1-hour/2-hour/4-hour policy: predictable schedules are easier
@@ -407,7 +418,8 @@ After reviewing the snapshot and approving a target directory, restore only to
 quarantine. The script refuses the live production root:
 
 ```bash
-cd /var/home/jk/bridge-ph/pimascor/source && ./infra/scripts/production-restore.sh --snapshot SNAPSHOT_ID --target /var/home/jk/bridge-ph/pimascor/restore-quarantine --execute
+install -d -m 700 /var/home/jk/bridge-ph/pimascor-restore-quarantine
+cd /var/home/jk/bridge-ph/pimascor/source && ./infra/scripts/production-restore.sh --snapshot SNAPSHOT_ID --target /var/home/jk/bridge-ph/pimascor-restore-quarantine --execute
 ```
 
 Review checksums, database contents, migrations, and uploaded files before a

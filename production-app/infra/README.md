@@ -52,17 +52,18 @@ Expected: `true` and `Linger=yes`.
 
 ## 3. Synchronize reviewed source
 
-From the computer containing `production-app`, first preview and then copy. Replace `VPS_HOST`:
+Use the committed Git-archive transfer entry points from the repository root.
+They refuse dirty trees, stream only the committed `production-app` tree, stage
+the archive remotely, and write a commit marker consumed by the VPS updater:
 
 ```bash
-rsync -avhn --delete --exclude '.DS_Store' --exclude 'node_modules/' --exclude '.venv/' --exclude 'dist/' /Users/jk.deguzman/Downloads/bridge-ph_Dashboard/production-app/ jk@VPS_HOST:/var/home/jk/bridge-ph/pimascor-demo/source/
+production-app/infra/scripts/deploy-demo-vps.sh
+production-app/infra/scripts/deploy-production-vps.sh
 ```
 
-```bash
-rsync -avh --delete --exclude '.DS_Store' --exclude 'node_modules/' --exclude '.venv/' --exclude 'dist/' /Users/jk.deguzman/Downloads/bridge-ph_Dashboard/production-app/ jk@VPS_HOST:/var/home/jk/bridge-ph/pimascor-demo/source/
-```
-
-`--delete` affects only the destination `source/` mirror, never live PostgreSQL data, installed Quadlets, Podman secrets, or Caddy.
+After login, run the matching VPS-only updater printed by the transfer script.
+Do not use ad-hoc file synchronization; it can transfer ignored build output or a source tree
+whose commit does not match the release being activated.
 
 ## 4. Required Podman secrets
 
@@ -119,6 +120,27 @@ The same Quadlet sets `PUBLIC_APP_URL` to the exact HTTPS application path and
 the Resend key remains a Podman secret.
 
 ## 5. Build and install
+
+### Release image pinning
+
+Deployment inputs are pinned to verified `linux/amd64` content digests in the
+committed Containerfiles and Quadlets: Python API base
+`sha256:d6e0850f13fda0e2305d4c3c1c2f7930fe1042d34ddd958e49bba6ef685d0bb2`, Node
+web builder `sha256:2a49bdf71e9fd965a58c1703fd9ddd205b34e5782b692a72dd1d248abb0beb43`,
+PostgreSQL `sha256:b6a16ed0eb96e2c362811f7eeb951eac8b459e7b40be4149ea5444aa7c65569b`,
+and Restic `sha256:08916bcda4a4435f9d9828ebb4e91bb7ada3d2c8a53699788930e0ae1bd4fa67`.
+The shared Caddy installer accepts the legacy fully qualified `caddy:alpine`
+reference only to migrate it to the approved digest
+(`sha256:98eb57d882ccd5213d1688764db10c1ca2c58a1ca3a6717a3411ad798f7a423a`);
+already digest-pinned Caddy Quadlets are preserved.
+The VPS updater uses `--pull=always`, so a pruned cache is rebuilt from those
+immutable references; Quadlet `Pull=missing` then uses the same digest.
+
+To update a pin, inspect the desired tag for the deployment architecture,
+record the digest returned by `podman manifest inspect`, update every matching
+reference together, rebuild both images, and run focused shell/image
+validation before committing and deploying. Never replace a digest with a
+floating `latest` or an unverified digest.
 
 For an already installed demo, use the guarded updater:
 

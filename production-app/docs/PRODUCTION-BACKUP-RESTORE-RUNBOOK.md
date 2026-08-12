@@ -29,13 +29,13 @@ upload spool, and production Quadlets. The PostgreSQL dump includes
 and attachment metadata. The local dump is removed only after the Restic
 service completes successfully.
 
-Support attachment bytes live in the private Backblaze B2 production prefix;
+Support attachment bytes for open tickets live in the private Backblaze B2
+production prefix;
 they are not copied into the host-side Restic snapshot. This is intentional:
 attachments are short-lived support evidence and are deleted from B2 when a
 ticket closes. A restore therefore recovers the ticket conversation and
-metadata, but not an already-removed attachment object. If policy later
-requires attachment recovery, add a separately encrypted B2 object backup and
-restore rehearsal before claiming that capability.
+metadata, but not an already-removed attachment object. The current product
+policy intentionally does not retain a second copy for attachment recovery.
 
 The current release provides fixed scheduled base backups and Restic
 deduplication. It does not claim continuous WAL/PITR until PostgreSQL WAL
@@ -73,7 +73,8 @@ repository and cannot be reconstructed from the database password or B2 key.
 4. Restore to a new quarantine directory only:
 
    ```bash
-   cd /var/home/jk/bridge-ph/pimascor/source && ./infra/scripts/production-restore.sh --snapshot SNAPSHOT_ID --target /var/home/jk/bridge-ph/pimascor/restore-quarantine --execute
+   install -d -m 700 /var/home/jk/bridge-ph/pimascor-restore-quarantine
+   cd /var/home/jk/bridge-ph/pimascor/source && ./infra/scripts/production-restore.sh --snapshot SNAPSHOT_ID --target /var/home/jk/bridge-ph/pimascor-restore-quarantine --execute
    ```
 
 5. Verify the dump checksum, run `pg_restore --list`, inspect uploads, check
