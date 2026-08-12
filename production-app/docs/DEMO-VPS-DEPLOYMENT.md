@@ -170,6 +170,15 @@ If any check fails, use the rollback image/directory printed by the updater and
 review the relevant `journalctl --user -u bridge-ph-pimascor-demo-api.service`
 logs. Keep rollback material until the walkthrough is complete.
 
+If the reset service reports `DuplicateObject: type "role" already exists`,
+the failure is the support-ticket migration retry path, not a reason to drop the
+shared PostgreSQL enum or reset the database manually. Deploy the corrected
+source, rerun the updater, and let Alembic retry from the last recorded revision.
+Migration `20260812_0015` now reuses existing PostgreSQL enum types with
+check-first creation. A short-name image warning for an unrelated legacy
+`accustandard-*` Quadlet is separate from this migration failure; inspect that
+legacy unit before removing it.
+
 ## Bunny CDN purge, only after verification
 
 Prefer targeted URL purges. The demo API is explicitly `no-store`, and hashed

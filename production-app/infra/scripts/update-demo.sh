@@ -160,6 +160,10 @@ grep -Fq 'revision = "20260729_0011"' "${SOURCE_ROOT}/apps/api/migrations/versio
   printf 'Refusing to update: the controlled data-export migration is missing or has an unexpected revision ID.\n' >&2
   exit 1
 }
+grep -Fq 'revision: str = "20260812_0015"' "${SOURCE_ROOT}/apps/api/migrations/versions/20260812_0015_support_tickets.py" || {
+  printf 'Refusing to update: the support-ticket migration is missing or has an unexpected revision ID.\n' >&2
+  exit 1
+}
 grep -Fqx 'Environment=INCIDENT_ADMIN_EMAIL=alyssa.d@bridge-ph.com' "${api_quadlet}" || {
   printf 'Refusing to update: the reviewed Bridge PH incident recipient is missing from the API Quadlet.\n' >&2
   exit 1

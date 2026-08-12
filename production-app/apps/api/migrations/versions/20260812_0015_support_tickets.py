@@ -9,6 +9,7 @@ from collections.abc import Sequence
 
 import sqlalchemy as sa
 from alembic import op
+from sqlalchemy.dialects import postgresql
 
 
 revision: str = "20260812_0015"
@@ -17,15 +18,16 @@ branch_labels: str | Sequence[str] | None = None
 depends_on: str | Sequence[str] | None = None
 
 
-support_ticket_status = sa.Enum(
+support_ticket_status = postgresql.ENUM(
     "OPEN",
     "IN_PROGRESS",
     "WAITING_FOR_REQUESTER",
     "RESOLVED",
     "CLOSED",
     name="supportticketstatus",
+    create_type=False,
 )
-role = sa.Enum(
+role = postgresql.ENUM(
     "ADMIN",
     "REQUESTER",
     "GM",
@@ -37,6 +39,12 @@ role = sa.Enum(
 
 
 def upgrade() -> None:
+    bind = op.get_bind()
+    # ``role`` is created by the initial migration and is reused here. The
+    # support status enum is new. Explicit check-first creation makes a retry
+    # safe after a deployment interrupted during PostgreSQL DDL.
+    role.create(bind, checkfirst=True)
+    support_ticket_status.create(bind, checkfirst=True)
     op.create_table(
         "support_tickets",
         sa.Column("id", sa.String(36), primary_key=True),
