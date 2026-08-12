@@ -73,6 +73,13 @@ class Settings(BaseSettings):
                 raise ValueError(
                     "Backblaze endpoint, region, bucket, object prefix, and both Podman secret files must be configured together"
                 )
+            expected_prefixes = {"demo": "pimascor/demo", "production": "pimascor"}
+            expected_prefix = expected_prefixes.get(self.deployment_tier)
+            if expected_prefix and self.b2_bucket and self.b2_object_prefix:
+                if self.b2_bucket != "bridge-ph" or self.b2_object_prefix != expected_prefix:
+                    raise ValueError(
+                        f"{self.deployment_tier.title()} Backblaze storage must use bucket bridge-ph and object prefix {expected_prefix}"
+                    )
         if self.app_env == "production":
             if not self.public_app_url.startswith("https://"):
                 raise ValueError("PUBLIC_APP_URL must use HTTPS in production")

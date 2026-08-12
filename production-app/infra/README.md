@@ -296,7 +296,7 @@ pimascor/
 ```
 
 - Demo uses `pimascor/demo/`.
-- Production application documents use `pimascor/production/`.
+- Production application documents use `pimascor/`.
 - Production encrypted backups use `pimascor/backups/restic/`.
 - Object keys use lowercase prefixes and opaque IDs. The original filename stays in PostgreSQL for display and audit, not in the object key.
 - Each PDF/JPEG/PNG may be up to 100 MB. Validation reads bounded chunks, and `%h/bridge-ph/pimascor-demo/data/uploads-tmp` is the private disk-backed spool used while Boto3 performs a managed multipart transfer.

@@ -141,8 +141,9 @@ bridge_ph_pimascor_account_bootstrap
 ```
 
 The database URL must target the production database service
-(`database:5432/pimascor`). The B2 credentials must be scoped to the
-production prefix `pimascor/production`; never reuse the demo key or prefix.
+(`database:5432/pimascor`). The B2 credentials must be scoped to bucket
+`bridge-ph` and production prefix `pimascor`; never reuse the demo key or
+prefix.
 Enable private-bucket server-side encryption in the B2 bucket configuration.
 
 The PostgreSQL data store intentionally remains a bind mount at

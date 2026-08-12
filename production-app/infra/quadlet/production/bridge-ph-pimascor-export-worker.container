@@ -26,7 +26,7 @@ Environment=DATA_EXPORT_ENABLED=true
 Environment=B2_ENDPOINT_URL=https://s3.us-west-001.backblazeb2.com
 Environment=B2_REGION=us-west-001
 Environment=B2_BUCKET=bridge-ph
-Environment=B2_OBJECT_PREFIX=pimascor/production
+Environment=B2_OBJECT_PREFIX=pimascor
 Environment=B2_KEY_ID_FILE=/run/secrets/bridge_ph_pimascor_b2_key_id
 Environment=B2_APPLICATION_KEY_FILE=/run/secrets/bridge_ph_pimascor_b2_application_key
 ReadOnly=true
