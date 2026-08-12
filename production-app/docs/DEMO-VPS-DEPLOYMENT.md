@@ -177,9 +177,14 @@ source, rerun the updater, and let Alembic retry from the last recorded revision
 Migration `20260812_0015` now reuses existing PostgreSQL enum types with
 check-first creation. Migration `20260812_0016` adds the secure support portal,
 recipient token hashes, category/reason fields, and simulated attachment
-metadata. A short-name image warning for an unrelated legacy
-`accustandard-*` Quadlet is separate from this migration failure; inspect that
-legacy unit before removing it.
+metadata. The short-name image warning from the unrelated legacy
+`accustandard-*` Quadlet is handled separately. The updater retires the known
+legacy `~/.config/containers/systemd/accustandard-demo-db.container` only when
+it contains the exact short image declaration `Image=postgres:16-alpine`.
+It stops/removes that obsolete Quadlet and container, but does not delete its
+data volume. The cleanup is limited to that exact path and image declaration;
+review any other legacy unit manually. The active PIMASCOR demo and production
+Quadlets use fully qualified PostgreSQL image references.
 
 ## Bunny CDN purge, only after verification
 

@@ -3,6 +3,12 @@
 This runbook applies only to `~/bridge-ph/pimascor`. It is separate from the
 demo runtime and from the Git continuity runbook.
 
+The production updater retires the known legacy
+`~/.config/containers/systemd/accustandard-demo-db.container` when it matches
+the old `Image=postgres:16-alpine` declaration. This removes the unrelated
+Podman short-name warning without deleting its data volume. The active
+production Quadlets use fully qualified image references.
+
 ## Responsibilities
 
 - The backup timer creates encrypted Restic snapshots in private Backblaze B2.

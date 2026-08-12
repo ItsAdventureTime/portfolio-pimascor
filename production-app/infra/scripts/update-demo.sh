@@ -15,6 +15,7 @@ SOURCE_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 RESET_BASELINE=true
 RUNTIME_ROOT="${XDG_RUNTIME_DIR:-/run/user/$(id -u)}"
 MAINTENANCE_LOCK="${RUNTIME_ROOT}/bridge-ph-pimascor-demo-maintenance.lock"
+LEGACY_ACCUSTANDARD_QUADLET="${HOME}/.config/containers/systemd/accustandard-demo-db.container"
 
 [[ "$(uname -s)" != "Darwin" ]] || {
   printf '%s\n' 'This is the VPS-only updater. Run infra/scripts/deploy-demo-vps.sh from your Mac instead.' >&2
@@ -202,6 +203,18 @@ for secret_name in \
   bridge_ph_pimascor_demo_b2_application_key; do
   podman secret exists "${secret_name}" || { printf 'Missing Podman secret: %s\n' "${secret_name}" >&2; exit 1; }
 done
+
+# Retire the known legacy Quadlet that emits a short-name warning on every
+# user-systemd generator run. Guard on the exact file path and image
+# declaration, and preserve the legacy data volume.
+if [[ -f "${LEGACY_ACCUSTANDARD_QUADLET}" ]] &&
+   grep -Fqx 'Image=postgres:16-alpine' "${LEGACY_ACCUSTANDARD_QUADLET}"; then
+  printf '%s\n' 'Retiring the known legacy accustandard demo database Quadlet...'
+  systemctl --user disable --now accustandard-demo-db.service >/dev/null 2>&1 || true
+  rm -f -- "${LEGACY_ACCUSTANDARD_QUADLET}"
+  podman rm -f accustandard-demo-db >/dev/null 2>&1 || true
+  systemctl --user daemon-reload
+fi
 
 install -d -m 700 \
   "${APP_ROOT}" \

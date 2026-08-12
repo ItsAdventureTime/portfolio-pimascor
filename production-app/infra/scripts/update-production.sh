@@ -10,6 +10,7 @@ API_HEALTH_URL="https://delegateops.business/pimascor/api/v1/health"
 SOURCE_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 RUNTIME_ROOT="${XDG_RUNTIME_DIR:-/run/user/$(id -u)}"
 MAINTENANCE_LOCK="${RUNTIME_ROOT}/bridge-ph-pimascor-maintenance.lock"
+LEGACY_ACCUSTANDARD_QUADLET="${HOME}/.config/containers/systemd/accustandard-demo-db.container"
 
 [[ "$(uname -s)" != "Darwin" ]] || { printf '%s\n' 'Run this on the Fedora CoreOS VPS.' >&2; exit 1; }
 [[ "${EUID}" -ne 0 ]] || { printf '%s\n' 'Refusing to run as root; use rootless user jk.' >&2; exit 1; }
@@ -84,6 +85,18 @@ grep -Fqx 'Secret=bridge_ph_pimascor_resend_api_key,uid=10001,gid=10001,mode=040
 for secret_name in bridge_ph_pimascor_postgres_password bridge_ph_pimascor_database_url bridge_ph_pimascor_resend_api_key bridge_ph_pimascor_b2_key_id bridge_ph_pimascor_b2_application_key bridge_ph_pimascor_pgpass bridge_ph_pimascor_restic_password bridge_ph_pimascor_account_bootstrap; do
   podman secret exists "$secret_name" || { printf 'Missing production Podman secret: %s\n' "$secret_name" >&2; exit 1; }
 done
+
+# Retire the known legacy Quadlet that emits a short-name warning on every
+# user-systemd generator run. Guard on the exact file path and image
+# declaration, and preserve the legacy data volume.
+if [[ -f "${LEGACY_ACCUSTANDARD_QUADLET}" ]] &&
+   grep -Fqx 'Image=postgres:16-alpine' "${LEGACY_ACCUSTANDARD_QUADLET}"; then
+  printf '%s\n' 'Retiring the known legacy accustandard demo database Quadlet...'
+  systemctl --user disable --now accustandard-demo-db.service >/dev/null 2>&1 || true
+  rm -f -- "${LEGACY_ACCUSTANDARD_QUADLET}"
+  podman rm -f accustandard-demo-db >/dev/null 2>&1 || true
+  systemctl --user daemon-reload
+fi
 
 install -d -m 700 "$APP_ROOT" "$APP_ROOT/data/postgres/18/docker" "$APP_ROOT/data/uploads-tmp" "$APP_ROOT/backup-staging" "$APP_ROOT/backup-catalog/history" "$APP_ROOT/restic-cache" "$APP_ROOT/bin" "$QUADLET_ROOT" "$TIMER_ROOT"
 quadlet_files=(bridge-ph-pimascor-data.network bridge-ph-pimascor-egress.network bridge-ph-pimascor-proxy.network bridge-ph-pimascor-db.container bridge-ph-pimascor-api.container bridge-ph-pimascor-account-bootstrap.container bridge-ph-pimascor-export-worker.container bridge-ph-pimascor-db-dump.container bridge-ph-pimascor-backup.container bridge-ph-pimascor-backup-retention.container)
