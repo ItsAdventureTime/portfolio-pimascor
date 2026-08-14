@@ -1,24 +1,27 @@
 BRIDGE / PIMASCOR HANDOFF DELIVERY STEPS
 
+Packet revision: 2026-08-14
+
 1. Open this directory:
    production-app/handoff/bridge-pimascor/
 
 2. Review the client packet inside:
    client-packet/
 
-3. Send Bridge only:
-   bridge-pimascor-client-handoff-2026-08-01.zip
+3. Send Bridge the approved client guide:
+   client-packet/00-pimascor-production-handoff-guide.pdf
 
-   The archive contains client-facing PDFs and a delivery manifest. It does
-   not contain source code, Podman files, Caddyfiles, Bash scripts, secrets,
-   or live production data.
+   This is the official non-technical production handoff. It does not contain
+   source code, Podman files, Caddyfiles, Bash scripts, secrets, or live
+   production data.
 
-4. Send the archive through an approved secure channel. Do not email secret
-   values, SSH private keys, API keys, database passwords, Restic passwords,
-   OTP codes, or production database/file exports.
+4. Send the PDF through an approved secure channel. A ZIP transfer wrapper is
+   allowed, but it must contain only the approved PDF and no secret values.
+   Do not email SSH private keys, API keys, database passwords, Restic
+   passwords, OTP codes, or production database/file exports.
 
 5. Schedule an acceptance session with Bridge/PIMASCOR. Use the acceptance
-   checklist in 00-bridge-pimascor-handoff-guide.pdf and record the accepted
+   and first-24-hours sections in the client guide. Record the accepted
    runtime release commit from the VPS during that session.
 
 6. Transfer access using named provider invitations or an approved password
@@ -34,3 +37,7 @@ BRIDGE / PIMASCOR HANDOFF DELIVERY STEPS
 8. If PIMASCOR or Bridge later wants the complete source/IP package, quote and
    document it as a separate purchase and written transfer agreement. The
    current hosted-service handoff does not include the source code.
+
+9. Send `BRIDGE-TEAM-MESSAGE.md` to the Bridge Team with the client guide.
+   Ask the team to review the guide first and reserve follow-up questions for
+   items it does not answer or that appear inaccurate or incomplete.

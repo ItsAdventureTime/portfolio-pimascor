@@ -10,21 +10,28 @@ this production handoff packet.
 
 ## Send to Bridge/PIMASCOR
 
-Use `client-packet/` for the approved PDF packet and its manifest. The packet
-covers product scope, requirements, workflows, API behavior, exports,
-incidents, QA acceptance, Philippine controls, and the dynamic quotation
-format reference.
+Use `client-packet/00-pimascor-production-handoff-guide.pdf` as the official
+client-facing guide. It is a single 16-page PDF written in English (US) for
+PIMASCOR's non-technical users. It covers product behavior, workflows,
+first-time account activation, downloads, backups, support, failure handling,
+and acceptance steps.
 
 The packet does not contain source code, Podman Quadlets, Caddy configuration,
 Bash deployment scripts, credentials, production data, or secret values.
 
-The generated ZIP archive and local review screenshots are not repository
-artifacts. Keep them on an approved local or controlled transfer location only.
+An optional ZIP file is only a transfer wrapper. It must contain the approved
+PDF and no other files unless the delivery manifest is updated first. Local
+review screenshots are not repository artifacts.
 
-The PDFs previously under `client-packet/` were generated delivery snapshots.
-They are archived under the repository-root `not-needed/` boundary because
-they are stale and must not be treated as current production guidance. Update
-the Markdown sources and regenerate a new packet before a new handoff.
+The approved PDF includes both Bridge Consulting and PIMASCOR branding. It is
+the current delivery artifact for this handoff and is tracked with the
+manifest in `client-packet/`.
+
+## Delivery communication
+
+Use `BRIDGE-TEAM-MESSAGE.md` when notifying the Bridge Team. The message asks
+the team to review the guide before sending questions and to reserve replies
+for items the guide does not answer or that appear inaccurate or incomplete.
 
 ## Keep with the VPS operator
 
@@ -77,6 +84,8 @@ record equivalent guidance for the demo build so the two experiences remain
 visually consistent while retaining their separate data and permissions.
 
 ## Revision control
+
+The current packet revision is 2026-08-14.
 
 The repository commit accepted during handoff must be written on the cover
 sheet and matched against the private GitHub repository. Commits are signed

@@ -1,23 +1,27 @@
 BRIDGE / PIMASCOR PDF BUILD NOTES
 
-Previous packet generated: 2026-08-01
-Python: 3.14.6
-ReportLab: 5.0.0
-pypdf: 6.13.3
-pdfplumber: 0.11.9
-Rendering QA: pypdfium2 5.12.1
+Current packet generated: 2026-08-14
+Current deliverable: `client-packet/00-pimascor-production-handoff-guide.pdf`
 
-The PDFs were generated from the reviewed Markdown documents with an A4
-layout, Bridge palette sampled from https://bridge-ph.com/about-us/, branded
-cover pages, consistent headers/footers, readable tables, page numbering, and
-rendered visual QA. The revised quotation PDF is preserved as the supplied
-reference artifact rather than re-typeset.
+The deliverable is a single 16-page A4 PDF written in English (US) for
+PIMASCOR's non-technical users. It explains the production workflow, account
+activation and first login, downloads, backups, support, incident handling,
+and first steps after acceptance.
 
-Client packet scope intentionally excludes source code, infrastructure files,
-Podman Quadlets, Caddyfiles, Bash scripts, credentials, and live production
-records.
+The cover uses the supplied Bridge Consulting and PIMASCOR branding. The
+PIMASCOR mark is presented on a white card so its dark-blue artwork remains
+readable against the Bridge navy cover.
 
-The source documentation was revised on 2026-08-09 for the approved production
-account identities, DCS/CEO/Chairman policy, and owner-only backup restoration
-workflow. Regenerate and render-check the client PDFs before delivery; do not
-distribute the previous 2026-08-01 PDFs as the final packet.
+The guide intentionally excludes source code, infrastructure files, Podman
+Quadlets, Caddyfiles, Bash scripts, credentials, live production records,
+operator identities, and infrastructure IP addresses.
+
+The PDF was generated with the current project PDF toolchain and rendered for
+visual QA. All 16 pages were inspected, including the branded cover and the
+official production sign-in address. Text extraction checks confirmed the
+expected page count, one sign-in URL, and no infrastructure IP or operator
+identity disclosures.
+
+The client packet is a delivery artifact. Update the authoritative Markdown
+sources and regenerate the PDF when the production workflow, account policy,
+support process, or branding changes.

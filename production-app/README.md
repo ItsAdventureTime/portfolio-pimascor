@@ -19,6 +19,8 @@ This directory is the working root for the new PIMASCOR Operational Control Syst
 - `docs/FACTUAL-BASIS.md`: evidence labels, confirmed VPS layout, and rules against presenting assumptions as facts
 - `docs/QUALITY-ASSURANCE.md`: required role, responsive, browser-engine, and deployment acceptance evidence
 - `docs/PRODUCTION-BACKUP-RESTORE-RUNBOOK.md`: encrypted backup catalog and owner-only CLI dry-run restore procedure
+- `docs/HANDOFF-BRIDGE-PIMASCOR.md`: internal production handoff boundary, acceptance, and source/IP terms
+- `handoff/bridge-pimascor/client-packet/`: current client-facing handoff PDF and delivery manifest
 - `docs/DEMO-BUILD-SOURCE-OF-TRUTH-2026-08-08.md`: newest demo-only Admin entry and role-evaluation rules
 - `docs/SUPPORT-TICKETS.md`: production support tickets and demo simulation contract
 - `docs/DEMO-DOCUMENTATION-INDEX.md`: starting point and file map for demo-only work

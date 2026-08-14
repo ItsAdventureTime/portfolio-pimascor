@@ -45,8 +45,11 @@ demo authority, runbook sequence, generated-artifact boundary, and exclusions.
   acceptance, and source/IP terms.
 - `../handoff/bridge-pimascor/README.md` — handoff packet navigation and the
   authoritative production account list.
-- `../handoff/bridge-pimascor/client-packet/` — client-facing PDFs and manifest.
-  Regenerate PDFs after source-document revisions before delivery.
+- `../handoff/bridge-pimascor/BRIDGE-TEAM-MESSAGE.md` — approved message for
+  notifying Bridge Team about the official client handoff.
+- `../handoff/bridge-pimascor/client-packet/` — current client-facing PDF and
+  delivery manifest. The official deliverable is
+  `00-pimascor-production-handoff-guide.pdf`.
 
 ## Infrastructure ownership
 

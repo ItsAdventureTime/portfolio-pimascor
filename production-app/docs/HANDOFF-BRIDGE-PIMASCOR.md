@@ -31,10 +31,19 @@ Authorized operators use the restricted technical runbook for host maintenance.
 
 ## 2. Files for the client handoff
 
-Send Bridge a read-only PDF or archive containing these documents and reference
-files. Confirm that the version/commit is recorded on the handoff cover sheet.
+The official client-facing deliverable is
+`handoff/bridge-pimascor/client-packet/00-pimascor-production-handoff-guide.pdf`.
+Send Bridge this read-only PDF through an approved secure channel. It is a
+plain-language guide for PIMASCOR's non-technical users and includes the
+current workflow, account activation, downloads, backups, support, failure
+handling, and acceptance steps. Confirm that the version/commit is recorded on
+the handoff cover sheet.
 
-### Required
+The Markdown documents below are the internal source and review set used to
+prepare the client guide. They are not an ordinary client packet. Disclose
+them only when the agreed support or source-transfer scope requires it.
+
+### Internal source and review set
 
 - `docs/PRODUCT-SPEC.md` — product scope and supported capabilities.
 - `docs/REQUIREMENTS-V2.md` — approved requirements and business rules.
