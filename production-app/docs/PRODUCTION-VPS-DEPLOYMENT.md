@@ -209,10 +209,12 @@ Run on the Mac:
 /Users/jk.deguzman/dev/bridge-ph_Dashboard/production-app/infra/scripts/deploy-production-vps.sh
 ```
 
-The Mac-side script archives the committed `production-app` tree and transfers
-it to `/var/home/jk/bridge-ph/pimascor/source`. It does not transfer secrets,
-PostgreSQL data, uploads, backups, or the demo tree. Repeat it for every
-committed production release. When the approved account names, email
+The Mac-side script builds the API image and static PWA inside the repository's
+Docker Sandbox, archives the committed `production-app` tree, and transfers the
+source plus a commit-matched release bundle to the VPS. It does not transfer
+secrets, PostgreSQL data, uploads, backups, or the demo tree. Repeat it for every
+committed production release. The VPS receives artifacts only; it does not
+compile or build the API or PWA. When the approved account names, email
 addresses, or roles change, use the explicit account-refresh option:
 
 ```bash
@@ -226,14 +228,22 @@ new or corrected pending accounts are reconciled. An already-activated account
 whose email, display name, or role differs is refused for safety and must be
 changed through an explicit Administrator procedure.
 
-After SSH login, run on the VPS:
+After SSH login, first provision any missing secrets, then run the exact
+commit-specific activation command printed by the Mac transfer script:
 
 ```bash
-cd /var/home/jk/bridge-ph/pimascor/source && ./infra/scripts/provision-production-secrets.sh && ./infra/scripts/update-production.sh --source /var/home/jk/bridge-ph/pimascor/source && ./infra/scripts/install-production-caddy.sh
+cd /var/home/jk/bridge-ph/pimascor/source && ./infra/scripts/provision-production-secrets.sh
+cd /var/home/jk/bridge-ph/pimascor/source && ./infra/scripts/update-production.sh --source /var/home/jk/bridge-ph/pimascor/source --api-image-archive /var/home/jk/bridge-ph/pimascor/release-artifacts/COMMIT/api-image.tar --web-dist /var/home/jk/bridge-ph/pimascor/release-artifacts/COMMIT/web-dist
+cd /var/home/jk/bridge-ph/pimascor/source && ./infra/scripts/install-production-caddy.sh
 ```
 
-The normal repeatable sequence is to run the Mac transfer script, then run
-`update-production.sh` on the VPS. Migrations execute through `alembic upgrade
+Replace `COMMIT` with the release SHA, or copy the exact path printed by
+`deploy-production-vps.sh`. The updater loads the prebuilt API image, stages the
+prebuilt static files, applies migrations, restarts the services, and checks
+health; it does not run a build.
+
+The normal repeatable sequence is to run the Mac transfer script, then run the
+printed VPS activation command. Migrations execute through `alembic upgrade
 head`: each revision runs once because Alembic records it in the database.
 The account bootstrap, service restarts, web asset replacement, and backup
 timer activation are safe to repeat. Secret provisioning preserves existing
@@ -254,19 +264,20 @@ the scripts and Quadlets without deleting the catalog history or production
 data. The first real backup creates the first catalog entry. No restore runs
 automatically during deployment.
 
-Local macOS builds are optional validation only. The deployment script builds
-the production images on the VPS with its rootless Podman runtime. If local
-validation is needed, use the existing Podman machine and disposable
-`podman run --rm` containers; do not install production secrets or data on the
-Mac.
+The local release builder is required for each deployment. It uses
+`jk-sbx-project exec` and Docker's private Sandbox daemon to produce the
+linux/amd64 API image archive and static PWA in the project workspace. Do not
+use local Podman for builds or tests, and do not install production secrets or
+data on the Mac. The VPS uses rootless Podman only to load and run the already
+built API image and to manage its production services.
 
-This is the complete VPS sequence. Secret provisioning preserves existing
-secrets and only prompts for missing values. The updater builds and activates
-the production API, web assets, migrations, account bootstrap, export worker,
-and backup timers. The final command must be invoked as
-`./infra/scripts/install-production-caddy.sh` from the deployed source
-directory; `install-production-caddy.sh` by itself is not a shell command
-unless that directory has been added to `PATH`.
+This is the complete deployment sequence. Secret provisioning preserves
+existing secrets and only prompts for missing values. The updater activates the
+prebuilt API and web assets, applies migrations, reconciles the account
+bootstrap, starts the export worker, and enables backup timers. The final
+command must be invoked as `./infra/scripts/install-production-caddy.sh` from
+the deployed source directory; `install-production-caddy.sh` by itself is not
+a shell command unless that directory has been added to `PATH`.
 
 This runs forward migrations and starts an empty production database if the
 database is new. It does not delete or reset existing production records.

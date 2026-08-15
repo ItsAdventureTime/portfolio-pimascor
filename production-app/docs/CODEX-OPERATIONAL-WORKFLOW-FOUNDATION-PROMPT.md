@@ -285,15 +285,18 @@ accessibility, testing, and recovery properties.
 7. Preserve unrelated user changes and avoid destructive actions outside the approved
    scope.
 8. Add forward migrations and deterministic demo seed updates when data changes.
-9. Run focused tests first, then the full API suite and frontend production build.
+9. Run focused tests first, then the full API suite and frontend production
+   build through the repository Docker Sandbox.
 10. Verify the actual user path at desktop and mobile widths when UI changes.
 11. Update each rule once in the authoritative document and link to it elsewhere.
 12. For every deployment-relevant change, lead the final response with the
     outcome, actual local verification evidence, and exactly two clearly labeled
     one-line commands: one to transfer from the operator's local machine and one
     to activate after VPS login. State whether the current workflow transfers a
-    compiled artifact or source, and never describe local checks as proof of VPS
-    deployment. Then state migration/CDN impact and remaining decisions.
+     compiled artifact or source, and never describe local checks as proof of VPS
+     deployment. The current deployment transfers both committed source and
+     commit-matched artifacts built locally in the Docker Sandbox; the VPS only
+     activates them. Then state migration/CDN impact and remaining decisions.
 
 ## Required deliverables
 

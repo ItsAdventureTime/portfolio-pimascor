@@ -18,8 +18,8 @@ ENV VITE_CSRF_COOKIE_NAME=${VITE_CSRF_COOKIE_NAME}
 ENV VITE_DEPLOYMENT_TIER=${VITE_DEPLOYMENT_TIER}
 RUN npm run build
 
-# This artifact-only stage is exported to the host with:
-# podman build --output type=local,dest=/path/to/web-dist apps/web
+# This artifact-only stage is exported from the local Docker Sandbox with:
+# jk-sbx-project exec docker build --output type=local,dest=/path/to/web-dist production-app/apps/web
 # Caddy serves these files directly; no frontend runtime container is needed.
 FROM scratch AS export
 COPY --from=build /build/dist /

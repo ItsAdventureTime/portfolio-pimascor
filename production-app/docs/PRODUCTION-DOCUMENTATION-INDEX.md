@@ -61,8 +61,11 @@ demo authority, runbook sequence, generated-artifact boundary, and exclusions.
 - `../infra/quadlet/demo/` and `DEMO-VPS-DEPLOYMENT.md` — demo only; do not
   mix with production paths or secrets.
 
-The Mac-side production transfer entry point is
-`../infra/scripts/deploy-production-vps.sh`. The optional
+The Mac-side production release builder is
+`../infra/scripts/build-local-release.sh`; the transfer entry point is
+`../infra/scripts/deploy-production-vps.sh`. The transfer script builds inside
+the Docker Sandbox and sends the source plus commit-matched API/web artifacts.
+The VPS updater only activates the supplied bundle. The optional
 `--refresh-account-manifest` flag is the only path that intentionally replaces
 the account-bootstrap secret; ordinary releases preserve it.
 

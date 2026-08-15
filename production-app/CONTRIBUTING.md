@@ -15,12 +15,16 @@ invent a path, service state, provider configuration, or production decision.
 
 1. Start from `main` and create one short-lived branch per focused change, such as `feat/client-payment-filter` or `fix/demo-reset-health-check`.
 2. Keep commits small and use an imperative Conventional Commit-style subject, for example `fix(api): reject invalid payment allocation`.
-3. Before committing an API change, create or refresh the pinned development
-   environment with `uv sync --extra dev`, then run `uv run pytest` from
-   `apps/api`; run Ruff when it is available. Commit the generated `uv.lock`
-   whenever dependency resolution is available, rather than relying on an
-   unpinned local environment.
-4. Before committing a web change, run `npm run build` from `apps/web`.
+3. Before committing an API change, use the repository Docker Sandbox for the
+   pinned environment: `jk-sbx-project exec sh -lc 'cd production-app/apps/api
+   && uv sync --extra dev'`, then run the API tests through the same wrapper.
+   Run Ruff when it is available. Commit the generated `uv.lock` whenever
+   dependency resolution is available, rather than relying on an unpinned local
+   environment.
+4. Before committing a web change, run the build through
+   `jk-sbx-project exec` from the project root. For a release, use
+   `production-app/infra/scripts/build-local-release.sh`, which builds both
+   deployable artifacts in the Docker Sandbox.
 5. Before committing infrastructure or security changes, review the diff and the relevant deployment/runbook documentation together.
 
 ## Commit and release policy

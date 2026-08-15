@@ -32,7 +32,7 @@ This directory is the working root for the new PIMASCOR Operational Control Syst
 
 ## Next deliverables
 
-1. Deploy the team-demo release at `/pimascor/demo/` by following `infra/README.md`; no host Python, Node.js, npm, or PostgreSQL installation is required. Node builds the static PWA inside a temporary container, and the existing Caddy container serves the exported files directly.
+1. Deploy the team-demo release at `/pimascor/demo/` by following `infra/README.md`; no host Python, Node.js, npm, or PostgreSQL installation is required. The Docker Sandbox builds the API image and static PWA locally, and the existing Caddy container serves the exported files directly.
 2. Review the Phase 0 specification and hosted demo with each operational owner.
 3. Record accepted changes and sign off the screen and workflow behavior.
 4. Validate Shipment Profitability plus the connected GM approval, DCS payment, Additional Budget, Liquidation, Billing/replacement/Credit Memo, Client Payment, and Request for Payment workflows with each role owner.
@@ -49,7 +49,7 @@ The application currently uses two local processes. This is development setup, n
 
 ## Deployment boundary
 
-This repository includes reviewed Containerfiles, Quadlet templates, Caddy path handlers, and a manual Fedora CoreOS runbook. Hosted deployments use no `.env` files: non-secret values stay in `.container` files and credentials are mounted from Podman secrets. PostgreSQL 18 binds the exact `data/postgres/18/docker` directory. Caddy is the only public container. The public API uses the production security profile and Quadlet health checks. The 03:00 Asia/Manila maintenance job deletes objects below `pimascor/demo/documents/`, replaces disposable demo data locally, preserves accounts, and uses no backup restore. Production keeps separate credentials, the `pimascor/` object prefix, and the `pimascor/backups/restic/` repository.
+This repository includes reviewed Containerfiles, Quadlet templates, Caddy path handlers, and a manual Fedora CoreOS runbook. Hosted deployments use no `.env` files: non-secret values stay in `.container` files and credentials are mounted from Podman secrets. The Mac-side transfer scripts build the API image and static PWA inside the Docker Sandbox, then transfer a commit-matched source and artifact bundle. The VPS performs plain artifact deployment and runtime activation; it does not compile or build. PostgreSQL 18 binds the exact `data/postgres/18/docker` directory. Caddy is the only public container. The public API uses the production security profile and Quadlet health checks. The 03:00 Asia/Manila maintenance job deletes objects below `pimascor/demo/documents/`, replaces disposable demo data locally, preserves accounts, and uses no backup restore. Production keeps separate credentials, the `pimascor/` object prefix, and the `pimascor/backups/restic/` repository.
 
 The current production requirements source of truth is `docs/MEETING-DECISIONS-2026-07-24.md`, followed by `docs/REQUIREMENTS-V2.md` for implementation detail. The current demo-only source of truth is `docs/DEMO-BUILD-SOURCE-OF-TRUTH-2026-08-08.md`; it supersedes older demo wording and generated handoff snapshots. The meeting record supersedes older prototype assumptions. For deployment and operational claims, follow `docs/FACTUAL-BASIS.md`; never present an unverified VPS state as completed. Historical source prompts and generated snapshots are archived under the repository-root `not-needed/` boundary and are not active guidance.
 

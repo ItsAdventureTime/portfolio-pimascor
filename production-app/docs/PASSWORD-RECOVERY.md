@@ -62,8 +62,9 @@ never use that value as a production credential.
 
 ## Deployment checklist
 
-The migration is `20260803_0013_password_reset_requests`. Deploy the source,
-then run the normal production updater. No new Podman secret is required.
+The migration is `20260803_0013_password_reset_requests`. Build and transfer
+the release locally, then run the normal production activation command with the
+commit-matched artifact paths. No new Podman secret is required.
 
 Local Mac command:
 
@@ -74,7 +75,7 @@ Local Mac command:
 VPS command after SSH login:
 
 ```bash
-cd /var/home/jk/bridge-ph/pimascor/source && ./infra/scripts/update-production.sh --source /var/home/jk/bridge-ph/pimascor/source
+cd /var/home/jk/bridge-ph/pimascor/source && ./infra/scripts/update-production.sh --source /var/home/jk/bridge-ph/pimascor/source --api-image-archive /var/home/jk/bridge-ph/pimascor/release-artifacts/COMMIT/api-image.tar --web-dist /var/home/jk/bridge-ph/pimascor/release-artifacts/COMMIT/web-dist
 ```
 
 Run `./infra/scripts/install-production-caddy.sh` only if the shared Caddy

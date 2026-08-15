@@ -35,7 +35,7 @@ Transfer from this Mac:
 Then, after signing in to the VPS:
 
 ```bash
-cd /var/home/jk/bridge-ph/pimascor-demo/source && ./infra/scripts/update-demo.sh --source /var/home/jk/bridge-ph/pimascor-demo/source && bash ./infra/scripts/reconcile-demo-web-root.sh
+cd /var/home/jk/bridge-ph/pimascor-demo/source && ./infra/scripts/update-demo.sh --source /var/home/jk/bridge-ph/pimascor-demo/source --api-image-archive /var/home/jk/bridge-ph/pimascor-demo/release-artifacts/COMMIT/api-image.tar --web-dist /var/home/jk/bridge-ph/pimascor-demo/release-artifacts/COMMIT/web-dist && bash ./infra/scripts/reconcile-demo-web-root.sh
 ```
 
 The current demo intentionally keeps complete local-record archive generation

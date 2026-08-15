@@ -9,11 +9,11 @@ For the current demo-only entry and role-testing behavior, use
 
 ## Local source gate
 
-Run these from the repository before transfer:
+Run these from the repository Docker Sandbox before transfer:
 
 ```bash
-(cd apps/api && uv sync --extra dev && uv run pytest -q)
-(cd apps/web && npm run build)
+jk-sbx-project exec sh -lc 'cd production-app/apps/api && uv sync --extra dev && uv run pytest -q'
+jk-sbx-project exec sh -lc 'cd production-app/apps/web && npm ci && npm run build'
 ```
 
 `uv sync` resolves the exact pinned package versions from `pyproject.toml` and

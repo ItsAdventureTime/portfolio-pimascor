@@ -2,15 +2,30 @@
 
 FastAPI application for PIMASCOR's authenticated operational and financial workflows.
 
-## Local development
+## Docker Sandbox execution
 
-The default local database is SQLite so the application can run without installing a database server. PostgreSQL remains the production database and can be selected with `DATABASE_URL`.
+Run dependency installs, API tests, local servers, and container builds inside
+the repository's Docker Sandbox. From the repository root:
 
 ```bash
-cd apps/api
-uv sync --extra dev
-uv run python -m pimascor_api.seed
-uv run uvicorn pimascor_api.main:app --reload --port 8000
+jk-sbx-project exec sh -lc 'cd production-app/apps/api && uv sync --extra dev'
+jk-sbx-project exec sh -lc 'cd production-app/apps/api && uv run pytest'
+```
+
+The VPS deployment receives the API image produced by the local release builder;
+the VPS updater loads that image and does not run an API build.
+
+## Local development
+
+The default local database is SQLite so the application can run without
+installing a database server. PostgreSQL remains the production database and
+can be selected with `DATABASE_URL`. From the repository root, run the
+interactive commands through the Docker Sandbox:
+
+```bash
+jk-sbx-project exec sh -lc 'cd production-app/apps/api && uv sync --extra dev'
+jk-sbx-project exec sh -lc 'cd production-app/apps/api && uv run python -m pimascor_api.seed'
+jk-sbx-project exec sh -lc 'cd production-app/apps/api && uv run uvicorn pimascor_api.main:app --reload --port 8000'
 ```
 
 Local development uses the safe defaults in the application. If a non-default,
@@ -111,7 +126,7 @@ health-check loop.
 ## Tests
 
 ```bash
-uv run pytest
+jk-sbx-project exec sh -lc 'cd production-app/apps/api && uv run pytest'
 ```
 
 When `uv sync` creates or changes `uv.lock`, commit the lock file with the

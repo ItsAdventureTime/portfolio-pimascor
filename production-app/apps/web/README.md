@@ -4,36 +4,51 @@ This is the React browser application. Authentication, clients, Budget Requests 
 
 ## Requirements
 
-- The active Node.js LTS release
-- npm
+- Docker Sandbox with `jk-sbx-project`
+- Node.js and npm inside the project Sandbox
 
 ## Run locally
 
 ```sh
-npm install
-npm run dev
+jk-sbx-project exec sh -lc 'cd production-app/apps/web && npm ci'
+jk-sbx-project exec sh -lc 'cd production-app/apps/web && npm run dev -- --host 0.0.0.0'
 ```
 
-Start the API first, then open the local address printed by Vite, normally `http://localhost:5173`. The default API is `http://127.0.0.1:8000/api/v1`; override it with `VITE_API_URL` when needed.
+Run these commands from the repository root. Start the API first, then open the
+local address printed by Vite, normally `http://localhost:5173`. The default API
+is `http://127.0.0.1:8000/api/v1`; override it with `VITE_API_URL` when needed.
 
 ## Validate a production build
 
 ```sh
-npm run build
-npm run preview
+jk-sbx-project exec sh -lc 'cd production-app/apps/web && npm run build'
+jk-sbx-project exec sh -lc 'cd production-app/apps/web && npm run preview -- --host 0.0.0.0'
 ```
 
-## Export the hosted static site with Podman
+## Build the hosted release locally in Docker Sandbox
 
 The hosted deployment does not run a frontend web-server container. The
 Containerfile uses a verified immutable Node build image digest for its
 temporary build stage, then exports the compiled files for the existing Caddy
 container to serve directly. Node never runs in the deployed application, and
-every rebuilt artifact is validated before it replaces the current site:
+every release artifact is built locally before it is transferred to the VPS.
+
+From the repository root, use the release builder. It calls
+`jk-sbx-project exec` for the API image and the static PWA, then writes
+`api-image.tar`, `web-dist/`, and a release manifest to the ignored output
+directory:
 
 ```sh
-podman build --pull=always --output type=local,dest="$HOME/bridge-ph/pimascor-demo/web-dist" --build-arg VITE_BASE_PATH=/pimascor/demo/ --build-arg VITE_API_URL=/pimascor/demo/api/v1 --build-arg VITE_CSRF_COOKIE_NAME=bridge_ph_pimascor_demo_csrf --build-arg VITE_DEPLOYMENT_TIER=demo .
+production-app/infra/scripts/build-local-release.sh \
+  --tier demo \
+  --commit "$(git rev-parse HEAD)" \
+  --output-dir production-app/.deployment-artifacts.demo.manual
 ```
+
+Use `--tier production` for the production base path and API route. Do not run
+`podman build` on the Mac or on the VPS. The VPS updater loads the transferred
+API image archive and stages the transferred static files; it does not compile
+or build them.
 
 Use the maintenance procedure in `../../infra/README.md` when replacing an
 already deployed build. It stages and validates the new files before Caddy is

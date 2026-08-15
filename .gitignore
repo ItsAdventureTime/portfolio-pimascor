@@ -9,6 +9,9 @@
 **/*.local
 *.zip
 
+# Local Docker Sandbox release bundles are transfer artifacts, not source.
+**/.deployment-artifacts.*/
+
 # Local environments, test output, and runtime state
 **/.venv/
 **/__pycache__/

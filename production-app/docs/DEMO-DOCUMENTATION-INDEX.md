@@ -49,7 +49,10 @@ inferring behavior from screenshots.
 - `DEMO-INCIDENT-RECOVERY-PODMAN-RM.md` — recovery after broad rootless Podman
   stop/remove commands; inspect first and preserve demo data.
 - `../infra/scripts/deploy-demo-vps.sh` — Mac-side transfer entry point.
-- `../infra/scripts/update-demo.sh` — VPS-only guarded build/migration/reset.
+- `../infra/scripts/build-local-release.sh` — optional local Docker Sandbox
+  builder for a manually inspected demo release bundle.
+- `../infra/scripts/update-demo.sh` — VPS-only guarded artifact activation,
+  migration, and demo reset.
 - `../infra/scripts/reconcile-demo-web-root.sh` — Caddy mount and stale-stage
   reconciliation; it validates canonical paths so `/home/jk` and
   `/var/home/jk` equivalents are not falsely rejected.

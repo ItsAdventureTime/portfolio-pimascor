@@ -12,9 +12,9 @@ Podman/Caddy services.
 
 ## What this release deploys
 
-- The API image and the demo-approved Alembic migration chain, with a demo
+- A locally built API image and the demo-approved Alembic migration chain, with a demo
   release gate distinct from the production migration gate.
-- The compiled demo PWA.
+- The locally built demo PWA exported as static files.
 - The reviewed demo Quadlet definitions and reset timer.
 - Accounting exports as separate **Billing CSV** and **Collections CSV**.
 - The local-record archive UI in its intentionally non-operational demo mode.
@@ -61,18 +61,19 @@ From the local Terminal, run this exact command. It uses the confirmed
 
     /Users/jk.deguzman/dev/bridge-ph_Dashboard/production-app/infra/scripts/deploy-demo-vps.sh
 
-It sends the current local source tree (excluding Git history, virtual
-environments, build output, and local test data) to
-`/var/home/jk/bridge-ph/pimascor-demo/source`. It first extracts to a private staging
-directory, then replaces only that source directory. It creates no previous
-source snapshot and does not remove demo data or B2 objects. The transfer
-requires a clean Git worktree and sends the exact committed `production-app`
-tree plus a commit marker. Using Git's archive format excludes macOS metadata,
-ignored build output, virtual environments, and Git history. The updater refuses
-a source tree without a valid commit marker.
+It first builds the API image and static PWA in the local Docker Sandbox. It
+then sends the committed source archive plus the release bundle to
+`/var/home/jk/bridge-ph/pimascor-demo/source` and the matching release-artifact
+directory. It first extracts to private staging directories, then replaces only
+the source and commit-matched artifact bundle. It does not remove demo data or
+B2 objects. The transfer requires a clean Git worktree and sends the exact
+committed `production-app` tree plus a commit marker. Using Git's archive format
+excludes macOS metadata, ignored build output, virtual environments, and Git
+history. The updater refuses a source tree or artifact bundle without matching
+release markers.
 
 The source, runtime data, and Caddy-served PWA share one canonical application
-root. The updater builds the PWA only into
+root. The local release builder exports the PWA, and the updater copies it into
 `/var/home/jk/bridge-ph/pimascor-demo/web-dist`. Caddy's rootless Quadlet must
 bind that directory read-only to `/srv/bridge-ph-pimascor-demo`. The guarded
 reconciliation helper compares canonicalized paths, so Fedora's equivalent
@@ -90,33 +91,39 @@ After the source transfer completes, log in:
 
     ssh -p 22 jk@216.75.75.136
 
-Then run this exact VPS command:
+Then run the exact commit-specific activation command printed by the transfer
+script. The command has this shape:
 
-    cd ~/bridge-ph/pimascor-demo/source && ./infra/scripts/update-demo.sh --source ~/bridge-ph/pimascor-demo/source && bash ./infra/scripts/reconcile-demo-web-root.sh
+```bash
+cd ~/bridge-ph/pimascor-demo/source && ./infra/scripts/update-demo.sh --source ~/bridge-ph/pimascor-demo/source --api-image-archive ~/bridge-ph/pimascor-demo/release-artifacts/COMMIT/api-image.tar --web-dist ~/bridge-ph/pimascor-demo/release-artifacts/COMMIT/web-dist && bash ./infra/scripts/reconcile-demo-web-root.sh
+```
 
-The final reconciliation step runs only after the corrected updater has built
-and verified the Caddy-served PWA. It removes only stale staging directories
+Replace `COMMIT` with the release SHA, or copy the exact printed command.
+
+The final reconciliation step runs only after the updater has loaded the
+prebuilt API image and verified the Caddy-served PWA. It removes only stale staging directories
 matching `~/bridge-ph/pimascor-demo/web-dist.next.*`; it does not alter source,
 database data, uploads, Quadlets, Caddy configuration, secrets, or the live
 `~/bridge-ph/pimascor-demo/web-dist` directory.
 
 ## Required handoff for every demo-relevant change
 
-Every implementation handoff must repeat the two single-line commands above:
-the local transfer command first, then the VPS activation command after login.
-It must also state which local checks actually passed and what the VPS command
-still needs to verify. This repository's current workflow validates source
-locally, transfers source, and builds the API/PWA on the VPS. It does not
-transfer a locally compiled artifact, so a local build must never be presented
-as evidence that the VPS has been updated.
+Every implementation handoff must repeat the local transfer command first, then
+the commit-specific VPS activation command after login. It must also state
+which local checks actually passed and what the VPS command still needs to
+verify. The current workflow builds the API/PWA locally in the Docker Sandbox,
+transfers the source and artifacts, and performs only activation, migration,
+service, and health work on the VPS. Local checks remain evidence of local
+validation; VPS command output is required to prove VPS activation.
 
 ## What the transfer does before starting
 
 1. Keep the existing demo online until the new release has passed its health and
    browser checks. Do not purge Bunny yet.
-2. It transfers the reviewed source tree and this runbook through the private
-   SSH connection. Git synchronization is handled separately through the
-   private remote documented in [Local and private Git workflow](GIT-WORKFLOW.md).
+2. It builds the API image and static PWA in the Docker Sandbox, then transfers
+   the reviewed source tree and commit-matched release bundle through the
+   private SSH connection. Git synchronization is handled separately through
+   the private remote documented in [Local and private Git workflow](GIT-WORKFLOW.md).
 3. The VPS updater confirms the documented demo migration release gate and its
    required demo safeguards are present. The demo database has its own Alembic
    state and is migrated independently; no production database or migration
@@ -128,13 +135,13 @@ as evidence that the VPS has been updated.
 
 The VPS command above runs the guarded demo updater. Its default behavior
 applies migrations and reloads the approved synthetic demo
-baseline, which is the correct choice for a demo release. It builds the API and
-PWA, saves local rollback material, installs the
-reviewed Quadlets, runs the database forward migration through the API/reset
-entrypoint, restarts Caddy, and probes both the health endpoint and public demo
-route. It prints the activated Git commit and expected CSS/JavaScript asset
-names, then verifies that Caddy's mounted `index.html` matches the newly built
-`~/bridge-ph/pimascor-demo/web-dist/index.html`. A warning that the public route still returns an older index means
+baseline, which is the correct choice for a demo release. It loads the
+prebuilt API image and copies the prebuilt PWA, saves local rollback material,
+installs the reviewed Quadlets, runs the database forward migration through the
+API/reset entrypoint, restarts Caddy, and probes both the health endpoint and
+public demo route. It prints the activated Git commit and expected
+CSS/JavaScript asset names, then verifies that Caddy's mounted `index.html`
+matches the transferred `~/bridge-ph/pimascor-demo/web-dist/index.html`. A warning that the public route still returns an older index means
 the origin is updated but Bunny still needs the documented targeted purge. Stop
 if it reports an error. Do not purge the CDN after a failed update.
 Do not run `update-demo.sh` directly from macOS; it is intentionally VPS-only.

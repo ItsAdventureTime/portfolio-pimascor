@@ -52,7 +52,7 @@ this on the VPS as `jk` to reinstall Quadlets and recreate removed containers
 without resetting synthetic records:
 
 ```bash
-cd ~/bridge-ph/pimascor-demo/source && ./infra/scripts/update-demo.sh --source ~/bridge-ph/pimascor-demo/source --keep-demo-data && bash ./infra/scripts/reconcile-demo-web-root.sh
+cd ~/bridge-ph/pimascor-demo/source && ./infra/scripts/update-demo.sh --source ~/bridge-ph/pimascor-demo/source --api-image-archive ~/bridge-ph/pimascor-demo/release-artifacts/COMMIT/api-image.tar --web-dist ~/bridge-ph/pimascor-demo/release-artifacts/COMMIT/web-dist --keep-demo-data && bash ./infra/scripts/reconcile-demo-web-root.sh
 ```
 
 The updater recreates the demo database/API containers from Quadlets and

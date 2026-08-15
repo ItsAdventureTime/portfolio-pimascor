@@ -13,6 +13,8 @@ PUBLIC_URL="https://delegateops.business/pimascor/demo/"
 API_HEALTH_URL="https://delegateops.business/pimascor/demo/api/v1/health"
 SOURCE_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 RESET_BASELINE=true
+API_IMAGE_ARCHIVE=""
+WEB_DIST=""
 RUNTIME_ROOT="${XDG_RUNTIME_DIR:-/run/user/$(id -u)}"
 MAINTENANCE_LOCK="${RUNTIME_ROOT}/bridge-ph-pimascor-demo-maintenance.lock"
 
@@ -36,9 +38,11 @@ flock --nonblock 9 || {
 
 usage() {
   printf '%s\n' \
-    'Usage: infra/scripts/update-demo.sh [--source PATH] [--keep-demo-data]' \
+    'Usage: infra/scripts/update-demo.sh --source PATH --api-image-archive PATH --web-dist PATH [--keep-demo-data]' \
     '' \
     '  --source PATH       production-app source root (default: inferred from this script)' \
+    '  --api-image-archive PATH  prebuilt API image archive from the local Docker Sandbox' \
+    '  --web-dist PATH     prebuilt static PWA directory from the local Docker Sandbox' \
     '  --keep-demo-data    migrate existing demo records but do not reload the baseline'
 }
 
@@ -53,6 +57,16 @@ while (($#)); do
       RESET_BASELINE=false
       shift
       ;;
+    --api-image-archive)
+      [[ $# -ge 2 ]] || { usage; exit 2; }
+      API_IMAGE_ARCHIVE="$2"
+      shift 2
+      ;;
+    --web-dist)
+      [[ $# -ge 2 ]] || { usage; exit 2; }
+      WEB_DIST="$2"
+      shift 2
+      ;;
     --help|-h)
       usage
       exit 0
@@ -62,8 +76,19 @@ while (($#)); do
       usage >&2
       exit 2
       ;;
-  esac
+esac
 done
+
+[[ -n "$API_IMAGE_ARCHIVE" && -f "$API_IMAGE_ARCHIVE" ]] || {
+  printf '%s\n' 'A prebuilt API image archive is required; build it locally in the Docker Sandbox.' >&2
+  exit 2
+}
+[[ -n "$WEB_DIST" && -d "$WEB_DIST" ]] || {
+  printf '%s\n' 'A prebuilt static web directory is required; build it locally in the Docker Sandbox.' >&2
+  exit 2
+}
+API_IMAGE_ARCHIVE="$(cd "$(dirname "$API_IMAGE_ARCHIVE")" && pwd)/$(basename "$API_IMAGE_ARCHIVE")"
+WEB_DIST="$(cd "$WEB_DIST" && pwd)"
 
 required_files=(
   "${SOURCE_ROOT}/.deployment-source-commit"
@@ -98,6 +123,17 @@ release_commit="$(tr -d '\r\n' < "${SOURCE_ROOT}/.deployment-source-commit")"
   printf 'Refusing to update: the transferred Git commit marker is missing or invalid.\n' >&2
   exit 1
 }
+release_image="localhost/bridge-ph-pimascor-demo-api:release-${release_commit}"
+release_bundle_root="$(dirname "$API_IMAGE_ARCHIVE")"
+release_manifest="${release_bundle_root}/release-manifest"
+[[ -f "$release_manifest" ]] || { printf 'Missing release manifest: %s\n' "$release_manifest" >&2; exit 1; }
+grep -Fqx 'tier=demo' "$release_manifest" || { printf '%s\n' 'Release artifact tier does not match demo.' >&2; exit 1; }
+grep -Fqx "commit=${release_commit}" "$release_manifest" || { printf '%s\n' 'Release artifacts do not match the transferred source commit.' >&2; exit 1; }
+grep -Fqx "api_image=${release_image}" "$release_manifest" || { printf '%s\n' 'Release manifest contains an unexpected API image.' >&2; exit 1; }
+[[ -s "$API_IMAGE_ARCHIVE" ]] || { printf '%s\n' 'The prebuilt API image archive is empty.' >&2; exit 1; }
+for web_file in index.html manifest.webmanifest sw.js; do
+  [[ -f "${WEB_DIST}/${web_file}" ]] || { printf 'Missing prebuilt web file: %s\n' "${WEB_DIST}/${web_file}" >&2; exit 1; }
+done
 grep -Fq '.record-tabs, .tabbed-heading { display: flex; flex-wrap: wrap;' \
   "${SOURCE_ROOT}/apps/web/src/styles.css" || {
   printf 'Refusing to update: the transferred source does not contain the reviewed tab overflow fix.\n' >&2
@@ -204,6 +240,13 @@ for secret_name in \
   podman secret exists "${secret_name}" || { printf 'Missing Podman secret: %s\n' "${secret_name}" >&2; exit 1; }
 done
 
+printf 'Loading prebuilt demo API image for commit %s...\n' "$release_commit"
+podman load --input "$API_IMAGE_ARCHIVE" >/dev/null
+podman image exists "$release_image" || {
+  printf 'Prebuilt API image was not loaded with the expected tag: %s\n' "$release_image" >&2
+  exit 1
+}
+
 bash "${SOURCE_ROOT}/infra/scripts/retire-legacy-accustandard-quadlet.sh"
 
 install -d -m 700 \
@@ -278,15 +321,13 @@ fi
 
 release_stamp="$(date -u +%Y%m%dT%H%M%SZ)"
 rollback_image="localhost/bridge-ph-pimascor-demo-api:rollback-${release_stamp}"
-release_image="localhost/bridge-ph-pimascor-demo-api:release-${release_commit}"
 rollback_image_created=false
 if podman image exists localhost/bridge-ph-pimascor-demo-api:demo; then
   podman tag localhost/bridge-ph-pimascor-demo-api:demo "${rollback_image}"
   rollback_image_created=true
 fi
 
-printf 'Building the revised API image...\n'
-podman build --pull=always --tag "${release_image}" "${SOURCE_ROOT}/apps/api"
+printf 'Activating prebuilt demo API image for commit %s...\n' "$release_commit"
 
 install -d -m 700 "${WEB_ROOT}"
 web_stage="$(mktemp -d "${WEB_ROOT}/web-dist.next.XXXXXX")"
@@ -295,15 +336,8 @@ cleanup_web_stage() {
   rm -rf -- "${web_stage}"
 }
 trap cleanup_web_stage EXIT
-printf 'Building the revised static PWA into staging...\n'
-podman build \
-  --pull=always \
-  --output "type=local,dest=${web_stage}" \
-  --build-arg VITE_BASE_PATH=/pimascor/demo/ \
-  --build-arg VITE_API_URL=/pimascor/demo/api/v1 \
-  --build-arg VITE_CSRF_COOKIE_NAME=bridge_ph_pimascor_demo_csrf \
-  --build-arg VITE_DEPLOYMENT_TIER=demo \
-  "${SOURCE_ROOT}/apps/web"
+printf 'Staging prebuilt demo web assets for commit %s...\n' "$release_commit"
+cp -a "${WEB_DIST}/." "${web_stage}/"
 
 test -f "${web_stage}/index.html"
 test -f "${web_stage}/manifest.webmanifest"

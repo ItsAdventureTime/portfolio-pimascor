@@ -38,8 +38,9 @@ databases, and runtime output remain prohibited.
    explicit private-push guard.
 7. Verify GitHub authentication and the published commit with GitHub CLI.
 8. For demo changes, use the committed tree with
-   `infra/scripts/deploy-demo-vps.sh` and then run the documented VPS
-   activation command.
+   `infra/scripts/deploy-demo-vps.sh`. It builds the API image and static PWA
+   in the Docker Sandbox before transfer; then run the documented VPS
+   activation command with the commit-specific artifact paths.
 
 The responsibility is intentionally split: local Git creates the commit;
 GitHub CLI authenticates and verifies publication to the HTTPS remote.
@@ -97,8 +98,9 @@ log.
 
 Every response that changes production code, infrastructure, or deployment
 configuration must include both commands below, clearly labelled. The Mac
-command transfers the committed production tree; the VPS command activates it.
-Do not describe local build output as proof of VPS deployment.
+command builds and transfers the committed production source plus artifacts; the
+VPS command activates those artifacts. Do not describe local build output as
+proof of VPS deployment.
 
 **Run on macOS:**
 
@@ -109,9 +111,13 @@ Do not describe local build output as proof of VPS deployment.
 **Run after logging into the VPS:**
 
 ```bash
-cd /var/home/jk/bridge-ph/pimascor/source && ./infra/scripts/provision-production-secrets.sh && ./infra/scripts/update-production.sh --source /var/home/jk/bridge-ph/pimascor/source && ./infra/scripts/install-production-caddy.sh
+cd /var/home/jk/bridge-ph/pimascor/source && ./infra/scripts/provision-production-secrets.sh
+cd /var/home/jk/bridge-ph/pimascor/source && ./infra/scripts/update-production.sh --source /var/home/jk/bridge-ph/pimascor/source --api-image-archive /var/home/jk/bridge-ph/pimascor/release-artifacts/COMMIT/api-image.tar --web-dist /var/home/jk/bridge-ph/pimascor/release-artifacts/COMMIT/web-dist
+cd /var/home/jk/bridge-ph/pimascor/source && ./infra/scripts/install-production-caddy.sh
 ```
 
 If the approved account manifest changed, the Mac command must use
-`--refresh-account-manifest`; secrets, migrations, and account bootstrap remain
-idempotent according to `PRODUCTION-VPS-DEPLOYMENT.md`.
+`--refresh-account-manifest`. Replace `COMMIT` with the release SHA, or copy the
+exact artifact paths printed by the transfer script. Secrets, migrations, and
+account bootstrap remain idempotent according to
+`PRODUCTION-VPS-DEPLOYMENT.md`.

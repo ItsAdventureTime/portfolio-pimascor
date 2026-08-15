@@ -52,16 +52,20 @@ Expected: `true` and `Linger=yes`.
 
 ## 3. Synchronize reviewed source
 
-Use the committed Git-archive transfer entry points from the repository root.
-They refuse dirty trees, stream only the committed `production-app` tree, stage
-the archive remotely, and write a commit marker consumed by the VPS updater:
+Use the committed release transfer entry points from the repository root.
+They refuse dirty trees, build the API image and static PWA locally inside the
+Docker Sandbox, transfer only the committed `production-app` tree plus the
+prebuilt artifacts, stage the bundle remotely, and write a commit marker
+consumed by the VPS updater:
 
 ```bash
 production-app/infra/scripts/deploy-demo-vps.sh
 production-app/infra/scripts/deploy-production-vps.sh
 ```
 
-After login, run the matching VPS-only updater printed by the transfer script.
+After login, run the matching VPS activation command printed by the transfer
+script. The VPS updater loads the prebuilt API image and copies the prebuilt
+web files; it does not compile or build them.
 Do not use ad-hoc file synchronization; it can transfer ignored build output or a source tree
 whose commit does not match the release being activated.
 
@@ -121,6 +125,29 @@ the Resend key remains a Podman secret.
 
 ## 5. Build and install
 
+### Local Docker Sandbox prerequisite
+
+The VPS runtime is `linux/amd64`. The project Docker Sandbox may run on an
+ARM-based host, so the local builder checks that the Sandbox can execute
+`linux/amd64` build steps before it starts. Docker's current guidance is to use
+QEMU/binfmt emulation or a native builder for cross-platform builds. The release
+builder automatically installs the Sandbox-local QEMU packages and registers
+the x86_64 handler when that check is missing; it never changes the VPS.
+
+You can verify the capability directly:
+
+```bash
+jk-sbx-project exec docker run \
+  --platform linux/amd64 \
+  --rm \
+  docker.io/library/alpine@sha256:14358309a308569c32bdc37e2e0e9694be33a9d99e68afb0f5ff33cc1f695dce \
+  uname -m
+```
+
+Expected output is `x86_64`. If the check still fails after the builder's
+automatic setup, configure QEMU/binfmt or use a native `linux/amd64` builder
+before retrying. See Docker's [multi-platform build guidance](https://docs.docker.com/build/building/multi-platform/).
+
 ### Release image pinning
 
 Deployment inputs are pinned to verified `linux/amd64` content digests in the
@@ -133,8 +160,10 @@ The shared Caddy installer accepts the legacy fully qualified `caddy:alpine`
 reference only to migrate it to the approved digest
 (`sha256:98eb57d882ccd5213d1688764db10c1ca2c58a1ca3a6717a3411ad798f7a423a`);
 already digest-pinned Caddy Quadlets are preserved.
-The VPS updater uses `--pull=always`, so a pruned cache is rebuilt from those
-immutable references; Quadlet `Pull=missing` then uses the same digest.
+The Docker Sandbox release builder uses Docker's `--pull` flag and the
+`linux/amd64` platform, so each local artifact is rebuilt from those
+immutable references. The VPS updater loads the transferred image; Quadlet
+`Pull=missing` remains relevant only to separately managed registry images.
 
 To update a pin, inspect the desired tag for the deployment architecture,
 record the digest returned by `podman manifest inspect`, update every matching
@@ -142,35 +171,31 @@ reference together, rebuild both images, and run focused shell/image
 validation before committing and deploying. Never replace a digest with a
 floating `latest` or an unverified digest.
 
-For an already installed demo, use the guarded updater:
+For an already installed demo or a first deployment, run the transfer script
+from the repository workspace. It builds the API image and static PWA locally,
+then prints the exact VPS-only activation command:
 
 ```bash
-cd ~/bridge-ph/pimascor-demo/source
-infra/scripts/update-demo.sh
+production-app/infra/scripts/deploy-demo-vps.sh
 ```
 
-It verifies secrets and migrations, installs the reviewed Quadlets, checks PostgreSQL, preserves local rollback material, builds the API and PWA, applies migrations, reloads the demo baseline, restarts Caddy, and probes HTTPS.
-
-For a first deployment, build the API:
+For a manual local bundle, use the same Docker Sandbox builder invoked by the
+transfer script:
 
 ```bash
-cd ~/bridge-ph/pimascor-demo/source
-podman build --pull=missing --tag localhost/bridge-ph-pimascor-demo-api:demo apps/api
+production-app/infra/scripts/build-local-release.sh \
+  --tier demo \
+  --commit "$(git rev-parse HEAD)" \
+  --output-dir production-app/.deployment-artifacts.demo.manual
 ```
 
-Export the PWA:
+After the transfer, the guarded VPS activation command verifies secrets and
+migrations, loads the API image, installs the reviewed Quadlets, checks
+PostgreSQL, preserves local rollback material, stages the supplied PWA, applies
+migrations, reloads the demo baseline, restarts Caddy, and probes HTTPS. It does
+not compile or build application code.
 
-```bash
-cd ~/bridge-ph/pimascor-demo/source
-mkdir -p ~/bridge-ph/pimascor-demo/web-dist.new
-podman build --pull=missing --file apps/web/Containerfile --output type=local,dest="$HOME/bridge-ph/pimascor-demo/web-dist.new" apps/web
-install -d -m 700 ~/bridge-ph/pimascor-demo/web-dist
-find ~/bridge-ph/pimascor-demo/web-dist -mindepth 1 -maxdepth 1 -exec rm -rf -- {} +
-cp -a ~/bridge-ph/pimascor-demo/web-dist.new/. ~/bridge-ph/pimascor-demo/web-dist/
-rm -rf -- ~/bridge-ph/pimascor-demo/web-dist.new
-```
-
-Install definitions:
+Install definitions only when performing a first-time manual VPS setup:
 
 ```bash
 install -m 600 infra/quadlet/demo/* ~/.config/containers/systemd/bridge-ph/pimascor-demo/
@@ -338,12 +363,10 @@ Expected:
 
 ## 11. Updates and rollback cleanup
 
-After synchronizing the source, update, migrate, reload the demo baseline, restart
-Caddy, and run the public health checks:
-
-```bash
-cd ~/bridge-ph/pimascor-demo/source && infra/scripts/update-demo.sh
-```
+After synchronizing the source and local release bundle, run the complete
+activation command printed by `infra/scripts/deploy-demo-vps.sh`. It loads the
+prebuilt API image, stages the static PWA, updates, migrates, reloads the demo
+baseline, restarts Caddy, and runs the public health checks.
 
 List or remove accepted local rollback material interactively:
 
@@ -453,10 +476,11 @@ dry-run, and quarantine restore procedure; Admin/DCS web access is catalog-only.
 # Production deployment
 
 The isolated production path is documented in `docs/PRODUCTION-VPS-DEPLOYMENT.md`.
-Use `infra/scripts/deploy-production-vps.sh` from the Mac, then run
-`infra/scripts/provision-production-secrets.sh` followed by
-`infra/scripts/update-production.sh` under `/var/home/jk/bridge-ph/pimascor/source`
-on the VPS. Production Quadlets belong only in
+Use `infra/scripts/deploy-production-vps.sh` from the Mac. It builds the
+production API image and PWA in the Docker Sandbox, then transfers the source
+and release bundle. After login, run the printed activation command with the
+`--api-image-archive` and `--web-dist` paths, followed by
+`infra/scripts/install-production-caddy.sh`. Production Quadlets belong only in
 `~/.config/containers/systemd/bridge-ph/pimascor`; do not reuse demo units or
 the demo database/object prefix. The secrets helper also creates the protected
 account manifest consumed by the production account-bootstrap Quadlet; it never

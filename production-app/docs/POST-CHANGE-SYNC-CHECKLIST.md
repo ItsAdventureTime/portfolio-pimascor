@@ -71,6 +71,11 @@ VPS production operations and Podman Quadlets. Host-side Git, `gh`, source
 editing, and exact sandbox lifecycle commands remain allowed control-plane
 operations.
 
+For deployment changes, the local release builder must produce the API image
+archive and static PWA before transfer. The VPS updater is activation-only: it
+loads the supplied image, stages the supplied web directory, runs the required
+runtime migrations and health checks, and never calls podman build.
+
 For documentation-only changes, at minimum run `git diff --check`, review the
 staged diff, verify referenced files exist, and run any applicable artifact
 inspection or rendering check.

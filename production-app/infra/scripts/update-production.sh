@@ -8,6 +8,8 @@ TIMER_ROOT="${HOME}/.config/systemd/user"
 PUBLIC_URL="https://delegateops.business/pimascor/"
 API_HEALTH_URL="https://delegateops.business/pimascor/api/v1/health"
 SOURCE_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
+API_IMAGE_ARCHIVE=""
+WEB_DIST=""
 RUNTIME_ROOT="${XDG_RUNTIME_DIR:-/run/user/$(id -u)}"
 MAINTENANCE_LOCK="${RUNTIME_ROOT}/bridge-ph-pimascor-maintenance.lock"
 
@@ -20,10 +22,23 @@ flock --nonblock 9 || { printf '%s\n' 'Another production update is running.' >&
 while (($#)); do
   case "$1" in
     --source) [[ $# -ge 2 ]] || exit 2; SOURCE_ROOT="$(cd "$2" && pwd)"; shift 2 ;;
-    --help|-h) printf '%s\n' 'Usage: update-production.sh [--source PATH]'; exit 0 ;;
+    --api-image-archive) [[ $# -ge 2 ]] || exit 2; API_IMAGE_ARCHIVE="$2"; shift 2 ;;
+    --web-dist) [[ $# -ge 2 ]] || exit 2; WEB_DIST="$2"; shift 2 ;;
+    --help|-h) printf '%s\n' 'Usage: update-production.sh --source PATH --api-image-archive PATH --web-dist PATH'; exit 0 ;;
     *) printf 'Unknown option: %s\n' "$1" >&2; exit 2 ;;
   esac
 done
+
+[[ -n "$API_IMAGE_ARCHIVE" && -f "$API_IMAGE_ARCHIVE" ]] || {
+  printf '%s\n' 'A prebuilt API image archive is required; build it locally in the Docker Sandbox.' >&2
+  exit 2
+}
+[[ -n "$WEB_DIST" && -d "$WEB_DIST" ]] || {
+  printf '%s\n' 'A prebuilt static web directory is required; build it locally in the Docker Sandbox.' >&2
+  exit 2
+}
+API_IMAGE_ARCHIVE="$(cd "$(dirname "$API_IMAGE_ARCHIVE")" && pwd)/$(basename "$API_IMAGE_ARCHIVE")"
+WEB_DIST="$(cd "$WEB_DIST" && pwd)"
 
 required_files=(
   "${SOURCE_ROOT}/.deployment-source-commit"
@@ -73,6 +88,17 @@ grep -Fq 'support_ticket_status.create(bind, checkfirst=True)' "$support_ticket_
 [[ -x "${SOURCE_ROOT}/infra/scripts/production-backup-now.sh" && -x "${SOURCE_ROOT}/infra/scripts/production-restore.sh" ]] || { printf '%s\n' 'Production backup/restore helpers must be executable.' >&2; exit 1; }
 release_commit="$(tr -d '\r\n' < "${SOURCE_ROOT}/.deployment-source-commit")"
 [[ "$release_commit" =~ ^[0-9a-f]{40}$ ]] || { printf '%s\n' 'Invalid Git commit marker.' >&2; exit 1; }
+release_image="localhost/bridge-ph-pimascor-api:release-${release_commit}"
+release_bundle_root="$(dirname "$API_IMAGE_ARCHIVE")"
+release_manifest="${release_bundle_root}/release-manifest"
+[[ -f "$release_manifest" ]] || { printf 'Missing release manifest: %s\n' "$release_manifest" >&2; exit 1; }
+grep -Fqx 'tier=production' "$release_manifest" || { printf '%s\n' 'Release artifact tier does not match production.' >&2; exit 1; }
+grep -Fqx "commit=${release_commit}" "$release_manifest" || { printf '%s\n' 'Release artifacts do not match the transferred source commit.' >&2; exit 1; }
+grep -Fqx "api_image=${release_image}" "$release_manifest" || { printf '%s\n' 'Release manifest contains an unexpected API image.' >&2; exit 1; }
+[[ -s "$API_IMAGE_ARCHIVE" ]] || { printf '%s\n' 'The prebuilt API image archive is empty.' >&2; exit 1; }
+for web_file in index.html manifest.webmanifest sw.js; do
+  [[ -f "${WEB_DIST}/${web_file}" ]] || { printf 'Missing prebuilt web file: %s\n' "${WEB_DIST}/${web_file}" >&2; exit 1; }
+done
 grep -Fqx 'Environment=DEPLOYMENT_TIER=production' "${SOURCE_ROOT}/infra/quadlet/production/bridge-ph-pimascor-api.container"
 grep -Fqx 'Environment=DATA_EXPORT_ENABLED=true' "${SOURCE_ROOT}/infra/quadlet/production/bridge-ph-pimascor-api.container"
 bootstrap_quadlet="${SOURCE_ROOT}/infra/quadlet/production/bridge-ph-pimascor-account-bootstrap.container"
@@ -85,6 +111,13 @@ grep -Fqx 'Secret=bridge_ph_pimascor_resend_api_key,uid=10001,gid=10001,mode=040
 for secret_name in bridge_ph_pimascor_postgres_password bridge_ph_pimascor_database_url bridge_ph_pimascor_resend_api_key bridge_ph_pimascor_b2_key_id bridge_ph_pimascor_b2_application_key bridge_ph_pimascor_pgpass bridge_ph_pimascor_restic_password bridge_ph_pimascor_account_bootstrap; do
   podman secret exists "$secret_name" || { printf 'Missing production Podman secret: %s\n' "$secret_name" >&2; exit 1; }
 done
+
+printf 'Loading prebuilt production API image for commit %s...\n' "$release_commit"
+podman load --input "$API_IMAGE_ARCHIVE" >/dev/null
+podman image exists "$release_image" || {
+  printf 'Prebuilt API image was not loaded with the expected tag: %s\n' "$release_image" >&2
+  exit 1
+}
 
 bash "${SOURCE_ROOT}/infra/scripts/retire-legacy-accustandard-quadlet.sh"
 
@@ -128,21 +161,19 @@ if ! systemctl --user start bridge-ph-pimascor-db.service; then
   exit 1
 fi
 
-printf 'Building production API image for commit %s...\n' "$release_commit"
-release_image="localhost/bridge-ph-pimascor-api:release-${release_commit}"
+printf 'Activating prebuilt production API image for commit %s...\n' "$release_commit"
 rollback_image="localhost/bridge-ph-pimascor-api:rollback-${release_commit}"
 old_image_exists=false
 if podman image exists localhost/bridge-ph-pimascor-api:production; then
   podman tag localhost/bridge-ph-pimascor-api:production "${rollback_image}"
   old_image_exists=true
 fi
-podman build --pull=always --tag "${release_image}" "${SOURCE_ROOT}/apps/api"
 web_stage="$(mktemp -d "${WEB_ROOT}/web-dist.next.XXXXXX")"
 previous_web="${WEB_ROOT}/web-dist.previous.${release_commit}"
 cleanup_release() { [[ -d "${web_stage:-}" ]] && rm -rf -- "${web_stage}"; }
 trap cleanup_release EXIT
-podman build --pull=always --output "type=local,dest=${web_stage}" --build-arg VITE_BASE_PATH=/pimascor/ --build-arg VITE_API_URL=/pimascor/api/v1 --build-arg VITE_CSRF_COOKIE_NAME=bridge_ph_pimascor_csrf --build-arg VITE_DEPLOYMENT_TIER=production "${SOURCE_ROOT}/apps/web"
-test -f "${web_stage}/index.html" && test -f "${web_stage}/manifest.webmanifest" && test -f "${web_stage}/sw.js"
+printf 'Staging prebuilt production web assets for commit %s...\n' "$release_commit"
+cp -a "${WEB_DIST}/." "${web_stage}/"
 install -d -m 700 "${WEB_ROOT}/web-dist"
 rm -rf -- "${previous_web}"
 cp -a "${WEB_ROOT}/web-dist" "${previous_web}"

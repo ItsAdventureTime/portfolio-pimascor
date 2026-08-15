@@ -81,27 +81,30 @@ not prove VPS deployment.
 
 ## Required demo deployment handoff
 
-**Confirmed by owner on 30 July 2026.** Whenever a completed change affects the
-demo release, the handoff must include both exact, single-line commands below:
+**Confirmed by owner on 30 July 2026; deployment workflow revised on 16 August
+2026.** Whenever a completed change affects the demo release, the handoff must
+include the local transfer command and the commit-specific VPS activation
+command below:
 
 ```bash
 /Users/jk.deguzman/dev/bridge-ph_Dashboard/production-app/infra/scripts/deploy-demo-vps.sh
 ```
 
-Run that command locally on the Mac. After it succeeds and after logging in with
-`ssh -p 22 jk@216.75.75.136`, run this command on the VPS:
+Run that command locally on the Mac. After it succeeds and after logging in,
+run the exact activation command printed by the transfer script. Its shape is:
 
 ```bash
-cd ~/bridge-ph/pimascor-demo/source && ./infra/scripts/update-demo.sh --source ~/bridge-ph/pimascor-demo/source && bash ./infra/scripts/reconcile-demo-web-root.sh
+cd ~/bridge-ph/pimascor-demo/source && ./infra/scripts/update-demo.sh --source ~/bridge-ph/pimascor-demo/source --api-image-archive ~/bridge-ph/pimascor-demo/release-artifacts/COMMIT/api-image.tar --web-dist ~/bridge-ph/pimascor-demo/release-artifacts/COMMIT/web-dist && bash ./infra/scripts/reconcile-demo-web-root.sh
 ```
 
-**Confirmed in repository.** The local transfer sends reviewed source, not a
-pre-built release artifact: it excludes local `apps/web/dist`, `node_modules`,
-virtual environments, and test data. A local test or `npm run build` is evidence
-of local validation only. The VPS updater builds the API and PWA there before it
-activates the demo. Report those two evidence categories separately and never
-claim the VPS update, migration, restart, health check, or CDN purge completed
-until its command output is available.
+**Confirmed in repository.** The local transfer builds the API image and static
+PWA in the Docker Sandbox, then sends the reviewed source and commit-matched
+release artifacts; it excludes local `apps/web/dist`, `node_modules`, virtual
+environments, and test data. A local check is evidence of local validation only.
+The VPS updater loads the API image and stages the PWA before it activates the
+demo. Report local and VPS evidence separately and never claim the VPS update,
+migration, restart, health check, or CDN purge completed until its command
+output is available.
 
 ## Sales quotation printing
 

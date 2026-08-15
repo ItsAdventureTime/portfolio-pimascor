@@ -57,8 +57,9 @@ starting their Quadlet units and recreates a missing network through its
 user-level `.network` unit before attempting the API.
 
 If the production source directory is missing or incomplete, run this on the
-Mac. The transfer contains committed source and Quadlet definitions only; it
-does not transfer secrets, PostgreSQL data, uploads, or backups:
+Mac. The transfer builds the API image and static PWA in the Docker Sandbox,
+then contains committed source, Quadlet definitions, and commit-matched
+artifacts. It does not transfer secrets, PostgreSQL data, uploads, or backups:
 
 ```bash
 /Users/jk.deguzman/dev/bridge-ph_Dashboard/production-app/infra/scripts/deploy-production-vps.sh
@@ -74,12 +75,12 @@ If the PostgreSQL bind-mounted data directory exists and the required secrets
 are present, run on the VPS as `jk`:
 
 ```bash
-cd /var/home/jk/bridge-ph/pimascor/source && ./infra/scripts/update-production.sh --source /var/home/jk/bridge-ph/pimascor/source
+cd /var/home/jk/bridge-ph/pimascor/source && ./infra/scripts/update-production.sh --source /var/home/jk/bridge-ph/pimascor/source --api-image-archive /var/home/jk/bridge-ph/pimascor/release-artifacts/COMMIT/api-image.tar --web-dist /var/home/jk/bridge-ph/pimascor/release-artifacts/COMMIT/web-dist
 ```
 
 `update-production.sh` reinstalls the production Quadlets, regenerates the
-user-level services, recreates missing containers, rebuilds the API and web
-images, runs recorded migrations, and restarts the production workers. It does
+user-level services, recreates missing containers, loads the prebuilt API image
+and web assets, runs recorded migrations, and restarts the production workers. It does
 not reset the database or seed fictional records. If the API fails to start,
 the updater now prints the user-unit status, recent user journal, and recent
 API container log automatically, without printing secret contents. Preserve
