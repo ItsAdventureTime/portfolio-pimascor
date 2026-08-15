@@ -10,9 +10,15 @@ https://github.com/ItsAdventureTime/bridge-pimascor.git
 
 ## Required sequence for every tracked change
 
-**Transport rule:** create commits with local `git` commands. Publish the
+**Default rule:** after every update, revision, or modification, follow
+[`POST-CHANGE-SYNC-CHECKLIST.md`](POST-CHANGE-SYNC-CHECKLIST.md). Search current
+official guidance before acting, update the relevant documentation and guides,
+validate the change, create a signed local commit, publish it through the
+authenticated HTTPS workflow, and verify the remote SHA.
+
+**Transport rule:** create signed commits with local `git` commands. Publish the
 already-created commit with GitHub CLI over the HTTPS `origin`; do not use an
-SSH GitHub remote or an SSH signing key for Git transport. `gh auth setup-git
+SSH GitHub remote or SSH Git transport. `gh auth setup-git
 --hostname github.com` configures Git to use the authenticated GitHub CLI
 credential helper. Authentication must still be verified with `gh auth status`;
 do not assume a machine is authenticated.
@@ -24,7 +30,7 @@ databases, and runtime output remain prohibited.
 
 1. Review the worktree and confirm the intended files are the only changes.
 2. Run the relevant local checks from `CONTRIBUTING.md`.
-3. Commit the change locally with a focused Conventional Commit message.
+3. Commit the change locally with a focused signed Conventional Commit message.
 4. Confirm `origin` still resolves to the HTTPS private repository above.
 5. Run `gh auth setup-git --hostname github.com`; GitHub CLI supplies the
    authenticated HTTPS credential helper used by Git operations.
@@ -68,7 +74,7 @@ Run from the repository root after checks and after committing:
 
 ```bash
 git add <reviewed-files>
-git commit -m "type(scope): concise change"
+git commit -S -m "type(scope): concise change"
 git remote get-url origin
 git status --short
 git remote set-url origin https://github.com/ItsAdventureTime/bridge-pimascor.git

@@ -9,9 +9,17 @@ private GitHub mirror as a synchronized recovery copy, including approved
 NDA/client project materials. Credentials, access tokens, private keys, local
 databases, runtime state, and unapproved secrets remain excluded.
 
+## Default post-change rule
+
+Every update, revision, or modification must follow
+`production-app/docs/POST-CHANGE-SYNC-CHECKLIST.md`. A change is not complete
+until the relevant documentation and guides are synchronized, applicable
+checks pass, the local commit is signed, the authorized HTTPS remote is
+published through GitHub CLI authentication, and the remote SHA is verified.
+
 - The project owner has authorized this exact private mirror: `https://github.com/ItsAdventureTime/bridge-pimascor.git`.
 - GitHub publication uses HTTPS with the GitHub CLI credential helper. Run `gh auth setup-git --hostname github.com`; do not configure an SSH GitHub remote.
-- Create commits with local `git commit`; use `gh auth setup-git` plus the guarded HTTPS push and `gh api` verification for remote synchronization. GitHub CLI does not provide a separate `gh commit` command.
+- Create signed commits with local `git commit -S`; use `gh auth setup-git` plus the guarded HTTPS push and `gh api` verification for remote synchronization. GitHub CLI does not provide a separate local `gh commit` command.
 - The configured pre-push hook blocks every other remote and requires the explicit `PIMASCOR_ALLOW_PRIVATE_GITHUB_PUSH=1` flag for this mirror.
 - Never change the remote to a public repository or push NDA material to any other service.
 - Use a private, access-controlled, encrypted backup for the working directory and Git metadata. A Git bundle can provide a portable offline copy of committed history, but it does not include uncommitted worktree changes, local configuration, hooks, or the index.
@@ -20,8 +28,8 @@ databases, runtime state, and unapproved secrets remain excluded.
 
 ## Working conventions
 
-Use local `git` for `add`, `commit`, and history inspection. No SSH key is
-required for this Git workflow. Use GitHub CLI for
+Use local `git` for `add`, signed `commit`, and history inspection. No SSH Git
+remote or SSH Git transport is allowed for this workflow. Use GitHub CLI for
 remote authentication, publication, and verification over the HTTPS origin:
 `gh auth setup-git --hostname github.com`, `gh auth status`, and
 `PIMASCOR_ALLOW_PRIVATE_GITHUB_PUSH=1 git push origin main`. Never replace the

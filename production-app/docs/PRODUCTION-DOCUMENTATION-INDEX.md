@@ -23,6 +23,8 @@ demo authority, runbook sequence, generated-artifact boundary, and exclusions.
   carry-forward fixes for menus, grids, and responsive forms.
 - `REPOSITORY-BACKUP-RUNBOOK.md` — private GitHub continuity, encrypted mirror,
   restore checks, and exposure response.
+- `POST-CHANGE-SYNC-CHECKLIST.md` — required research, documentation sync,
+  validation, signed commit, HTTPS publication, and remote verification flow.
 
 ## Security and operations
 
@@ -74,6 +76,9 @@ the account-bootstrap secret; ordinary releases preserve it.
 6. Use signed commits and GitHub CLI remote checks over the configured HTTPS
    remote; verify the GitHub signature rather than assuming a local commit is
    verified.
+7. After every update, revision, or modification, follow
+   `POST-CHANGE-SYNC-CHECKLIST.md` and record any remaining unrelated worktree
+   changes without staging them.
 
 Local Git `main` is the production documentation source of truth. GitHub
 `origin/main` is synchronized after local validation and signed commit
