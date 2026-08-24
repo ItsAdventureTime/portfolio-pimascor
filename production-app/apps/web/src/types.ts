@@ -388,18 +388,6 @@ export interface ApiDataExport {
   requested_by: ApiUser
 }
 
-export interface ApiBackupCatalogItem {
-  id: string
-  completed_at: string
-  scope: string
-  encrypted: boolean
-  storage: string
-  retention_class: string
-  local_copy_deleted: boolean
-  restore_mode: string
-  verification: string
-}
-
 export interface ApiBilling {
   id: string
   reference: string

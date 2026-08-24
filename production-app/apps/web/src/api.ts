@@ -1,4 +1,4 @@
-import type { ApiActivityCategory, ApiAdminActivity, ApiBackupCatalogItem, ApiBilling, ApiBudgetRequest, ApiClient, ApiClientPayment, ApiCreditMemo, ApiDataExport, ApiDocument, ApiExpenseRequest, ApiExpenseType, ApiFundingSource, ApiIncident, ApiIncidentReport, ApiLiquidation, ApiPaymentQueueItem, ApiQuotation, ApiReleaseUpdate, ApiShipmentProfitability, ApiSupportPortal, ApiSupportTicket, ApiSupportTicketStatus, ApiTaxProfile, ApiUser } from './types'
+import type { ApiActivityCategory, ApiAdminActivity, ApiBilling, ApiBudgetRequest, ApiClient, ApiClientPayment, ApiCreditMemo, ApiDataExport, ApiDocument, ApiExpenseRequest, ApiExpenseType, ApiFundingSource, ApiIncident, ApiIncidentReport, ApiLiquidation, ApiPaymentQueueItem, ApiQuotation, ApiReleaseUpdate, ApiShipmentProfitability, ApiSupportPortal, ApiSupportTicket, ApiSupportTicketStatus, ApiTaxProfile, ApiUser } from './types'
 
 const API_BASE = import.meta.env.VITE_API_URL ?? 'http://127.0.0.1:8000/api/v1'
 const CSRF_COOKIE_NAME = import.meta.env.VITE_CSRF_COOKIE_NAME ?? 'pimascor_csrf'
@@ -614,10 +614,6 @@ export function updateSupportTicket(id: string, input: { status?: ApiSupportTick
 
 export function getDataExports() {
   return request<ApiDataExport[]>('/data-exports')
-}
-
-export function getBackups() {
-  return request<ApiBackupCatalogItem[]>('/backups')
 }
 
 export function requestDataExport() {

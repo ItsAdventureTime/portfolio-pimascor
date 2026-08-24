@@ -1,5 +1,12 @@
 # PIMASCOR production deployment
 
+The deploy command is end-to-end: it builds in the Docker Sandbox, transfers
+the committed source and artifacts, then SSHes back to the VPS and runs
+`update-production.sh`. No manual activation command is required. New
+deployments do not create rollback images, previous web directories, backup
+timers, retention units, or restore helpers. Existing remote backup data and
+secrets are preserved.
+
 This is the isolated production track. It does not use the demo runtime, demo
 database, demo object prefix, demo containers, or demo web root.
 
@@ -361,93 +368,4 @@ correct its owning site or Quadlet explicitly.
 
 ## Backup and export
 
-Production and demo deployment inputs are content-digest pinned; the current
-API, web builder, PostgreSQL, Restic, and shared Caddy pins are recorded in
-`infra/README.md`. Rebuilds after image-cache pruning use those immutable
-references rather than floating tags.
-
-Production installs the PostgreSQL dump, restic backup, retention timer, and
-single export worker as separate rootless Quadlets. Full-record archives are
-CSV records plus eligible original attachments and generated documents in an encrypted
-short-lived archive. The API enforces the two-request Philippine calendar-week
-limit; the worker processes the queue and expires archives.
-
-### Recovery policy and operator controls
-
-The encrypted Backblaze B2 Restic repository is the recovery source of truth.
-The scheduled service creates a consistent PostgreSQL custom-format dump,
-backs up production uploads other than short-lived support-ticket attachment
-bytes, the dump, and production Quadlets, then records a
-non-sensitive completion entry for the Admin/DCS catalog. The transient dump is
-deleted only after the Restic service exits successfully. B2 credentials and
-the Restic password never enter the catalog or the web response.
-
-Support-ticket attachment bytes remain only in the private production B2 prefix
-while the ticket is open. They are not in Restic and are intentionally deleted
-from B2 when the ticket closes; this is product policy, not a backup gap to be
-repaired by adding retention.
-
-The current base-backup schedule is four fixed runs per day. It is deliberately
-not an adaptive 1-hour/2-hour/4-hour policy: predictable schedules are easier
-to audit and restore. Near-real-time PostgreSQL WAL archiving/PITR remains a
-separate production change requiring a tested archive destination and restore
-rehearsal; this release does not claim WAL/PITR availability.
-
-Retention is applied by the Restic timer (short daily, weekly, monthly, and
-yearly classes). Quarterly and semiannual legal retention must be represented
-by approved tagged/archive copies or a B2 lifecycle/Object Lock policy; Restic
-`forget` alone does not create those business calendar tiers. A legal hold
-must be approved before enabling immutable retention because Object Lock can
-prevent lifecycle deletion.
-
-Admin and DCS can view the encrypted backup completion catalog under Accounting.
-They cannot restore, replace, delete, or re-encrypt production data from the
-web app. Only the service owner uses the VPS CLI, and every restore starts as a
-dry run and then a quarantine restore for inspection.
-
-Force a backup on the VPS:
-
-```bash
-cd /var/home/jk/bridge-ph/pimascor/source && ./infra/scripts/production-backup-now.sh --dry-run
-cd /var/home/jk/bridge-ph/pimascor/source && ./infra/scripts/production-backup-now.sh
-```
-
-List encrypted repository snapshots, then perform a safe dry run (the default)
-before any download:
-
-```bash
-cd /var/home/jk/bridge-ph/pimascor/source && ./infra/scripts/production-restore.sh --list
-cd /var/home/jk/bridge-ph/pimascor/source && ./infra/scripts/production-restore.sh --snapshot latest --dry-run
-```
-
-After reviewing the snapshot and approving a target directory, restore only to
-quarantine. The script refuses the live production root:
-
-```bash
-install -d -m 700 /var/home/jk/bridge-ph/pimascor-restore-quarantine
-cd /var/home/jk/bridge-ph/pimascor/source && ./infra/scripts/production-restore.sh --snapshot SNAPSHOT_ID --target /var/home/jk/bridge-ph/pimascor-restore-quarantine --execute
-```
-
-Review checksums, database contents, migrations, and uploaded files before a
-separate controlled cutover. There is intentionally no restore button or
-restore API endpoint.
-
-Do not enable production traffic until:
-
-1. all production secrets exist and are scoped correctly;
-2. the first Administrator is created;
-3. Caddy validation and the HTTPS route check pass;
-4. a real client and role account are created;
-5. a test quotation, approval, payment, document view, and authorized export
-   are verified with the appropriate accounts;
-6. backup and restore evidence is recorded separately from the demo.
-7. password recovery is tested with a real mailbox, including an expired link,
-   a reused link, a wrong-token attempt, and confirmation that old sessions are
-   revoked.
-8. the owner runs the force-backup dry run, confirms a completed catalog entry,
-   lists snapshots, and rehearses a quarantine restore before production data
-   is considered recoverable.
-
-The architecture follows the official Podman Quadlet user-unit model and
-SQLAlchemy's explicit child-before-parent deletion requirement for bulk
-operations.
+PIMASCOR deployment no longer creates, retains, or restores production backup artifacts. Existing remote backups and secrets are preserved. The updater disables and removes only the repository-managed backup service, timer, Quadlet, and helper paths; it does not delete backup data or secrets.

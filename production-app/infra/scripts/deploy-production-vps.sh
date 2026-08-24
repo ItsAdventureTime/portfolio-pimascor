@@ -181,12 +181,14 @@ fi
 printf 'Release commit: %s\n' "${release_commit}"
 printf 'Artifact bundle: %s\n' "${artifact_dir}"
 source_dir="/var/home/jk/bridge-ph/pimascor/source"
-printf '\n# ========== TRANSFER COMPLETE — NOT ACTIVATED ==========\n'
-printf '# On the VPS, paste only the next line:\n'
-printf 'cd %q && %q --source %q --api-image-archive %q --web-dist %q\n' \
-  "${source_dir}" \
-  './infra/scripts/update-production.sh' \
-  "${source_dir}" \
-  "${artifact_dir}/api-image.tar" \
-  "${artifact_dir}/web-dist"
-printf '%s\n' 'Activation remains a separate VPS step; follow docs/PRODUCTION-VPS-DEPLOYMENT.md.'
+printf '\nActivating the transferred production release on the VPS...\n'
+ssh -tt \
+  -o ConnectTimeout=15 \
+  -o ServerAliveInterval=30 \
+  -o ServerAliveCountMax=3 \
+  -p "${SSH_PORT}" \
+  "${SSH_TARGET}" \
+  'cd /var/home/jk/bridge-ph/pimascor/source && ./infra/scripts/update-production.sh --source /var/home/jk/bridge-ph/pimascor/source --api-image-archive /var/home/jk/bridge-ph/pimascor/release-artifacts/'"${release_commit}"'/api-image.tar --web-dist /var/home/jk/bridge-ph/pimascor/release-artifacts/'"${release_commit}"'/web-dist'
+printf 'Production release %s is active.\n' "${release_commit}"
+printf 'Expected public URL: %s\n' 'https://delegateops.business/prod/pimascor/'
+printf 'Health check: %s\n' 'https://delegateops.business/prod/pimascor/api/v1/health'

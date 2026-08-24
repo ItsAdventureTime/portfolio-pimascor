@@ -326,7 +326,9 @@ pimascor/
 
 - Demo uses `pimascor/demo/`.
 - Production application documents use `pimascor/`.
-- Production encrypted backups use `pimascor/backups/restic/`.
+- Existing production encrypted snapshots, if present, remain in the private
+  `pimascor/backups/restic/` prefix; new PIMASCOR deployments do not create or
+  retain backup artifacts.
 - Object keys use lowercase prefixes and opaque IDs. The original filename stays in PostgreSQL for display and audit, not in the object key.
 - Each PDF/JPEG/PNG may be up to 100 MB. Validation reads bounded chunks, and `%h/bridge-ph/pimascor-demo/data/uploads-tmp` is the private disk-backed spool used while Boto3 performs a managed multipart transfer.
 - S3 storage is flat. These are prefixes, not real folders. Do not pre-create them; the first object upload creates the visible hierarchy automatically.
@@ -365,18 +367,13 @@ Expected:
   delivered separate operational Admin and technical/Codex Developer messages.
 - Firefox, Chrome/Edge, and Safari load the PWA; 320 px layouts reflow; reduced-motion disables non-essential animation.
 
-## 11. Updates and rollback cleanup
+## 11. Updates and lifecycle cleanup
 
-After synchronizing the source and local release bundle, run the complete
-activation command from `docs/DEMO-VPS-DEPLOYMENT.md`. It loads the
-prebuilt API image, stages the static PWA, updates, migrates, reloads the demo
-baseline, restarts Caddy, and runs the public health checks.
-
-List or remove accepted local rollback material interactively:
-
-```bash
-cd ~/bridge-ph/pimascor-demo/source && infra/scripts/cleanup-demo-rollback.sh
-```
+The deploy scripts now perform the complete VPS activation over SSH after
+transferring the commit-matched source and prebuilt artifacts. They load the
+API image, stage the static PWA, migrate, restart the required services, and
+run the public health checks without a second manual command. New releases do
+not create rollback images or previous web directories.
 
 Delete only stored demo incident reports and their incident audit events:
 
@@ -455,16 +452,11 @@ Backblaze `403`: verify endpoint, region, bucket, secret names, and that the app
 
 Do not promote the demo by renaming it. Production receives separate Quadlets, networks, database, cookies, users, credentials, object prefix, retention, and acceptance evidence.
 
-Production backup templates remain under `infra/quadlet/production/`. They use:
-
-```text
-s3:https://s3.us-west-001.backblazeb2.com/bridge-ph/pimascor/backups/restic
-```
-
-`update-production.sh` installs and enables the backup and retention timers
-after production services pass their health checks. Use
-`docs/PRODUCTION-BACKUP-RESTORE-RUNBOOK.md` for the owner-only force-backup,
-dry-run, and quarantine restore procedure; Admin/DCS web access is catalog-only.
+The current production deploy no longer installs or enables backup/retention
+timers, database-dump units, or restore helpers. On the next update it disables
+and removes only those exact repository-managed unit/helper paths. Existing
+remote backup data and Podman secrets are preserved; this change does not
+delete or rotate them.
 
 ## Official references
 

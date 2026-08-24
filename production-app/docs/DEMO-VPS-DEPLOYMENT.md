@@ -1,5 +1,12 @@
 # Demo VPS release procedure
 
+The deploy command is end-to-end: it builds in the Docker Sandbox, transfers
+the committed source and artifacts, then SSHes back to the VPS and runs
+`update-demo.sh` plus the web-root reconciliation. No manual activation command
+is required. Existing rollback images or previous web directories, if present
+from an older release, are intentionally left untouched; new deployments do
+not create more of them.
+
 Read [Factual basis and evidence policy](FACTUAL-BASIS.md) first. The paths in
 this guide are confirmed by the owner; completion of a transfer, cleanup,
 migration, restart, or Bunny purge remains unverified until its current command

@@ -41,11 +41,9 @@ Environment=B2_BUCKET=bridge-ph
 Environment=B2_OBJECT_PREFIX=pimascor
 Environment=B2_KEY_ID_FILE=/run/secrets/bridge_ph_pimascor_b2_key_id
 Environment=B2_APPLICATION_KEY_FILE=/run/secrets/bridge_ph_pimascor_b2_application_key
-Environment=BACKUP_CATALOG_DIR=/var/lib/pimascor/backup-catalog
 ReadOnly=true
 ReadOnlyTmpfs=true
 Volume=%h/bridge-ph/pimascor/data/uploads-tmp:/tmp:U,Z
-Volume=%h/bridge-ph/pimascor/backup-catalog:/var/lib/pimascor/backup-catalog:ro,Z
 NoNewPrivileges=true
 DropCapability=all
 PidsLimit=256

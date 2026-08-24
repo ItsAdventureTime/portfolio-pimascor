@@ -242,7 +242,6 @@ The endpoint name remains an internal compatibility boundary; the user-facing la
 ```text
 GET /health
 GET /admin/activity?days=30&include_admin=false&category=&search=&limit=100
-GET /backups
 POST /incidents
 POST /incidents/{incident-id}/report
 ```
@@ -254,12 +253,6 @@ server reference for investigation. Dismissal is local and calls neither endpoin
 series, categories, actor summaries, and recent events. It defaults to staff
 activity; `include_admin=true` exposes privileged actions that remain recorded.
 Viewing the monitor is itself audited.
-
-`GET /backups` is restricted to Admin and DCS. It returns only non-sensitive
-completion metadata from the host catalog (coverage, completion time, retention
-class, and verification state). It never returns B2 object keys, credentials,
-Restic passwords, or restore actions; restoration remains an owner-only CLI
-operation.
 
 ## Security rules
 

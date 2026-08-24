@@ -25,7 +25,7 @@ inferring behavior from screenshots.
 1. `DEMO-BUILD-SOURCE-OF-TRUTH-2026-08-08.md` is the controlling demo
    decision record. Newer dated demo decisions supersede it.
 2. `DEMO-VPS-DEPLOYMENT.md` is the current demo release runbook and contains
-   the approved Mac-to-VPS transfer and VPS activation sequence. `infra/README.md`
+   the approved Mac-to-VPS transfer and automatic VPS activation sequence. `infra/README.md`
    remains a lower-level manual/bootstrap reference.
 3. Code, Quadlets, and scripts are the implementation evidence. Documentation
    must not claim a deployed result without recorded local or VPS evidence.
@@ -38,13 +38,13 @@ inferring behavior from screenshots.
 - Read `FACTUAL-BASIS.md` before treating any local, VPS, or external state as
   verified evidence.
 - Run the local transfer command in `DEMO-VPS-DEPLOYMENT.md`.
-- Run the VPS activation command in that same runbook.
+- The deploy script performs VPS activation automatically after transfer.
 - Complete the health, Admin entry, role-workspace, quotation-preview,
   protected-document, and cache-validation checks before CDN purge.
 
 ## How-to guides — operational tasks
 
-- `DEMO-VPS-DEPLOYMENT.md` — transfer, activate, validate, rollback, cleanup,
+- `DEMO-VPS-DEPLOYMENT.md` — build, transfer, automatic activation, validate,
   and targeted Bunny cache purge.
 - `DEMO-INCIDENT-RECOVERY-PODMAN-RM.md` — recovery after broad rootless Podman
   stop/remove commands; inspect first and preserve demo data.
@@ -56,8 +56,6 @@ inferring behavior from screenshots.
 - `../infra/scripts/reconcile-demo-web-root.sh` — Caddy mount and stale-stage
   reconciliation; it validates canonical paths so `/home/jk` and
   `/var/home/jk` equivalents are not falsely rejected.
-- `../infra/scripts/cleanup-demo-rollback.sh` — remove obsolete rollback
-  directories only after the active release is verified.
 - `QUALITY-ASSURANCE.md` — source and deployed acceptance evidence.
 - `GIT-WORKFLOW.md` — local commit, private GitHub CLI push, and SHA checks.
 

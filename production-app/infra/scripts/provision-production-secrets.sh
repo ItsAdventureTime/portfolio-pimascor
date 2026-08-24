@@ -161,7 +161,6 @@ create_secret bridge_ph_pimascor_b2_key_id 'Backblaze B2 key ID'
 create_secret bridge_ph_pimascor_b2_application_key 'Backblaze B2 application key'
 create_derived_secret bridge_ph_pimascor_pgpass "database:5432:pimascor:pimascor:${escaped_postgres_password}"
 unset postgres_password encoded_postgres_password escaped_postgres_password
-create_secret bridge_ph_pimascor_restic_password 'Restic backup encryption password (store it safely; losing it prevents backup restore)'
 create_account_manifest
 
 printf '%s\n' 'Production secret provisioning complete. Run update-production.sh next.'

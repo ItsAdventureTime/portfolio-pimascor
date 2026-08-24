@@ -140,14 +140,14 @@ artifact_dir="/var/home/jk/bridge-ph/pimascor-demo/release-artifacts/${release_c
 printf 'Release commit: %s\n' "${release_commit}"
 printf 'Artifact bundle: %s\n' "${artifact_dir}"
 source_dir="/var/home/jk/bridge-ph/pimascor-demo/source"
-printf '\n# ========== TRANSFER COMPLETE — NOT ACTIVATED ==========\n'
-printf '# On the VPS, paste only the next line:\n'
-printf 'cd %q && %q --source %q --api-image-archive %q --web-dist %q && %q %q\n' \
-  "${source_dir}" \
-  './infra/scripts/update-demo.sh' \
-  "${source_dir}" \
-  "${artifact_dir}/api-image.tar" \
-  "${artifact_dir}/web-dist" \
-  bash \
-  './infra/scripts/reconcile-demo-web-root.sh'
-printf '%s\n' 'Activation remains a separate VPS step; follow docs/DEMO-VPS-DEPLOYMENT.md.'
+printf '\nActivating the transferred demo release on the VPS...\n'
+ssh -tt \
+  -o ConnectTimeout=15 \
+  -o ServerAliveInterval=30 \
+  -o ServerAliveCountMax=3 \
+  -p "${SSH_PORT}" \
+  "${SSH_TARGET}" \
+  'cd /var/home/jk/bridge-ph/pimascor-demo/source && ./infra/scripts/update-demo.sh --source /var/home/jk/bridge-ph/pimascor-demo/source --api-image-archive /var/home/jk/bridge-ph/pimascor-demo/release-artifacts/'"${release_commit}"'/api-image.tar --web-dist /var/home/jk/bridge-ph/pimascor-demo/release-artifacts/'"${release_commit}"'/web-dist && bash ./infra/scripts/reconcile-demo-web-root.sh'
+printf 'Demo release %s is active.\n' "${release_commit}"
+printf 'Expected public URL: %s\n' 'https://delegateops.business/demo/pimascor/'
+printf 'Health check: %s\n' 'https://delegateops.business/demo/pimascor/api/v1/health'

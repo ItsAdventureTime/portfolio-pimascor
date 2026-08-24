@@ -46,7 +46,6 @@ class Settings(BaseSettings):
     b2_object_prefix: str | None = None
     b2_key_id_file: Path | None = None
     b2_application_key_file: Path | None = None
-    backup_catalog_dir: Path = Path("/var/lib/pimascor/backup-catalog")
     pdf_preview_retention_hours: int = 12
     # A demo must never create a reusable archive containing all records and
     # attachments. Production enables this only after its worker is deployed.
