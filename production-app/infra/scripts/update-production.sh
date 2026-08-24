@@ -58,6 +58,9 @@ required_files=(
   "${SOURCE_ROOT}/infra/quadlet/production/bridge-ph-pimascor-data.network"
   "${SOURCE_ROOT}/infra/quadlet/production/bridge-ph-pimascor-egress.network"
   "${SOURCE_ROOT}/infra/quadlet/production/bridge-ph-pimascor-proxy.network"
+  "${SOURCE_ROOT}/infra/scripts/record-production-backup.sh"
+  "${SOURCE_ROOT}/infra/scripts/production-backup-now.sh"
+  "${SOURCE_ROOT}/infra/scripts/production-restore.sh"
   "${SOURCE_ROOT}/infra/scripts/retire-legacy-accustandard-quadlet.sh"
 )
 for required_file in "${required_files[@]}"; do
@@ -82,6 +85,7 @@ grep -Fq 'support_ticket_status.create(bind, checkfirst=True)' "$support_ticket_
   exit 1
 }
 [[ -x "${SOURCE_ROOT}/infra/scripts/install-production-caddy.sh" ]] || { printf '%s\n' 'Caddy installer is not executable in the deployed source.' >&2; exit 1; }
+[[ -x "${SOURCE_ROOT}/infra/scripts/production-backup-now.sh" && -x "${SOURCE_ROOT}/infra/scripts/production-restore.sh" ]] || { printf '%s\n' 'Production backup/restore helpers must be executable.' >&2; exit 1; }
 release_commit="$(tr -d '\r\n' < "${SOURCE_ROOT}/.deployment-source-commit")"
 [[ "$release_commit" =~ ^[0-9a-f]{40}$ ]] || { printf '%s\n' 'Invalid Git commit marker.' >&2; exit 1; }
 release_image="localhost/bridge-ph-pimascor-api:release-${release_commit}"
@@ -104,7 +108,7 @@ grep -Fqx 'Environment=SESSION_COOKIE_SECURE=true' "$bootstrap_quadlet" || { pri
 grep -Fqx 'Secret=bridge_ph_pimascor_resend_api_key,uid=10001,gid=10001,mode=0400' "$bootstrap_quadlet" || { printf '%s\n' 'Account bootstrap is missing the production Resend secret.' >&2; exit 1; }
 [[ "$(podman info --format '{{.Host.Security.Rootless}}')" == 'true' ]] || { printf '%s\n' 'Rootless Podman is required.' >&2; exit 1; }
 
-for secret_name in bridge_ph_pimascor_postgres_password bridge_ph_pimascor_database_url bridge_ph_pimascor_resend_api_key bridge_ph_pimascor_pgpass bridge_ph_pimascor_account_bootstrap; do
+for secret_name in bridge_ph_pimascor_postgres_password bridge_ph_pimascor_database_url bridge_ph_pimascor_resend_api_key bridge_ph_pimascor_b2_key_id bridge_ph_pimascor_b2_application_key bridge_ph_pimascor_pgpass bridge_ph_pimascor_restic_password bridge_ph_pimascor_account_bootstrap; do
   podman secret exists "$secret_name" || { printf 'Missing production Podman secret: %s\n' "$secret_name" >&2; exit 1; }
 done
 
@@ -117,31 +121,19 @@ podman image exists "$release_image" || {
 
 bash "${SOURCE_ROOT}/infra/scripts/retire-legacy-accustandard-quadlet.sh"
 
-install -d -m 700 "$APP_ROOT" "$APP_ROOT/data/postgres/18/docker" "$APP_ROOT/data/uploads-tmp" "$APP_ROOT/bin" "$QUADLET_ROOT" "$TIMER_ROOT"
-quadlet_files=(bridge-ph-pimascor-data.network bridge-ph-pimascor-egress.network bridge-ph-pimascor-proxy.network bridge-ph-pimascor-db.container bridge-ph-pimascor-api.container bridge-ph-pimascor-account-bootstrap.container bridge-ph-pimascor-export-worker.container)
+install -d -m 700 "$APP_ROOT" "$APP_ROOT/data/postgres/18/docker" "$APP_ROOT/data/uploads-tmp" "$APP_ROOT/backup-staging" "$APP_ROOT/backup-catalog/history" "$APP_ROOT/restic-cache" "$APP_ROOT/bin" "$QUADLET_ROOT" "$TIMER_ROOT"
+quadlet_files=(bridge-ph-pimascor-data.network bridge-ph-pimascor-egress.network bridge-ph-pimascor-proxy.network bridge-ph-pimascor-db.container bridge-ph-pimascor-api.container bridge-ph-pimascor-account-bootstrap.container bridge-ph-pimascor-export-worker.container bridge-ph-pimascor-db-dump.container bridge-ph-pimascor-backup.container bridge-ph-pimascor-backup-retention.container)
 for quadlet_file in "${quadlet_files[@]}"; do
   install -m 600 "${SOURCE_ROOT}/infra/quadlet/production/${quadlet_file}" "${QUADLET_ROOT}/${quadlet_file}"
+install -m 600 "${SOURCE_ROOT}/infra/systemd/bridge-ph-pimascor-backup.timer" "${TIMER_ROOT}/bridge-ph-pimascor-backup.timer"
+install -m 600 "${SOURCE_ROOT}/infra/systemd/bridge-ph-pimascor-backup-retention.timer" "${TIMER_ROOT}/bridge-ph-pimascor-backup-retention.timer"
+install -m 700 "${SOURCE_ROOT}/infra/scripts/record-production-backup.sh" "${APP_ROOT}/bin/record-production-backup.sh"
 done
 
-# Stop and remove only the repository-managed backup units. Existing backup
-# data, remote snapshots, and Podman secrets are intentionally preserved.
-backup_units=(
-  bridge-ph-pimascor-backup.service
-  bridge-ph-pimascor-backup-retention.service
-  bridge-ph-pimascor-db-dump.service
-  bridge-ph-pimascor-backup.timer
-  bridge-ph-pimascor-backup-retention.timer
-)
-systemctl --user disable --now "${backup_units[@]}" 2>/dev/null || true
 rm -f -- \
-  "${QUADLET_ROOT}/bridge-ph-pimascor-db-dump.container" \
-  "${QUADLET_ROOT}/bridge-ph-pimascor-backup.container" \
-  "${QUADLET_ROOT}/bridge-ph-pimascor-backup-retention.container" \
-  "${TIMER_ROOT}/bridge-ph-pimascor-backup.timer" \
-  "${TIMER_ROOT}/bridge-ph-pimascor-backup-retention.timer" \
 
 systemctl --user daemon-reload
-systemd-analyze --user --generators=true verify bridge-ph-pimascor-db.service bridge-ph-pimascor-account-bootstrap.service bridge-ph-pimascor-api.service bridge-ph-pimascor-export-worker.service
+systemd-analyze --user --generators=true verify bridge-ph-pimascor-db.service bridge-ph-pimascor-account-bootstrap.service bridge-ph-pimascor-api.service bridge-ph-pimascor-export-worker.service bridge-ph-pimascor-db-dump.service bridge-ph-pimascor-backup.service
 systemctl --user start bridge-ph-pimascor-data-network.service bridge-ph-pimascor-egress-network.service bridge-ph-pimascor-proxy-network.service
 
 ensure_network() {
@@ -172,15 +164,37 @@ if ! systemctl --user start bridge-ph-pimascor-db.service; then
 fi
 
 printf 'Activating prebuilt production API image for commit %s...\n' "$release_commit"
+rollback_image="localhost/bridge-ph-pimascor-api:rollback-${release_commit}"
+old_image_exists=false
+if podman image exists localhost/bridge-ph-pimascor-api:production; then
+  podman tag localhost/bridge-ph-pimascor-api:production "${rollback_image}"
+  old_image_exists=true
+fi
 web_stage="$(mktemp -d "${WEB_ROOT}/web-dist.next.XXXXXX")"
+previous_web="${WEB_ROOT}/web-dist.previous.${release_commit}"
 cleanup_release() { [[ -d "${web_stage:-}" ]] && rm -rf -- "${web_stage}"; }
 trap cleanup_release EXIT
 printf 'Staging prebuilt production web assets for commit %s...\n' "$release_commit"
 cp -a "${WEB_DIST}/." "${web_stage}/"
 install -d -m 700 "${WEB_ROOT}/web-dist"
+rm -rf -- "${previous_web}"
+cp -a "${WEB_ROOT}/web-dist" "${previous_web}"
 find "${WEB_ROOT}/web-dist" -mindepth 1 -maxdepth 1 -exec rm -rf -- {} +
 cp -a "${web_stage}/." "${WEB_ROOT}/web-dist/"
 rm -rf -- "${web_stage}"
+rollback_release() {
+  printf '%s\n' 'Release activation failed; restoring the previous API image and web assets.' >&2
+  if [[ "${old_image_exists}" == true ]]; then
+    podman tag "${rollback_image}" localhost/bridge-ph-pimascor-api:production
+  fi
+  if [[ -d "${previous_web}" ]]; then
+    find "${WEB_ROOT}/web-dist" -mindepth 1 -maxdepth 1 -exec rm -rf -- {} +
+    cp -a "${previous_web}/." "${WEB_ROOT}/web-dist/"
+  fi
+  systemctl --user restart bridge-ph-pimascor-api.service >/dev/null 2>&1 || true
+  systemctl --user restart bridge-ph-pimascor-export-worker.service >/dev/null 2>&1 || true
+  printf 'Rollback diagnostics: API=%s web=%s\n' "${old_image_exists}" "${previous_web}" >&2
+}
 podman tag "${release_image}" localhost/bridge-ph-pimascor-api:production
 if ! systemctl --user restart bridge-ph-pimascor-account-bootstrap.service ||
    ! systemctl --user restart bridge-ph-pimascor-api.service ||
@@ -191,16 +205,20 @@ if ! systemctl --user restart bridge-ph-pimascor-account-bootstrap.service ||
   systemctl --user status --no-pager --full bridge-ph-pimascor-api.service >&2 || true
   journalctl --user --unit=bridge-ph-pimascor-api.service --no-pager --lines=160 >&2 || true
   podman logs --tail=160 bridge-ph-pimascor-api >&2 || true
+  rollback_release
   exit 1
 fi
 if ! curl --fail --silent --show-error --max-time 15 "${API_HEALTH_URL}" >/dev/null; then
   printf 'Production health check failed after cutover: %s\n' "${API_HEALTH_URL}" >&2
+  rollback_release
   exit 1
 fi
 if ! bash "${SOURCE_ROOT}/infra/scripts/install-production-caddy.sh"; then
   printf '%s\n' 'Production Caddy activation failed; restoring the previous API image and web assets.' >&2
+  rollback_release
   exit 1
 fi
+systemctl --user enable --now bridge-ph-pimascor-backup.timer bridge-ph-pimascor-backup-retention.timer
 printf 'Production release %s is active with atomic API/web/Caddy cutover.\n' "$release_commit"
 printf 'Expected public URL: %s\n' "$PUBLIC_URL"
 printf 'Health check: %s\n' "$API_HEALTH_URL"

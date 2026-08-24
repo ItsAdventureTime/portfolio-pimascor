@@ -326,9 +326,7 @@ pimascor/
 
 - Demo uses `pimascor/demo/`.
 - Production application documents use `pimascor/`.
-- Existing production encrypted snapshots, if present, remain in the private
-  `pimascor/backups/restic/` prefix; new PIMASCOR deployments do not create or
-  retain backup artifacts.
+- Production encrypted backups use `pimascor/backups/restic/`.
 - Object keys use lowercase prefixes and opaque IDs. The original filename stays in PostgreSQL for display and audit, not in the object key.
 - Each PDF/JPEG/PNG may be up to 100 MB. Validation reads bounded chunks, and `%h/bridge-ph/pimascor-demo/data/uploads-tmp` is the private disk-backed spool used while Boto3 performs a managed multipart transfer.
 - S3 storage is flat. These are prefixes, not real folders. Do not pre-create them; the first object upload creates the visible hierarchy automatically.
@@ -452,11 +450,12 @@ Backblaze `403`: verify endpoint, region, bucket, secret names, and that the app
 
 Do not promote the demo by renaming it. Production receives separate Quadlets, networks, database, cookies, users, credentials, object prefix, retention, and acceptance evidence.
 
-The current production deploy no longer installs or enables backup/retention
-timers, database-dump units, or restore helpers. On the next update it disables
-and removes only those exact repository-managed unit/helper paths. Existing
-remote backup data and Podman secrets are preserved; this change does not
-delete or rotate them.
+Production backup templates remain under `infra/quadlet/production/`. They use:
+`s3:https://s3.us-west-001.backblazeb2.com/bridge-ph/pimascor/backups/restic`
+`update-production.sh` installs and enables the backup and retention timers
+after production services pass their health checks. Use
+`docs/PRODUCTION-BACKUP-RESTORE-RUNBOOK.md` for the owner-only force-backup,
+dry-run, and quarantine restore procedure; Admin/DCS web access is catalog-only.
 
 ## Official references
 

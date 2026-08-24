@@ -1,0 +1,33 @@
+# Active production template. Retention changes require management approval.
+[Unit]
+Description=Apply the approved retention policy to PIMASCOR production Backblaze snapshots
+After=bridge-ph-pimascor-backup.service
+
+[Container]
+Image=docker.io/restic/restic@sha256:08916bcda4a4435f9d9828ebb4e91bb7ada3d2c8a53699788930e0ae1bd4fa67
+Pull=missing
+ContainerName=bridge-ph-pimascor-backup-retention
+Network=bridge-ph-pimascor-egress.network
+Secret=bridge_ph_pimascor_b2_key_id,type=env,target=AWS_ACCESS_KEY_ID
+Secret=bridge_ph_pimascor_b2_application_key,type=env,target=AWS_SECRET_ACCESS_KEY
+Secret=bridge_ph_pimascor_restic_password,target=restic_password,uid=0,gid=0,mode=0400
+Environment=AWS_DEFAULT_REGION=us-west-001
+Environment=RESTIC_REPOSITORY=s3:https://s3.us-west-001.backblazeb2.com/bridge-ph/pimascor/backups/restic
+Environment=RESTIC_PASSWORD_FILE=/run/secrets/restic_password
+Environment=RESTIC_CACHE_DIR=/cache
+Volume=%h/bridge-ph/pimascor/restic-cache:/cache:Z
+Exec=forget --tag=bridge-ph-pimascor-production --keep-within=7d --keep-daily=35 --keep-weekly=12 --keep-monthly=12 --keep-yearly=5 --prune
+ReadOnly=true
+ReadOnlyTmpfs=true
+Tmpfs=/tmp:rw,size=128m,mode=1777
+NoNewPrivileges=true
+DropCapability=all
+PidsLimit=256
+Memory=2g
+RunInit=true
+LogDriver=journald
+
+[Service]
+Type=oneshot
+Restart=no
+TimeoutStartSec=7200

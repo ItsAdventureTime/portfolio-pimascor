@@ -3,11 +3,9 @@
 ## Current deployment lifecycle
 
 The current deploy scripts build, transfer, and automatically activate both
-demo and production releases in one command. New deployments do not create
-rollback images, previous web directories, production backup timers, retention
-units, or restore helpers. Existing remote backup data and secrets are kept;
-the production updater only disables and removes the exact repository-managed
-backup unit/helper paths.
+demo and production releases in one command. Production deployments retain
+guarded API/web rollback material and install encrypted backup and retention
+units plus owner-only restore helpers. Demo has no production backup schedule.
 
 This document defines the handoff of the hosted PIMASCOR production service to
 Bridge. It is an operational handoff, not a transfer of secrets through email

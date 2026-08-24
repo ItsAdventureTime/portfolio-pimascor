@@ -2,10 +2,9 @@
 
 The deploy command is end-to-end: it builds in the Docker Sandbox, transfers
 the committed source and artifacts, then SSHes back to the VPS and runs
-`update-production.sh`. No manual activation command is required. New
-deployments do not create rollback images, previous web directories, backup
-timers, retention units, or restore helpers. Existing remote backup data and
-secrets are preserved.
+`update-production.sh`. No manual activation command is required. Production
+deployments retain guarded API/web rollback material and install the encrypted
+backup, retention, and restore tooling described below.
 
 This is the isolated production track. It does not use the demo runtime, demo
 database, demo object prefix, demo containers, or demo web root.
@@ -368,4 +367,44 @@ correct its owning site or Quadlet explicitly.
 
 ## Backup and export
 
-PIMASCOR deployment no longer creates, retains, or restores production backup artifacts. Existing remote backups and secrets are preserved. The updater disables and removes only the repository-managed backup service, timer, Quadlet, and helper paths; it does not delete backup data or secrets.
+Production installs the PostgreSQL dump, Restic backup, retention timer, and
+single export worker as separate rootless Quadlets. The encrypted Backblaze B2
+repository is the recovery source of truth. The scheduled service creates a
+consistent PostgreSQL dump, backs up production uploads and Quadlets, then
+records non-sensitive completion metadata for the Admin/DCS catalog. The
+transient dump is deleted only after Restic succeeds; credentials never enter
+the catalog or web response.
+
+Retention applies daily, weekly, monthly, and yearly classes. Quarterly and
+semiannual legal retention requires approved tagged/archive copies or a B2
+lifecycle/Object Lock policy; legal hold approval precedes immutable retention.
+Admin and DCS can view the catalog under Accounting but cannot restore data from
+the web app. The owner uses the VPS CLI, starting with dry-run and quarantine:
+
+```bash
+cd /var/home/jk/bridge-ph/pimascor/source
+./infra/scripts/production-backup-now.sh --dry-run
+./infra/scripts/production-backup-now.sh
+./infra/scripts/production-restore.sh --list
+./infra/scripts/production-restore.sh --snapshot latest --dry-run
+install -d -m 700 /var/home/jk/bridge-ph/pimascor-restore-quarantine
+./infra/scripts/production-restore.sh \
+  --snapshot SNAPSHOT_ID \
+  --target /var/home/jk/bridge-ph/pimascor-restore-quarantine \
+  --execute
+```
+
+Review checksums, database contents, migrations, and uploaded files before a
+controlled cutover. There is no restore button or restore API endpoint.
+Do not enable production traffic until:
+1. all production secrets exist and are scoped correctly;
+2. the first Administrator is created;
+3. Caddy validation and the HTTPS route check pass;
+4. a real client and role account are created;
+5. a test quotation, approval, payment, document view, and authorized export
+   are verified with the appropriate accounts;
+6. backup and restore evidence is recorded separately from the demo;
+7. password recovery is tested with a real mailbox, including expired, reused,
+   and wrong-token attempts, with old sessions revoked;
+8. the owner runs the force-backup dry run, confirms a catalog entry, lists
+   snapshots, and rehearses a quarantine restore.

@@ -15,6 +15,9 @@ implementation details.
 
 ## 2026-08-09 — Clearer recovery visibility
 
+- **New — See backup health at a glance.** Admin and DCS can review when the
+  latest encrypted production backup completed and what it covers, so they can
+  confirm that recovery protection is active without handling credentials.
 - **Improved — Keep recovery controlled.** Restoring production data remains a
   deliberate owner-led CLI process with a dry run and quarantine review first;
   no web action can replace live records accidentally.

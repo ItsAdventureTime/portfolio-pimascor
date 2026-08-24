@@ -1,11 +1,9 @@
 # ChatGPT context prompt: PIMASCOR production handoff
 
 > Current lifecycle override (2026-08-25): deploy scripts now build, transfer,
-> and automatically activate demo and production releases. New deployments do
-> not create rollback images, previous web directories, production backup or
-> retention units, or restore helpers. Existing remote backup data and secrets
-> remain untouched; the production updater removes only exact repository-
-> managed backup unit/helper paths.
+> and automatically activate demo and production releases. Production retains
+> guarded rollback material and installs encrypted backup/retention units and
+> owner-only restore helpers; demo remains free of production backup schedules.
 
 Prepared 13 August 2026 from the active project documentation and current
 official guidance for ChatGPT prompting and knowledge files.
