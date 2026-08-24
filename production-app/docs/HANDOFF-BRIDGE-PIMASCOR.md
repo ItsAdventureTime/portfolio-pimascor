@@ -10,7 +10,7 @@ VPS and that Bridge is the client and operational owner after acceptance.
 The day-to-day service is already deployed at:
 
 ```text
-https://delegateops.business/pimascor/
+https://delegateops.business/prod/pimascor/
 ```
 
 The production runtime facts are:
@@ -20,7 +20,7 @@ The production runtime facts are:
 | Production data, PostgreSQL data, uploads, backup staging | `~/bridge-ph/pimascor` on the VPS |
 | Rootless service definitions | `~/.config/containers/systemd/bridge-ph/pimascor` |
 | Shared edge proxy | Rootless Caddy user service |
-| Public route | `delegateops.business/pimascor/` |
+| Public route | `delegateops.business/prod/pimascor/` |
 | Object storage | Private Backblaze B2 bucket and production prefix configured in the VPS secrets |
 | Transactional email | Resend account configured in the VPS secrets |
 | Encrypted backups | Restic repository configured in the VPS secrets and backup timers |

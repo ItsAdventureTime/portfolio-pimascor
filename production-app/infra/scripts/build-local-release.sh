@@ -66,8 +66,8 @@ case "${TIER}" in
   production)
     api_image="localhost/bridge-ph-pimascor-api:release-${RELEASE_COMMIT}"
     web_args=(
-      --build-arg VITE_BASE_PATH=/pimascor/
-      --build-arg VITE_API_URL=/pimascor/api/v1
+    --build-arg VITE_BASE_PATH=/prod/pimascor/
+    --build-arg VITE_API_URL=/prod/pimascor/api/v1
       --build-arg VITE_CSRF_COOKIE_NAME=bridge_ph_pimascor_csrf
       --build-arg VITE_DEPLOYMENT_TIER=production
     )
@@ -75,8 +75,8 @@ case "${TIER}" in
   demo)
     api_image="localhost/bridge-ph-pimascor-demo-api:release-${RELEASE_COMMIT}"
     web_args=(
-      --build-arg VITE_BASE_PATH=/pimascor/demo/
-      --build-arg VITE_API_URL=/pimascor/demo/api/v1
+    --build-arg VITE_BASE_PATH=/demo/pimascor/
+    --build-arg VITE_API_URL=/demo/pimascor/api/v1
       --build-arg VITE_CSRF_COOKIE_NAME=bridge_ph_pimascor_demo_csrf
       --build-arg VITE_DEPLOYMENT_TIER=demo
     )

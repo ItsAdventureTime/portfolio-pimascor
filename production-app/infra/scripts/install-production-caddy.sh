@@ -7,7 +7,8 @@ CADDY_QUADLET="${PIMASCOR_CADDY_QUADLET:-${HOME}/.config/containers/systemd/cadd
 SOURCE_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 CADDYFILE="${CADDY_CONF_ROOT}/Caddyfile"
 HANDLERS="${CADDY_CONF_ROOT}/pimascor-production.handlers.Caddyfile"
-MARKER='import /etc/caddy/pimascor-production.handlers.Caddyfile'
+IMPORT='import /etc/caddy/pimascor-production.handlers.Caddyfile'
+MARKER='# Managed by install-production-caddy.sh: PIMASCOR production handlers'
 CADDY_IMAGE=""
 PINNED_CADDY_IMAGE=""
 validation_root=""
@@ -62,6 +63,35 @@ if grep -Eq '^[[:space:]]*import[[:space:]]+pimascor-production\.handlers\.Caddy
   awk '
     /^[[:space:]]*import[[:space:]]+pimascor-production\.handlers\.Caddyfile[[:space:]]*$/ { next }
     { print }
+  ' "${validation_caddyfile}" > "${caddy_tmp}"
+  chmod 600 "${caddy_tmp}"
+  mv "${caddy_tmp}" "${validation_caddyfile}"
+fi
+
+# Adopt an existing absolute import, or add the marker and import together.
+if ! grep -Fq "${MARKER}" "${validation_caddyfile}" ||
+  ! grep -Eq '^[[:space:]]*import[[:space:]]+/etc/caddy/pimascor-production\.handlers\.Caddyfile[[:space:]]*$' "${validation_caddyfile}"; then
+  caddy_tmp="$(mktemp "${validation_caddyfile}.next.XXXXXX")"
+  awk -v import_line="${IMPORT}" -v marker="${MARKER}" '
+    /^[[:space:]]*import[[:space:]]+\/etc\/caddy\/pimascor-production\.handlers\.Caddyfile[[:space:]]*$/ {
+      if (import_seen++) next
+      if (!marker_seen) print "\t" marker
+      marker_seen=1
+      print
+      next
+    }
+    index($0, marker) { marker_seen=1 }
+    !inserted && $0 ~ /^delegateops\.business[[:space:]]*\{/ {
+      if (!marker_seen) print "\t" marker
+      if (!import_seen) print "\t" import_line
+      marker_seen=1
+      import_seen=1
+      inserted=1
+      print
+      next
+    }
+    { print }
+    END { if (!import_seen) exit 3 }
   ' "${validation_caddyfile}" > "${caddy_tmp}"
   chmod 600 "${caddy_tmp}"
   mv "${caddy_tmp}" "${validation_caddyfile}"
@@ -175,9 +205,9 @@ systemctl --user daemon-reload
 systemctl --user restart bridge-ph-pimascor-proxy-network.service
 systemctl --user restart caddy.service
 podman exec caddy caddy validate --config /etc/caddy/Caddyfile --adapter caddyfile
-curl --fail --silent --show-error --location --max-time 15 "https://delegateops.business/pimascor/" >/dev/null
+curl --fail --silent --show-error --location --max-time 15 "https://delegateops.business/prod/pimascor/" >/dev/null
 
-api_health_url='https://delegateops.business/pimascor/api/v1/health'
+api_health_url='https://delegateops.business/prod/pimascor/api/v1/health'
 api_ready=false
 printf 'Waiting for production API health through Caddy...\n'
 for _attempt in {1..30}; do
@@ -192,4 +222,4 @@ if [[ "${api_ready}" != true ]]; then
   systemctl --user status --no-pager --full bridge-ph-pimascor-api.service >&2 || true
   exit 1
 fi
-printf '%s\n' 'Production Caddy route and API health check are active at https://delegateops.business/pimascor/'
+printf '%s\n' 'Production Caddy route and API health check are active at https://delegateops.business/prod/pimascor/'

@@ -661,7 +661,7 @@ function PwaInstallPrompt() {
           <div><span className="pwa-guide__number">3</span><h3>Desktop browser</h3></div>
           <p>In a compatible Chromium browser, use the install icon in the address bar or the browser menu. If no install option appears, keep using PIMASCOR in the browser.</p>
         </section>
-        <div className="callout callout--info"><CircleHelp size={18} /><span>Only install from the official HTTPS address: <strong>delegateops.business/pimascor</strong>.</span></div>
+        <div className="callout callout--info"><CircleHelp size={18} /><span>Only install from the official HTTPS address: <strong>{window.location.origin}{import.meta.env.BASE_URL}</strong>.</span></div>
       </div>
     </Modal>
   </>

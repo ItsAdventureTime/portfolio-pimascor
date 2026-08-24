@@ -54,7 +54,7 @@ def test_production_backblaze_storage_uses_canonical_bucket_and_prefix(tmp_path)
             app_env="production",
             deployment_tier="production",
             database_url_file=database_secret,
-            public_app_url="https://delegateops.business/pimascor/",
+            public_app_url="https://delegateops.business/prod/pimascor/",
             email_provider="resend",
             resend_api_key_file=resend_secret,
             session_cookie_secure=True,

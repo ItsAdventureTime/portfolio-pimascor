@@ -1,7 +1,7 @@
 # PIMASCOR revised delivery plan
 
 Updated: 23 July 2026  
-Current target: team demo at `https://delegateops.business/pimascor/demo/`
+Current target: team demo at `https://delegateops.business/demo/pimascor/`
 
 ## 1. Source of truth
 

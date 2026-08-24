@@ -5,8 +5,8 @@ APP_ROOT="${HOME}/bridge-ph/pimascor"
 WEB_ROOT="${APP_ROOT}"
 QUADLET_ROOT="${HOME}/.config/containers/systemd/bridge-ph/pimascor"
 TIMER_ROOT="${HOME}/.config/systemd/user"
-PUBLIC_URL="https://delegateops.business/pimascor/"
-API_HEALTH_URL="https://delegateops.business/pimascor/api/v1/health"
+PUBLIC_URL="https://delegateops.business/prod/pimascor/"
+API_HEALTH_URL="https://delegateops.business/prod/pimascor/api/v1/health"
 SOURCE_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 API_IMAGE_ARCHIVE=""
 WEB_DIST=""
@@ -102,7 +102,7 @@ done
 grep -Fqx 'Environment=DEPLOYMENT_TIER=production' "${SOURCE_ROOT}/infra/quadlet/production/bridge-ph-pimascor-api.container"
 grep -Fqx 'Environment=DATA_EXPORT_ENABLED=true' "${SOURCE_ROOT}/infra/quadlet/production/bridge-ph-pimascor-api.container"
 bootstrap_quadlet="${SOURCE_ROOT}/infra/quadlet/production/bridge-ph-pimascor-account-bootstrap.container"
-grep -Fqx 'Environment=PUBLIC_APP_URL=https://delegateops.business/pimascor/' "$bootstrap_quadlet" || { printf '%s\n' 'Account bootstrap must use the production HTTPS public URL.' >&2; exit 1; }
+grep -Fqx 'Environment=PUBLIC_APP_URL=https://delegateops.business/prod/pimascor/' "$bootstrap_quadlet" || { printf '%s\n' 'Account bootstrap must use the production HTTPS public URL.' >&2; exit 1; }
 grep -Fqx 'Environment=EMAIL_PROVIDER=resend' "$bootstrap_quadlet" || { printf '%s\n' 'Account bootstrap must use the production email provider.' >&2; exit 1; }
 grep -Fqx 'Environment=SESSION_COOKIE_SECURE=true' "$bootstrap_quadlet" || { printf '%s\n' 'Account bootstrap must require secure cookies in production.' >&2; exit 1; }
 grep -Fqx 'Secret=bridge_ph_pimascor_resend_api_key,uid=10001,gid=10001,mode=0400' "$bootstrap_quadlet" || { printf '%s\n' 'Account bootstrap is missing the production Resend secret.' >&2; exit 1; }
@@ -212,8 +212,13 @@ if ! curl --fail --silent --show-error --max-time 15 "${API_HEALTH_URL}" >/dev/n
   rollback_release
   exit 1
 fi
+if ! bash "${SOURCE_ROOT}/infra/scripts/install-production-caddy.sh"; then
+  printf '%s\n' 'Production Caddy activation failed; restoring the previous API image and web assets.' >&2
+  rollback_release
+  exit 1
+fi
 systemctl --user enable --now bridge-ph-pimascor-backup.timer bridge-ph-pimascor-backup-retention.timer
-printf 'Production release %s is active with atomic API/web cutover. Caddy remains unchanged; run the exact activation command printed below after its preflight.\n' "$release_commit"
+printf 'Production release %s is active with atomic API/web/Caddy cutover.\n' "$release_commit"
 printf 'Expected public URL: %s\n' "$PUBLIC_URL"
 printf 'Health check: %s\n' "$API_HEALTH_URL"
-printf 'Caddy activation command: cd %q && ./infra/scripts/install-production-caddy.sh\n' "$SOURCE_ROOT"
+printf '%s\n' 'Caddy activation: install-production-caddy.sh completed.'

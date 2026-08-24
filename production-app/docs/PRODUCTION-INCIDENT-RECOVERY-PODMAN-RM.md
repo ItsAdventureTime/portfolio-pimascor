@@ -119,7 +119,7 @@ Quadlet as `jk`:
 ```bash
 cd /var/home/jk/bridge-ph/pimascor/source && ./infra/scripts/install-production-caddy.sh
 systemctl --user status --no-pager caddy.service
-curl --fail --location https://delegateops.business/pimascor/api/v1/health
+curl --fail --location https://delegateops.business/prod/pimascor/api/v1/health
 ```
 
 The installer formats and validates the Caddyfile in disposable containers,
@@ -145,8 +145,8 @@ acceptance evidence for this recovery:
 - The installer waited for the production API readiness check instead of
   treating a transient upstream response as a completed deployment.
 - The public route and API health check completed successfully at
-  `https://delegateops.business/pimascor/` and
-  `https://delegateops.business/pimascor/api/v1/health`.
+  `https://delegateops.business/prod/pimascor/` and
+  `https://delegateops.business/prod/pimascor/api/v1/health`.
 
 No secret values, database contents, or credentials belong in this record.
 Repeat the read-only inventory and the documented health check after any

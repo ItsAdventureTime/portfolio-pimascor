@@ -7,7 +7,7 @@ VPS state. Verify host-specific facts with command output before modifying them.
 Short manual runbook for the rootless Fedora CoreOS deployment at:
 
 ```text
-https://delegateops.business/pimascor/demo/
+https://delegateops.business/demo/pimascor/
 ```
 
 Application source, runtime data, and the Caddy-served PWA live under
@@ -214,17 +214,20 @@ systemd-analyze --user --generators=true verify bridge-ph-pimascor-demo-db.servi
 Caddy must share `bridge-ph-pimascor-demo-proxy` with the API and bind
 `~/bridge-ph/pimascor-demo/web-dist` read-only at
 `/srv/bridge-ph-pimascor-demo`.
+The redirect, API prefix-stripping route, and SPA `handle_path` route must be
+live before `update-demo.sh`; the updater does not create or replace shared
+Caddy routing.
 
 The relevant site handlers are:
 
 ```Caddyfile
 delegateops.business {
-    handle /pimascor/demo {
-        redir * /pimascor/demo/ 308
+    handle /demo/pimascor {
+        redir * /demo/pimascor/ 308
     }
 
-    handle /pimascor/demo/api/* {
-        uri strip_prefix /pimascor/demo
+    handle /demo/pimascor/api/* {
+        uri strip_prefix /demo/pimascor
         header {
             >Cache-Control "private, no-store"
             >CDN-Cache-Control "no-store"
@@ -233,7 +236,7 @@ delegateops.business {
         reverse_proxy bridge-ph-pimascor-demo-api:8000
     }
 
-    handle_path /pimascor/demo/* {
+    handle_path /demo/pimascor/* {
         header {
             >Content-Security-Policy "default-src 'none'; script-src 'self'; script-src-attr 'none'; style-src 'self'; style-src-attr 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; connect-src 'self'; media-src 'self' blob:; object-src 'none'; frame-src 'self' blob:; frame-ancestors 'none'; worker-src 'self'; manifest-src 'self'; base-uri 'none'; form-action 'self'; upgrade-insecure-requests"
             >X-Robots-Tag "noindex, nofollow, noarchive"
@@ -260,7 +263,7 @@ Keep the previously reviewed common security headers. The route-specific CSP int
 The `delegateops.business` site block must retain `import common_security`.
 One-click email verification needs no extra Caddy callback: the OTP is carried in
 the URI fragment, which is not sent in the HTTP request, and the normal
-`/pimascor/demo/` SPA handler completes verification. Keep the full PWA
+`/demo/pimascor/` SPA handler completes verification. Keep the full PWA
 revalidation matcher from `Caddyfile.reviewed`, including all PNG icons.
 
 ## 7. Start in dependency order
@@ -331,8 +334,8 @@ pimascor/
 ## 10. Verification
 
 ```bash
-curl --fail --show-error https://delegateops.business/pimascor/demo/api/v1/health
-curl --fail --show-error --output /dev/null https://delegateops.business/pimascor/demo/
+curl --fail --show-error https://delegateops.business/demo/pimascor/api/v1/health
+curl --fail --show-error --output /dev/null https://delegateops.business/demo/pimascor/
 podman ps --format 'table {{.Names}}\t{{.Status}}\t{{.Ports}}'
 ```
 
@@ -478,9 +481,12 @@ dry-run, and quarantine restore procedure; Admin/DCS web access is catalog-only.
 The isolated production path is documented in `docs/PRODUCTION-VPS-DEPLOYMENT.md`.
 Use `infra/scripts/deploy-production-vps.sh` from the Mac. It builds the
 production API image and PWA in the Docker Sandbox, then transfers the source
-and release bundle. After login, run the printed activation command with the
-`--api-image-archive` and `--web-dist` paths, followed by
-`infra/scripts/install-production-caddy.sh`. Production Quadlets belong only in
+and release bundle. After login, run the printed `update-production.sh`
+activation command with the `--api-image-archive` and `--web-dist` paths. That
+updater invokes `install-production-caddy.sh` to adopt the handler, add the
+production Caddy network and web mount, validate the full configuration, and
+check `https://delegateops.business/prod/pimascor/api/v1/health`. Production
+Quadlets belong only in
 `~/.config/containers/systemd/bridge-ph/pimascor`; do not reuse demo units or
 the demo database/object prefix. The secrets helper also creates the protected
 account manifest consumed by the production account-bootstrap Quadlet; it never

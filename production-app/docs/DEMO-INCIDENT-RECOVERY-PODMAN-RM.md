@@ -74,7 +74,7 @@ recovered.
 systemctl --user is-active bridge-ph-pimascor-demo-db.service
 systemctl --user is-active bridge-ph-pimascor-demo-api.service
 systemctl --user is-active caddy.service
-curl --fail --show-error https://delegateops.business/pimascor/demo/api/v1/health
+curl --fail --show-error https://delegateops.business/demo/pimascor/api/v1/health
 ```
 
 Then complete the demo QA walkthrough and only afterward perform the targeted

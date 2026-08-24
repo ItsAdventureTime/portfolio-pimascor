@@ -136,13 +136,13 @@ delegateops.business {
 
 	# Exact canonical redirect. Keeping it in a handle block makes
 	# all domain routes mutually exclusive and easier to audit.
-	handle /pimascor/demo {
-		redir * /pimascor/demo/ 308
+	handle /demo/pimascor {
+		redir * /demo/pimascor/ 308
 	}
 
 	# Keep API traffic ahead of the SPA fallback.
-	handle /pimascor/demo/api/* {
-		uri strip_prefix /pimascor/demo
+	handle /demo/pimascor/api/* {
+		uri strip_prefix /demo/pimascor
 
 		header {
 			>Cache-Control "private, no-store"
@@ -155,7 +155,7 @@ delegateops.business {
 	}
 
 	# Strip the public mount path before looking in the static root.
-	handle_path /pimascor/demo/* {
+	handle_path /demo/pimascor/* {
 		root * /srv/bridge-ph-pimascor-demo
 
 		import same_origin_web_csp

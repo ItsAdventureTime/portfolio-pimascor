@@ -43,7 +43,7 @@ authorized for live financial or personal data.
 
 The documented production service is:
 
-- Public route: `https://delegateops.business/pimascor/`
+- Public route: `https://delegateops.business/prod/pimascor/`
 - Host: Fedora CoreOS VPS
 - Runtime: rootless Podman and Quadlets
 - Public edge: the existing rootless Caddy service

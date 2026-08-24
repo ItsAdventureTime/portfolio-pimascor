@@ -32,7 +32,7 @@ This directory is the working root for the new PIMASCOR Operational Control Syst
 
 ## Next deliverables
 
-1. Deploy the team-demo release at `/pimascor/demo/` by following `infra/README.md`; no host Python, Node.js, npm, or PostgreSQL installation is required. The Docker Sandbox builds the API image and static PWA locally, and the existing Caddy container serves the exported files directly.
+1. Deploy the team-demo release at `/demo/pimascor/` by following `infra/README.md`; no host Python, Node.js, npm, or PostgreSQL installation is required. The Docker Sandbox builds the API image and static PWA locally, and the existing Caddy container serves the exported files directly.
 2. Review the Phase 0 specification and hosted demo with each operational owner.
 3. Record accepted changes and sign off the screen and workflow behavior.
 4. Validate Shipment Profitability plus the connected GM approval, DCS payment, Additional Budget, Liquidation, Billing/replacement/Credit Memo, Client Payment, and Request for Payment workflows with each role owner.

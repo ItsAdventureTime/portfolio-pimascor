@@ -26,7 +26,7 @@ Environment=DATABASE_URL_FILE=/run/secrets/bridge_ph_pimascor_demo_database_url
 # Pydantic Settings decodes list-valued environment variables as JSON before
 # field validators run, so preserve the inner JSON quotes in the value.
 Environment='FRONTEND_ORIGINS=["https://delegateops.business"]'
-Environment=PUBLIC_APP_URL=https://delegateops.business/pimascor/demo/
+Environment=PUBLIC_APP_URL=https://delegateops.business/demo/pimascor/
 Environment=SESSION_COOKIE_NAME=bridge_ph_pimascor_demo_session
 Environment=CSRF_COOKIE_NAME=bridge_ph_pimascor_demo_csrf
 Environment=SESSION_COOKIE_SECURE=true

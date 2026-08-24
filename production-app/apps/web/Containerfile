@@ -8,8 +8,8 @@ COPY index.html tsconfig*.json vite.config.ts ./
 COPY public ./public
 COPY src ./src
 
-ARG VITE_BASE_PATH=/pimascor/demo/
-ARG VITE_API_URL=/pimascor/demo/api/v1
+ARG VITE_BASE_PATH=/demo/pimascor/
+ARG VITE_API_URL=/demo/pimascor/api/v1
 ARG VITE_CSRF_COOKIE_NAME=bridge_ph_pimascor_demo_csrf
 ARG VITE_DEPLOYMENT_TIER=development
 ENV VITE_BASE_PATH=${VITE_BASE_PATH}

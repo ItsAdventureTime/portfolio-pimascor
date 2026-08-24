@@ -71,7 +71,7 @@ def test_login_email_is_personal_clear_and_uses_fragment_for_secret():
         "Alyssa & Team",
         "challenge-123",
         "482915",
-        "https://delegateops.business/pimascor/demo/",
+    "https://delegateops.business/demo/pimascor/",
         5,
     )
 

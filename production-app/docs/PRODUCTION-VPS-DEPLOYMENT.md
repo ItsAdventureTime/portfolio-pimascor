@@ -14,7 +14,7 @@ Runtime paths:
   upload spool, backup staging, and restic cache.
 - `~/.config/containers/systemd/bridge-ph/pimascor`: production Quadlets.
 - Caddy serves `~/bridge-ph/pimascor/web-dist` at
-  `https://delegateops.business/pimascor/`.
+`https://delegateops.business/prod/pimascor/`.
 
 Caddy is not host-installed or root-run. It is the existing rootless Podman
 container managed by the user-level, Quadlet-generated `caddy.service`, with
@@ -234,7 +234,6 @@ commit-specific activation command printed by the Mac transfer script:
 ```bash
 cd /var/home/jk/bridge-ph/pimascor/source && ./infra/scripts/provision-production-secrets.sh
 cd /var/home/jk/bridge-ph/pimascor/source && ./infra/scripts/update-production.sh --source /var/home/jk/bridge-ph/pimascor/source --api-image-archive /var/home/jk/bridge-ph/pimascor/release-artifacts/COMMIT/api-image.tar --web-dist /var/home/jk/bridge-ph/pimascor/release-artifacts/COMMIT/web-dist
-cd /var/home/jk/bridge-ph/pimascor/source && ./infra/scripts/install-production-caddy.sh
 ```
 
 Replace `COMMIT` with the release SHA, or copy the exact path printed by
@@ -274,10 +273,10 @@ built API image and to manage its production services.
 This is the complete deployment sequence. Secret provisioning preserves
 existing secrets and only prompts for missing values. The updater activates the
 prebuilt API and web assets, applies migrations, reconciles the account
-bootstrap, starts the export worker, and enables backup timers. The final
-command must be invoked as `./infra/scripts/install-production-caddy.sh` from
-the deployed source directory; `install-production-caddy.sh` by itself is not
-a shell command unless that directory has been added to `PATH`.
+bootstrap, starts the export worker, and enables backup timers. The updater
+then invokes `./infra/scripts/install-production-caddy.sh` from the deployed
+source directory; do not run a bare `install-production-caddy.sh` from another
+working directory.
 
 This runs forward migrations and starts an empty production database if the
 database is new. It does not delete or reset existing production records.
@@ -304,17 +303,11 @@ the master data.
 
 ## Caddy activation
 
-The production updater deliberately leaves the shared edge configuration
-unchanged. After reviewing the supplied Caddyfile and confirming the existing
-`delegateops.business` site block, run:
-
-```bash
-cd /var/home/jk/bridge-ph/pimascor/source && ./infra/scripts/install-production-caddy.sh
-```
-
-The script installs the production handler import, adds the production static
-web root and proxy network to the existing rootless Caddy Quadlet, validates
-Caddy's adapted configuration, restarts Caddy, and checks the public route.
+`update-production.sh` invokes `install-production-caddy.sh` after the API and
+web cutover. The installer adopts the production handler import, adds the
+production static web root and proxy network to the existing rootless Caddy
+Quadlet, validates the full adapted configuration, restarts Caddy, and checks
+`https://delegateops.business/prod/pimascor/api/v1/health`.
 It refuses to edit the file if the expected site block, Quadlet, or production
 web root is absent. It normalizes the PIMASCOR web mount to the canonical
 `%h/bridge-ph/pimascor/web-dist` source and removes only duplicate PIMASCOR

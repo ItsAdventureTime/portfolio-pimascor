@@ -8,12 +8,12 @@
 # Email sign-in fragments never reach Caddy; the ordinary SPA handler below is
 # the correct landing route for both code entry and one-click verification.
 
-handle /pimascor/demo {
-    redir * /pimascor/demo/ 308
+handle /demo/pimascor {
+    redir * /demo/pimascor/ 308
 }
 
-handle /pimascor/demo/api/* {
-    uri strip_prefix /pimascor/demo
+handle /demo/pimascor/api/* {
+    uri strip_prefix /demo/pimascor
     header {
         >Cache-Control "private, no-store"
         >CDN-Cache-Control "no-store"
@@ -23,7 +23,7 @@ handle /pimascor/demo/api/* {
     reverse_proxy bridge-ph-pimascor-demo-api:8000
 }
 
-handle_path /pimascor/demo/* {
+handle_path /demo/pimascor/* {
     header {
         >Content-Security-Policy "default-src 'none'; script-src 'self'; script-src-attr 'none'; style-src 'self'; style-src-attr 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; connect-src 'self'; media-src 'self' blob:; object-src 'none'; frame-src 'self' blob:; frame-ancestors 'none'; worker-src 'self'; manifest-src 'self'; base-uri 'none'; form-action 'self'; upgrade-insecure-requests"
         >X-Robots-Tag "noindex, nofollow, noarchive"

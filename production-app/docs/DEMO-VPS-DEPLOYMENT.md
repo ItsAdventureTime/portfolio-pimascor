@@ -6,7 +6,7 @@ migration, restart, or Bunny purge remains unverified until its current command
 output is captured.
 
 This procedure is only for the public synthetic-data demo at
-`https://delegateops.business/pimascor/demo/`. It is not a production-data
+`https://delegateops.business/demo/pimascor/`. It is not a production-data
 deployment and must be run by the rootless Linux user that owns the demo
 Podman/Caddy services.
 
@@ -85,6 +85,31 @@ Because Caddy bind-mounts the `web-dist` directory itself, the updater keeps
 that directory in place and replaces its validated contents. It does not rename
 the live directory during activation; this preserves the container mount.
 
+## Caddy prerequisites
+
+Before running `update-demo.sh`, the live rootless Caddy service must already
+have the reviewed demo handlers and infrastructure in place:
+
+- `/demo/pimascor` redirects to `/demo/pimascor/`.
+- `/demo/pimascor/api/*` strips `/demo/pimascor` and proxies to
+  `bridge-ph-pimascor-demo-api:8000`.
+- `/demo/pimascor/*` uses `handle_path`, serves
+  `/srv/bridge-ph-pimascor-demo`, and falls back to `/index.html` for SPA
+  routes.
+- Caddy has the read-only `web-dist` bind mount and joins
+  `bridge-ph-pimascor-demo-proxy`.
+
+Check the service and network before activation:
+
+```bash
+systemctl --user is-active caddy.service
+podman network exists bridge-ph-pimascor-demo-proxy
+```
+
+If either check fails, stop and repair the Caddy Quadlet, mount, network, or
+live route first. `update-demo.sh` updates the application release; it does
+not create or replace the shared Caddy routing.
+
 ## Activate from the VPS
 
 After the source transfer completes, log in:
@@ -153,7 +178,7 @@ Run these from the VPS under the demo service account:
 ```bash
 systemctl --user is-active bridge-ph-pimascor-demo-db.service
 systemctl --user is-active bridge-ph-pimascor-demo-api.service
-curl --fail --show-error https://delegateops.business/pimascor/demo/api/v1/health
+curl --fail --show-error https://delegateops.business/demo/pimascor/api/v1/health
 grep -R --quiet --fixed-strings 'Module-specific accounting CSVs' "$HOME/bridge-ph/pimascor-demo/web-dist/assets"
 ```
 
@@ -205,10 +230,10 @@ In Bunny's dashboard, or through an approved API key kept outside this project,
 purge these exact URLs:
 
 ```text
-https://delegateops.business/pimascor/demo/
-https://delegateops.business/pimascor/demo/index.html
-https://delegateops.business/pimascor/demo/sw.js
-https://delegateops.business/pimascor/demo/manifest.webmanifest
+https://delegateops.business/demo/pimascor/
+https://delegateops.business/demo/pimascor/index.html
+https://delegateops.business/demo/pimascor/sw.js
+https://delegateops.business/demo/pimascor/manifest.webmanifest
 ```
 
 Do not perform a full Pull Zone purge unless this Pull Zone serves only this demo
