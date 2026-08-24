@@ -63,8 +63,9 @@ production-app/infra/scripts/deploy-demo-vps.sh
 production-app/infra/scripts/deploy-production-vps.sh
 ```
 
-After login, run the matching VPS activation command printed by the transfer
-script. The VPS updater loads the prebuilt API image and copies the prebuilt
+After login, run the matching VPS activation command from the deployment
+guide. The transfer script prints the release commit and artifact path as
+non-executable facts. The VPS updater loads the prebuilt API image and copies the prebuilt
 web files; it does not compile or build them.
 Do not use ad-hoc file synchronization; it can transfer ignored build output or a source tree
 whose commit does not match the release being activated.
@@ -173,7 +174,7 @@ floating `latest` or an unverified digest.
 
 For an already installed demo or a first deployment, run the transfer script
 from the repository workspace. It builds the API image and static PWA locally,
-then prints the exact VPS-only activation command:
+then prints the release/artifact facts needed by the VPS-only activation step:
 
 ```bash
 production-app/infra/scripts/deploy-demo-vps.sh
@@ -367,7 +368,7 @@ Expected:
 ## 11. Updates and rollback cleanup
 
 After synchronizing the source and local release bundle, run the complete
-activation command printed by `infra/scripts/deploy-demo-vps.sh`. It loads the
+activation command from `docs/DEMO-VPS-DEPLOYMENT.md`. It loads the
 prebuilt API image, stages the static PWA, updates, migrates, reloads the demo
 baseline, restarts Caddy, and runs the public health checks.
 
@@ -481,8 +482,9 @@ dry-run, and quarantine restore procedure; Admin/DCS web access is catalog-only.
 The isolated production path is documented in `docs/PRODUCTION-VPS-DEPLOYMENT.md`.
 Use `infra/scripts/deploy-production-vps.sh` from the Mac. It builds the
 production API image and PWA in the Docker Sandbox, then transfers the source
-and release bundle. After login, run the printed `update-production.sh`
-activation command with the `--api-image-archive` and `--web-dist` paths. That
+and release bundle. After login, run the `update-production.sh` activation
+command from `docs/PRODUCTION-VPS-DEPLOYMENT.md` with the `--api-image-archive`
+and `--web-dist` paths. That
 updater invokes `install-production-caddy.sh` to adopt the handler, add the
 production Caddy network and web mount, validate the full configuration, and
 check `https://delegateops.business/prod/pimascor/api/v1/health`. Production

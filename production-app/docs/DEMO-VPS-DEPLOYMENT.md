@@ -116,14 +116,15 @@ After the source transfer completes, log in:
 
     ssh -p 22 jk@216.75.75.136
 
-Then run the exact commit-specific activation command printed by the transfer
-script. The command has this shape:
+Then run the commit-specific activation command from this guide. The transfer
+script prints the release commit and artifact path as non-executable facts.
 
 ```bash
 cd ~/bridge-ph/pimascor-demo/source && ./infra/scripts/update-demo.sh --source ~/bridge-ph/pimascor-demo/source --api-image-archive ~/bridge-ph/pimascor-demo/release-artifacts/COMMIT/api-image.tar --web-dist ~/bridge-ph/pimascor-demo/release-artifacts/COMMIT/web-dist && bash ./infra/scripts/reconcile-demo-web-root.sh
 ```
 
-Replace `COMMIT` with the release SHA, or copy the exact printed command.
+Replace `COMMIT` with the release SHA shown in the transfer facts. The transfer
+script does not print an executable command; follow this guide for activation.
 
 The final reconciliation step runs only after the updater has loaded the
 prebuilt API image and verified the Caddy-served PWA. It removes only stale staging directories

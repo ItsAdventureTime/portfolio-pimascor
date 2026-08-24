@@ -76,7 +76,11 @@ git archive \
   --add-virtual-file="${source_prefix}/.deployment-source-commit:${release_commit}" \
   HEAD "${source_prefix}" > "${release_dir}/source.tar.gz"
 
-tar -czf - \
+tar_options=(-czf -)
+if [ "$(uname -s)" = Darwin ]; then
+  tar_options+=(--no-xattrs --no-mac-metadata)
+fi
+tar "${tar_options[@]}" \
   -C "${release_dir}" \
   source.tar.gz \
   api-image.tar \
@@ -169,12 +173,11 @@ if [ "${REFRESH_ACCOUNT_MANIFEST}" = true ]; then
     'cd /var/home/jk/bridge-ph/pimascor/source && ./infra/scripts/provision-production-secrets.sh --replace-account-manifest'
 fi
 
-printf '%s\n' 'Log in to the VPS, then run:'
 if [ "${REFRESH_ACCOUNT_MANIFEST}" = true ]; then
   printf '%s\n' 'The account-bootstrap secret was refreshed; the updater will apply pending identities idempotently.'
 else
   printf '%s\n' 'Account identities are unchanged. To refresh them explicitly, rerun this script with --refresh-account-manifest.'
 fi
-printf '%s\n' 'cd /var/home/jk/bridge-ph/pimascor/source && ./infra/scripts/provision-production-secrets.sh'
-printf 'cd /var/home/jk/bridge-ph/pimascor/source && ./infra/scripts/update-production.sh --source /var/home/jk/bridge-ph/pimascor/source --api-image-archive %s/api-image.tar --web-dist %s/web-dist\n' "${artifact_dir}" "${artifact_dir}"
-printf '%s\n' 'cd /var/home/jk/bridge-ph/pimascor/source && ./infra/scripts/install-production-caddy.sh'
+printf 'Release commit: %s\n' "${release_commit}"
+printf 'Artifact bundle: %s\n' "${artifact_dir}"
+printf '%s\n' 'Activation remains a separate VPS step; follow docs/PRODUCTION-VPS-DEPLOYMENT.md.'

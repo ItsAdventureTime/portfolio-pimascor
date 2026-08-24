@@ -91,7 +91,8 @@ command below:
 ```
 
 Run that command locally on the Mac. After it succeeds and after logging in,
-run the exact activation command printed by the transfer script. Its shape is:
+run the commit-specific activation command from the deployment guide. The
+transfer script prints the release commit and artifact path as facts. Its shape is:
 
 ```bash
 cd ~/bridge-ph/pimascor-demo/source && ./infra/scripts/update-demo.sh --source ~/bridge-ph/pimascor-demo/source --api-image-archive ~/bridge-ph/pimascor-demo/release-artifacts/COMMIT/api-image.tar --web-dist ~/bridge-ph/pimascor-demo/release-artifacts/COMMIT/web-dist && bash ./infra/scripts/reconcile-demo-web-root.sh

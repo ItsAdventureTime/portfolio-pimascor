@@ -51,7 +51,11 @@ git archive \
   --add-virtual-file="${source_prefix}/.deployment-source-commit:${release_commit}" \
   HEAD "${source_prefix}" > "${release_dir}/source.tar.gz"
 
-tar -czf - \
+tar_options=(-czf -)
+if [ "$(uname -s)" = Darwin ]; then
+  tar_options+=(--no-xattrs --no-mac-metadata)
+fi
+tar "${tar_options[@]}" \
   -C "${release_dir}" \
   source.tar.gz \
   api-image.tar \
@@ -133,5 +137,6 @@ tar -czf - \
 
 printf 'Transferred committed demo source and local build artifacts: %s\n' "${release_commit}"
 artifact_dir="/var/home/jk/bridge-ph/pimascor-demo/release-artifacts/${release_commit}"
-printf '%s\n' 'Log in to the VPS, then run:'
-printf 'cd /var/home/jk/bridge-ph/pimascor-demo/source && ./infra/scripts/update-demo.sh --source /var/home/jk/bridge-ph/pimascor-demo/source --api-image-archive %s/api-image.tar --web-dist %s/web-dist && bash ./infra/scripts/reconcile-demo-web-root.sh\n' "${artifact_dir}" "${artifact_dir}"
+printf 'Release commit: %s\n' "${release_commit}"
+printf 'Artifact bundle: %s\n' "${artifact_dir}"
+printf '%s\n' 'Activation remains a separate VPS step; follow docs/DEMO-VPS-DEPLOYMENT.md.'
