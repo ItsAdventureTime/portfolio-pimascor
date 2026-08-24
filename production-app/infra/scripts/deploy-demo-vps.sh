@@ -139,4 +139,15 @@ printf 'Transferred committed demo source and local build artifacts: %s\n' "${re
 artifact_dir="/var/home/jk/bridge-ph/pimascor-demo/release-artifacts/${release_commit}"
 printf 'Release commit: %s\n' "${release_commit}"
 printf 'Artifact bundle: %s\n' "${artifact_dir}"
+source_dir="/var/home/jk/bridge-ph/pimascor-demo/source"
+printf '\n# ========== TRANSFER COMPLETE — NOT ACTIVATED ==========\n'
+printf '# On the VPS, paste only the next line:\n'
+printf 'cd %q && %q --source %q --api-image-archive %q --web-dist %q && %q %q\n' \
+  "${source_dir}" \
+  './infra/scripts/update-demo.sh' \
+  "${source_dir}" \
+  "${artifact_dir}/api-image.tar" \
+  "${artifact_dir}/web-dist" \
+  bash \
+  './infra/scripts/reconcile-demo-web-root.sh'
 printf '%s\n' 'Activation remains a separate VPS step; follow docs/DEMO-VPS-DEPLOYMENT.md.'

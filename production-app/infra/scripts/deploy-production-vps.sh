@@ -180,4 +180,13 @@ else
 fi
 printf 'Release commit: %s\n' "${release_commit}"
 printf 'Artifact bundle: %s\n' "${artifact_dir}"
+source_dir="/var/home/jk/bridge-ph/pimascor/source"
+printf '\n# ========== TRANSFER COMPLETE — NOT ACTIVATED ==========\n'
+printf '# On the VPS, paste only the next line:\n'
+printf 'cd %q && %q --source %q --api-image-archive %q --web-dist %q\n' \
+  "${source_dir}" \
+  './infra/scripts/update-production.sh' \
+  "${source_dir}" \
+  "${artifact_dir}/api-image.tar" \
+  "${artifact_dir}/web-dist"
 printf '%s\n' 'Activation remains a separate VPS step; follow docs/PRODUCTION-VPS-DEPLOYMENT.md.'
