@@ -280,9 +280,11 @@ built API image and to manage its production services.
 This is the complete deployment sequence. Secret provisioning preserves
 existing secrets and only prompts for missing values. The updater activates the
 prebuilt API and web assets, applies migrations, reconciles the account
-bootstrap, starts the export worker, and enables backup timers. The updater
-then invokes `./infra/scripts/install-production-caddy.sh` from the deployed
-source directory; do not run a bare `install-production-caddy.sh` from another
+bootstrap, and starts the export worker. It then installs and validates Caddy;
+only after the API health check and Caddy activation succeed does it enable and
+start the production backup and retention timers. The updater then invokes
+`./infra/scripts/install-production-caddy.sh` from the deployed source
+directory; do not run a bare `install-production-caddy.sh` from another
 working directory.
 
 This runs forward migrations and starts an empty production database if the
@@ -371,9 +373,12 @@ Production installs the PostgreSQL dump, Restic backup, retention timer, and
 single export worker as separate rootless Quadlets. The encrypted Backblaze B2
 repository is the recovery source of truth. The scheduled service creates a
 consistent PostgreSQL dump, backs up production uploads and Quadlets, then
-records non-sensitive completion metadata for the Admin/DCS catalog. The
-transient dump is deleted only after Restic succeeds; credentials never enter
-the catalog or web response.
+records non-sensitive completion metadata for the Admin/DCS catalog. On each
+successful backup, the service deletes the transient dump before recording the
+catalog entry; systemd runs these post-success hooks in declaration order, so a
+cleanup failure fails the backup unit and prevents a misleading catalog entry.
+Failed uploads retain the staging dump for investigation or retry. Credentials
+never enter the catalog or web response.
 
 Retention applies daily, weekly, monthly, and yearly classes. Quarterly and
 semiannual legal retention requires approved tagged/archive copies or a B2

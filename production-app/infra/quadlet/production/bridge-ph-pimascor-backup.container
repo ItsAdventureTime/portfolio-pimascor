@@ -36,5 +36,7 @@ LogDriver=journald
 Type=oneshot
 Restart=no
 TimeoutStartSec=7200
+# Keep cleanup before catalog recording: systemd runs ExecStartPost hooks in
+# declaration order, and a cleanup failure must fail this backup unit.
 ExecStartPost=%h/bridge-ph/pimascor/bin/cleanup-production-backup-staging.sh
 ExecStartPost=%h/bridge-ph/pimascor/bin/record-production-backup.sh
