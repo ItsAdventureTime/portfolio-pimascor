@@ -36,4 +36,5 @@ LogDriver=journald
 Type=oneshot
 Restart=no
 TimeoutStartSec=7200
+ExecStartPost=%h/bridge-ph/pimascor/bin/cleanup-production-backup-staging.sh
 ExecStartPost=%h/bridge-ph/pimascor/bin/record-production-backup.sh

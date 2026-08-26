@@ -59,6 +59,7 @@ required_files=(
   "${SOURCE_ROOT}/infra/quadlet/production/bridge-ph-pimascor-egress.network"
   "${SOURCE_ROOT}/infra/quadlet/production/bridge-ph-pimascor-proxy.network"
   "${SOURCE_ROOT}/infra/scripts/record-production-backup.sh"
+  "${SOURCE_ROOT}/infra/scripts/cleanup-production-backup-staging.sh"
   "${SOURCE_ROOT}/infra/scripts/production-backup-now.sh"
   "${SOURCE_ROOT}/infra/scripts/production-restore.sh"
   "${SOURCE_ROOT}/infra/scripts/retire-legacy-accustandard-quadlet.sh"
@@ -128,6 +129,7 @@ for quadlet_file in "${quadlet_files[@]}"; do
 install -m 600 "${SOURCE_ROOT}/infra/systemd/bridge-ph-pimascor-backup.timer" "${TIMER_ROOT}/bridge-ph-pimascor-backup.timer"
 install -m 600 "${SOURCE_ROOT}/infra/systemd/bridge-ph-pimascor-backup-retention.timer" "${TIMER_ROOT}/bridge-ph-pimascor-backup-retention.timer"
 install -m 700 "${SOURCE_ROOT}/infra/scripts/record-production-backup.sh" "${APP_ROOT}/bin/record-production-backup.sh"
+install -m 700 "${SOURCE_ROOT}/infra/scripts/cleanup-production-backup-staging.sh" "${APP_ROOT}/bin/cleanup-production-backup-staging.sh"
 done
 
 rm -f -- \
