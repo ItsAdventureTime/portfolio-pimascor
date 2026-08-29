@@ -234,9 +234,10 @@ new or corrected pending accounts are reconciled. An already-activated account
 whose email, display name, or role differs is refused for safety and must be
 changed through an explicit Administrator procedure.
 
-After SSH login, first provision any missing secrets, then run the
-commit-specific activation commands from this guide. The Mac transfer script
-prints the release commit and artifact path as non-executable facts:
+The transfer script prints the release commit and artifact path as facts. It
+automatically invokes the VPS updater after transfer, so manual activation is
+only needed when recovering from an interrupted transfer or deliberately
+re-running a release:
 
 ```bash
 cd /var/home/jk/bridge-ph/pimascor/source && ./infra/scripts/provision-production-secrets.sh
@@ -248,9 +249,9 @@ loads the prebuilt API image, stages the
 prebuilt static files, applies migrations, restarts the services, and checks
 health; it does not run a build.
 
-The normal repeatable sequence is to run the Mac transfer script, then run the
-VPS activation commands in this guide. Migrations execute through `alembic upgrade
-head`: each revision runs once because Alembic records it in the database.
+The normal repeatable sequence is to run the Mac transfer script. Migrations
+execute through `alembic upgrade head`: each revision runs once because Alembic
+records it in the database.
 The account bootstrap, service restarts, web asset replacement, and backup
 timer activation are safe to repeat. Secret provisioning preserves existing
 secrets unless the explicit account-manifest replacement option is used.

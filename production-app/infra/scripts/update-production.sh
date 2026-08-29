@@ -126,13 +126,11 @@ install -d -m 700 "$APP_ROOT" "$APP_ROOT/data/postgres/18/docker" "$APP_ROOT/dat
 quadlet_files=(bridge-ph-pimascor-data.network bridge-ph-pimascor-egress.network bridge-ph-pimascor-proxy.network bridge-ph-pimascor-db.container bridge-ph-pimascor-api.container bridge-ph-pimascor-account-bootstrap.container bridge-ph-pimascor-export-worker.container bridge-ph-pimascor-db-dump.container bridge-ph-pimascor-backup.container bridge-ph-pimascor-backup-retention.container)
 for quadlet_file in "${quadlet_files[@]}"; do
   install -m 600 "${SOURCE_ROOT}/infra/quadlet/production/${quadlet_file}" "${QUADLET_ROOT}/${quadlet_file}"
+done
 install -m 600 "${SOURCE_ROOT}/infra/systemd/bridge-ph-pimascor-backup.timer" "${TIMER_ROOT}/bridge-ph-pimascor-backup.timer"
 install -m 600 "${SOURCE_ROOT}/infra/systemd/bridge-ph-pimascor-backup-retention.timer" "${TIMER_ROOT}/bridge-ph-pimascor-backup-retention.timer"
 install -m 700 "${SOURCE_ROOT}/infra/scripts/record-production-backup.sh" "${APP_ROOT}/bin/record-production-backup.sh"
 install -m 700 "${SOURCE_ROOT}/infra/scripts/cleanup-production-backup-staging.sh" "${APP_ROOT}/bin/cleanup-production-backup-staging.sh"
-done
-
-rm -f -- \
 
 systemctl --user daemon-reload
 systemd-analyze --user --generators=true verify bridge-ph-pimascor-db.service bridge-ph-pimascor-account-bootstrap.service bridge-ph-pimascor-api.service bridge-ph-pimascor-export-worker.service bridge-ph-pimascor-db-dump.service bridge-ph-pimascor-backup.service

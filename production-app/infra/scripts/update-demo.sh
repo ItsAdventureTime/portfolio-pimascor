@@ -2,8 +2,7 @@
 set -Eeuo pipefail
 
 # Guarded update helper for an already-installed PIMASCOR demo. It deliberately
-# does not create/replace secrets, modify Caddy configuration, publish ports, or
-# update unrelated containers.
+# does not create/replace secrets, publish ports, or update unrelated containers.
 
 APP_ROOT="${HOME}/bridge-ph/pimascor-demo"
 WEB_ROOT="${APP_ROOT}"
@@ -385,11 +384,8 @@ if [[ "${RESET_BASELINE}" == true ]]; then
   systemctl --user start bridge-ph-pimascor-demo-api.service
 fi
 
-if ! podman exec caddy caddy validate --config /etc/caddy/Caddyfile --adapter caddyfile ||
-   ! systemctl --user restart caddy.service; then
-  printf '%s\n' 'Caddy activation failed; restoring the previous release.' >&2
-  exit 1
-fi
+printf '%s\n' 'Activating and validating the reviewed demo Caddy route...'
+bash "${SOURCE_ROOT}/infra/scripts/install-demo-caddy.sh"
 
 host_index_sha="$(sha256sum "${WEB_ROOT}/web-dist/index.html" | awk '{print $1}')"
 caddy_index_sha="$(podman exec caddy cat /srv/bridge-ph-pimascor-demo/index.html | sha256sum | awk '{print $1}')"
@@ -399,7 +395,7 @@ if [[ "${host_index_sha}" != "${caddy_index_sha}" ]]; then
 fi
 
 if ! curl --fail --show-error "${API_HEALTH_URL}"; then
-  printf '%s\n' 'Demo API health failed after cutover; restoring the previous release.' >&2
+  printf '%s\n' 'Demo API health failed after cutover; no rollback is available. Review the logs and rerun the corrected release.' >&2
   exit 1
 fi
 curl --fail --show-error --output /dev/null "${PUBLIC_URL}"

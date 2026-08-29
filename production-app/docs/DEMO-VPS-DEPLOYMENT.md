@@ -3,9 +3,9 @@
 The deploy command is end-to-end: it builds in the Docker Sandbox, transfers
 the committed source and artifacts, then SSHes back to the VPS and runs
 `update-demo.sh` plus the web-root reconciliation. No manual activation command
-is required. Existing rollback images or previous web directories, if present
-from an older release, are intentionally left untouched; new deployments do
-not create more of them.
+is required. Demo deployments do not create rollback images or previous web
+directories because the demo contains synthetic data; existing legacy rollback
+material, if present, is outside the managed demo release path.
 
 Read [Factual basis and evidence policy](FACTUAL-BASIS.md) first. The paths in
 this guide are confirmed by the owner; completion of a transfer, cleanup,
@@ -92,30 +92,40 @@ Because Caddy bind-mounts the `web-dist` directory itself, the updater keeps
 that directory in place and replaces its validated contents. It does not rename
 the live directory during activation; this preserves the container mount.
 
-## Caddy prerequisites
+## Caddy activation
 
-Before running `update-demo.sh`, the live rootless Caddy service must already
-have the reviewed demo handlers and infrastructure in place:
+`update-demo.sh` invokes `install-demo-caddy.sh` after the demo API and PWA are
+ready. The installer is idempotent and manages only the reviewed demo route:
 
-- `/demo/pimascor` redirects to `/demo/pimascor/`.
+- `/demo/pimascor` redirects to `/demo/pimascor/` with status 308.
 - `/demo/pimascor/api/*` strips `/demo/pimascor` and proxies to
   `bridge-ph-pimascor-demo-api:8000`.
 - `/demo/pimascor/*` uses `handle_path`, serves
   `/srv/bridge-ph-pimascor-demo`, and falls back to `/index.html` for SPA
   routes.
-- Caddy has the read-only `web-dist` bind mount and joins
+- Caddy receives the read-only `web-dist` bind mount and joins
   `bridge-ph-pimascor-demo-proxy`.
 
-Check the service and network before activation:
+The installer stages the complete Caddy configuration, the committed demo
+fragment, and the shared Caddy Quadlet in disposable directories. It derives
+the validation image from the live Quadlet's digest-pinned `Image=` value,
+validates both the full Caddy configuration and the staged Quadlet with
+`podman-system-generator`, and exits before touching live files if either
+check fails. The demo `Network=` and `Volume=` entries are normalized exactly
+once under `[Container]`, even when an older installer placed them elsewhere.
+Only after validation does it atomically install the Caddyfile, demo fragment,
+and Quadlet, reload systemd, restart the demo network and Caddy, and verify the
+public redirect, static route, and API health endpoint.
+
+Check the result after activation:
 
 ```bash
 systemctl --user is-active caddy.service
 podman network exists bridge-ph-pimascor-demo-proxy
 ```
 
-If either check fails, stop and repair the Caddy Quadlet, mount, network, or
-live route first. `update-demo.sh` updates the application release; it does
-not create or replace the shared Caddy routing.
+If either check fails, the installer stops before reporting a successful
+deployment; repair the Caddy Quadlet, mount, network, or live route and retry.
 
 ## Activate from the VPS
 
@@ -123,15 +133,14 @@ After the source transfer completes, log in:
 
     ssh -p 22 jk@216.75.75.136
 
-Then run the commit-specific activation command from this guide. The transfer
-script prints the release commit and artifact path as non-executable facts.
+The transfer script now runs the commit-specific activation command
+automatically on the VPS.
 
 ```bash
 cd ~/bridge-ph/pimascor-demo/source && ./infra/scripts/update-demo.sh --source ~/bridge-ph/pimascor-demo/source --api-image-archive ~/bridge-ph/pimascor-demo/release-artifacts/COMMIT/api-image.tar --web-dist ~/bridge-ph/pimascor-demo/release-artifacts/COMMIT/web-dist && bash ./infra/scripts/reconcile-demo-web-root.sh
 ```
 
-Replace `COMMIT` with the release SHA shown in the transfer facts. The transfer
-script does not print an executable command; follow this guide for activation.
+Replace `COMMIT` with the release SHA only when activating an artifact manually.
 
 The final reconciliation step runs only after the updater has loaded the
 prebuilt API image and verified the Caddy-served PWA. It removes only stale staging directories
@@ -169,7 +178,7 @@ validation; VPS command output is required to prove VPS activation.
 The VPS command above runs the guarded demo updater. Its default behavior
 applies migrations and reloads the approved synthetic demo
 baseline, which is the correct choice for a demo release. It loads the
-prebuilt API image and copies the prebuilt PWA, saves local rollback material,
+prebuilt API image and copies the prebuilt PWA,
 installs the reviewed Quadlets, runs the database forward migration through the
 API/reset entrypoint, restarts Caddy, and probes both the health endpoint and
 public demo route. It prints the activated Git commit and expected
@@ -206,9 +215,10 @@ Then use a private/incognito browser window to check the public demo:
    screen is not evidence that the server-side role gate accepts or rejects an
    action correctly.
 
-If any check fails, use the rollback image/directory printed by the updater and
+If any check fails, do not purge the CDN or report a successful deployment;
 review the relevant `journalctl --user -u bridge-ph-pimascor-demo-api.service`
-logs. Keep rollback material until the walkthrough is complete.
+logs, correct the release, and rerun the updater. Demo releases have no managed
+rollback image or previous web directory.
 
 If the reset service reports `DuplicateObject: type "role" already exists`,
 the failure is the support-ticket migration retry path, not a reason to drop the

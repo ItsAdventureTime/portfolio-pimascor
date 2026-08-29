@@ -56,8 +56,9 @@ cd ~/bridge-ph/pimascor-demo/source && ./infra/scripts/update-demo.sh --source ~
 ```
 
 The updater recreates the demo database/API containers from Quadlets and
-restarts the shared Caddy service. Keep the rollback material it reports until
-health and role walkthroughs pass.
+restarts the shared Caddy service. Demo deployments do not create managed
+rollback images or previous web directories; use the transferred release
+artifacts and rerun the updater if health checks fail.
 
 If the source directory is missing, run the Mac transfer command from
 `DEMO-VPS-DEPLOYMENT.md`, then repeat the VPS command above. The transfer does
