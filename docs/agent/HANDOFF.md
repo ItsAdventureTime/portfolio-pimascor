@@ -124,3 +124,57 @@ URL and protected document path pass independent review. If a true external
 blocker remains, name it and the smallest owner action needed. Do not claim
 Cloudflare Workers, R2, OrbStack, Tunnel, or public deployment succeeded from
 source files alone.
+
+## Independent review — 2026-09-24
+
+Reviewed committed `b1baa0d1a5a66c229e0be201ed7a47bc744daf37` against
+this handoff, the demo source of truth, the Compose runbook, and the changed
+source. **Verdict: source checks conditionally pass; public demo acceptance
+fails.** No deployment or secret/Tunnel/R2 change was made.
+
+- **P1 — runbook secret probe cannot pass as written.**
+  `production-app/infra/docker-compose/README.md:98-99` overrides the
+  PostgreSQL entrypoint with `/bin/sh` and then requires UID 70. The exact
+  pinned image returned UID 0 for that shell; the `postgres` account is UID
+  70. Run the database probe with `--user 70:70` (or another proven equivalent)
+  before using it as the startup gate, then check secret readability on the
+  actual OrbStack mount without relaxing host permissions.
+- **P1 — runtime acceptance unavailable.** The expected
+  `~/docker/portfolio/pimascor/` folder is absent, and the public hostname
+  failed DNS resolution (`curl` exit 6). No DB/API health, Tunnel route, role,
+  browser, cache, R2 document, or restart-persistence claim can pass yet.
+- **P2 — GitHub signature status unresolved.** Local `git verify-commit HEAD`
+  passed and remote `main` matches local HEAD, but GitHub reports
+  `verified: false`, reason `unknown_key`. The owner must register the signing
+  key with GitHub, or otherwise resolve GitHub verification, before the
+  post-change signature gate is complete. Git transport is HTTPS.
+- **P3 — stale planning wording.**
+  `production-app/docs/DEMO-HOSTING-DECISION-2026-09-24.md:13-14` still says
+  the Compose/API edits are uncommitted. Revise it after the source repair.
+
+Independent validation used only `jk-sbx-project validate` on the committed
+snapshot: `uv sync --locked --extra dev` and `uv run --locked pytest -q`
+passed; `npm ci` and the demo Vite build passed; `docker compose config
+--quiet` passed. The pinned PostgreSQL image UID probe returned `0` and `70`
+for the shell and `postgres` account. `git diff --check 979fb0e..HEAD` passed.
+`npm audit` reported one high `nanoid` and one moderate `postcss` advisory;
+`npm audit --omit=dev` reported zero. API tests retained the Starlette
+deprecation warnings recorded in implementation notes. No source defects
+were found beyond the runbook probe; document storage remains incomplete
+without private R2 configuration and live checks.
+
+## Implementor response — 2026-09-24
+
+- Fixed the PostgreSQL secret probe to set `--user 70:70` before overriding
+  the image entrypoint. The pinned image reproduced UID 0 without that option
+  and UID 70 with it. A temporary Compose fixture with a placeholder secret
+  passed the corrected UID/readability command. This does not prove actual
+  OrbStack secret file permissions; the owner must still run that probe on the
+  real files before database startup.
+- Updated the hosting decision to remove stale “uncommitted” wording and
+  record the reviewer-observed DNS failure without treating source publication
+  as deployment evidence.
+- Remaining blockers: expected OrbStack secrets/runtime folder is absent,
+  public DNS fails, R2 acceptance is unverified, and GitHub reports
+  `unknown_key` for the locally verified SSH signature. The reviewer should
+  recheck the corrected probe and documentation in the follow-up commit.

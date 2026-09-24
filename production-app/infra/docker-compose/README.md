@@ -95,7 +95,7 @@ Check secret access without displaying file contents:
 ```sh
 docker --context orbstack compose run --rm --no-deps --entrypoint /bin/sh api \
   -c 'test "$(id -u)" = 10001 && test -r /run/secrets/database_url'
-docker --context orbstack compose run --rm --no-deps --entrypoint /bin/sh db \
+docker --context orbstack compose run --rm --no-deps --user 70:70 --entrypoint /bin/sh db \
   -c 'test "$(id -u)" = 70 && test -r /run/secrets/postgres_password'
 ```
 

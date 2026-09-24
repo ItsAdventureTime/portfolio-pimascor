@@ -10,10 +10,11 @@ React PWA in the same API image. Use Cloudflare R2 through its S3-compatible
 endpoint for protected demo documents if full upload/view behavior is required.
 Do not add a Worker solely to host this demo.
 
-This is a planning decision, not deployment evidence. The current Compose/API
-edits are uncommitted as of this review. Mac runtime state, Tunnel routing,
-Cloudflare subscription features, R2 activation, and the public URL have not
-been checked. The executor must prove them before claiming a working demo.
+This is a hosting decision, not deployment evidence. The implementation is
+published on the public portfolio repository's `main` branch. Independent
+review found that `pimascor.delegateops.business` did not resolve in DNS. Mac
+runtime state, Tunnel routing, R2 activation, and protected document behavior
+remain unverified. Prove them before claiming a working demo.
 
 ### Why this path
 

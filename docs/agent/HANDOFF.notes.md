@@ -73,8 +73,24 @@ the guarded workflow. GitHub's current `main` SHA matched local at publication:
 returned HTTP 404 because the current token lacks `admin:ssh_signing_key`; no
 additional token scope was requested. The owner may register the signing key
 in GitHub to establish GitHub's verification status. GitHub transport remains
-HTTPS. No deployment, public URL response, Tunnel, or R2 acceptance evidence
-exists. Independent review is the next role.
+HTTPS. No deployment or successful public URL response exists. The reviewer
+reported DNS resolution failure. Tunnel and R2 acceptance evidence do not
+exist. Independent review is the next role.
+
+## Post-review correction — 2026-09-24
+
+Independent review identified that overriding the PostgreSQL image entrypoint
+made its secret probe run as root (UID 0) instead of the postgres user (UID
+70). The Compose runbook now passes `--user 70:70`. Confirmed the pinned image
+reports UID 0 without the override and UID 70 with it. A temporary Compose
+file-backed placeholder-secret probe passed with the corrected command. This
+does not prove the absent OrbStack files' actual ownership/read permissions.
+
+The hosting decision no longer says source edits are uncommitted. Reviewer
+also observed that the public hostname fails DNS resolution, and that GitHub
+reports `unknown_key` although local `git verify-commit` succeeds. The runtime
+folder/secrets, Tunnel, public URL, and R2 acceptance remain unresolved; no
+deployment claim is supported.
 
 ### Smallest owner actions to complete runtime acceptance
 
@@ -82,8 +98,9 @@ exists. Independent review is the next role.
    owner-only access and matching PostgreSQL password and URL files. Run both
    UID readability probes; stop if they fail without a restrictive ownership
    solution.
-2. Identify the existing OrbStack `cloudflared` container/network and confirm
-   the correct management mode. Do not create another Tunnel service.
+2. Identify the existing OrbStack `cloudflared` container/network, repair the
+   hostname DNS/Tunnel route, and confirm its management mode. Do not create
+   another Tunnel service.
 3. If document flows are required, activate R2 and provide a private bucket
    with a bucket-scoped Object Read & Write S3 token; then configure and test
    multipart upload, protected range reads, delete, and reset cleanup.
