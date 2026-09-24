@@ -1,9 +1,9 @@
 # PIMASCOR demo implementation handoff
 
-ACTIVE_ROLE: implementation complete; public acceptance blocked by runtime prerequisites
-NEXT_OWNER: project owner to provide runtime/DNS/R2 configuration and register the GitHub signing key; then GPT-6 Sol (High) can complete runtime review
+ACTIVE_ROLE: independent source review complete; public acceptance blocked by runtime prerequisites
+NEXT_OWNER: project owner to provide runtime/DNS/R2 configuration and register the GitHub signing key; implementation agent to activate and verify the demo; independent reviewer to complete public acceptance
 IMPLEMENTATION_OWNER: GPT-6 Luna (High)
-REVIEW_OWNER: GPT-6 Sol (High), separate follow-up turn
+REVIEW_OWNER: GPT-6 Sol (Medium), current follow-up turn
 TARGET: `https://pimascor.delegateops.business`
 GIT_TARGET: `https://github.com/ItsAdventureTime/portfolio-pimascor.git` over HTTPS
 PUSH_CAPABILITY: signed local commit and guarded non-force push after checks
@@ -34,7 +34,7 @@ DEPLOYMENT_CAPABILITY: demo only; use owner's existing OrbStack/Tunnel, never pr
   verified locally and pushed to the public HTTPS remote. GitHub reports
   `unknown_key` for its signature; the available CLI token lacks the scope to
   inspect registered signing keys. The remote main SHA matched the local
-  commit at publication. Independent review remains pending.
+  commit at publication. Independent review was pending at that point.
 
 Read [the hosting decision and manual operator guide](../../production-app/docs/DEMO-HOSTING-DECISION-2026-09-24.md),
 then the current
@@ -195,3 +195,33 @@ request was not repeated. Local `git verify-commit HEAD` passed; GitHub's
 `main` SHA matches `4f649cde570b77030299460474fc1bd96776c055` and still
 reports `verified: false`, reason `unknown_key`. **Verdict remains: source
 checks conditionally pass; public demo acceptance fails.**
+
+## Current independent review — 2026-09-24
+
+Reviewed clean `main` at `73a933da9017af2b142119b3b25e5f7d7480ab8a`.
+The two commits after `4f649cde` change documentation only. In a fresh
+`jk-sbx-project validate` snapshot, `uv sync --locked --extra dev` and
+`uv run --locked pytest -q` passed (all tests; two Starlette deprecation
+warnings). `npm ci --silent` and the demo TypeScript/Vite build passed with
+`VITE_BASE_PATH=/`, `VITE_API_URL=/api/v1`, the demo CSRF cookie name, and
+`VITE_DEPLOYMENT_TIER=demo`. The unchanged Compose source and disposable
+UID-70 probe retain the prior review's passing result; no real runtime
+secret-read check was possible.
+
+The public `/api/v1/health` request still exits 6 because
+`pimascor.delegateops.business` does not resolve. The expected OrbStack
+runtime directory is absent. Local `git verify-commit HEAD` passes and GitHub
+`main` matches `73a933da9017af2b142119b3b25e5f7d7480ab8a`, but GitHub
+reports `verified: false`, reason `unknown_key`. No live DB/API, Tunnel,
+browser, role, cache, restart-persistence, or R2 document check has passed.
+**Verdict: source checks pass; public demo acceptance remains blocked.**
+
+Next implementation agent: after the owner supplies the external runtime and
+Tunnel details, prove UID 10001/70 can read only their assigned secrets,
+load the reviewed ARM64 image into OrbStack, start DB, run migration,
+initializer, and reset explicitly, then start API and record health and
+restart-persistence results. If full document behavior is required, add
+private R2 configuration and test upload, protected range view, delete, and
+reset cleanup before claiming it works. Record exact commands and results in
+`HANDOFF.notes.md`; hand public URL, role, browser, and cache acceptance to
+an independent reviewer. Resolve GitHub's signing-key registration separately.

@@ -9,17 +9,19 @@ For the current demo-only entry and role-testing behavior, use
 
 ## Local source gate
 
-Run these from the repository Docker Sandbox before transfer:
+Run these against the committed repository snapshot in the independent Docker
+Sandbox validation lane before transfer:
 
 ```bash
-jk-sbx-project exec sh -lc 'cd production-app/apps/api && uv sync --extra dev && uv run pytest -q'
-jk-sbx-project exec sh -lc 'cd production-app/apps/web && npm ci && npm run build'
+jk-sbx-project validate 'cd production-app/apps/api && uv sync --locked --extra dev && uv run --locked pytest -q'
+jk-sbx-project validate 'cd production-app/apps/web && npm ci && VITE_BASE_PATH=/ VITE_API_URL=/api/v1 VITE_CSRF_COOKIE_NAME=bridge_ph_pimascor_demo_csrf VITE_DEPLOYMENT_TIER=demo npm run build'
 ```
 
-`uv sync` resolves the exact pinned package versions from `pyproject.toml` and
-creates or refreshes `uv.lock`. Commit that lock file when it changes. If package
-resolution is unavailable, record the API suite as **not run**; a successful web
-build does not substitute for API verification.
+`--locked` checks the existing `uv.lock` without updating it. The validation
+lane uses a private clone of committed `HEAD`; it cannot see uncommitted edits
+or reuse the implementation worktree's dependencies. If dependency install
+fails, record the API suite as **not run**; a successful web build does not
+substitute for API verification.
 
 ## Deployed role acceptance
 
