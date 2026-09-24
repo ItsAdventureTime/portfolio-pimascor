@@ -1,7 +1,7 @@
 # PIMASCOR demo implementation handoff
 
-ACTIVE_ROLE: implementation complete; signed commit and publication in progress
-NEXT_OWNER: GPT-6 Sol (High), independent review after signed commit and HTTPS publication
+ACTIVE_ROLE: implementation complete; independent review pending
+NEXT_OWNER: GPT-6 Sol (High), independent review of the published candidate
 IMPLEMENTATION_OWNER: GPT-6 Luna (High)
 REVIEW_OWNER: GPT-6 Sol (High), separate follow-up turn
 TARGET: `https://pimascor.delegateops.business`
@@ -30,9 +30,11 @@ DEPLOYMENT_CAPABILITY: demo only; use owner's existing OrbStack/Tunnel, never pr
   evidence; continue source checks and record the owner actions required.
 - API tests, demo web build, ARM64 image build/inspection, Compose source
   configuration assertions, implementation notes, and focused path review are
-  complete. The first signing attempt had no key in the default SSH agent; the
-  Bitwarden SSH agent socket is available and lists the configured signing key.
-  Retrying signed commit, then guarded HTTPS publication and remote SHA checks.
+  complete. Signed commit `5675ec0b9d08a38dfb883c71178d968cce500332` was
+  verified locally and pushed to the public HTTPS remote. GitHub reports
+  `unknown_key` for its signature; the available CLI token lacks the scope to
+  inspect registered signing keys. The remote main SHA matched the local
+  commit at publication. Independent review remains pending.
 
 Read [the hosting decision and manual operator guide](../../production-app/docs/DEMO-HOSTING-DECISION-2026-09-24.md),
 then the current

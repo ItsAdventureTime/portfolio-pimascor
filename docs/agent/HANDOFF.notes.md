@@ -59,14 +59,22 @@
 
 ## Handoff status
 
-The first `git commit -S` attempt failed with `Couldn't find key in agent`.
-The default agent had no identities. The Bitwarden desktop SSH-agent socket
-`~/.bitwarden-ssh-agent.sock` responds to `ssh-add -L` and lists the configured
-public signing key. The `bw` CLI is not installed. Retry the signed commit with
-`SSH_AUTH_SOCK` pointed at the Bitwarden socket. Do not bypass signing. Then
-publish through the guarded HTTPS remote, verify remote SHA/signature, and hand
-the candidate to the independent reviewer. No push, release SHA, public
-response, or deployment evidence exists yet.
+The first `git commit -S` attempt failed because the default agent had no
+identities. The Bitwarden desktop SSH-agent socket `~/.bitwarden-ssh-agent.sock`
+responds to `ssh-add -L` and lists the configured public signing key. The `bw`
+CLI is not installed. A direct SSH signing probe succeeded; then
+`SSH_AUTH_SOCK="$HOME/.bitwarden-ssh-agent.sock" git commit -S ...` created
+commit `5675ec0b9d08a38dfb883c71178d968cce500332`.
+
+`git verify-commit HEAD` passed locally. The commit was pushed over HTTPS using
+the guarded workflow. GitHub's current `main` SHA matched local at publication:
+`5675ec0b9d08a38dfb883c71178d968cce500332`. GitHub's commit API reported
+`verified: false`, reason `unknown_key`. Checking `user/ssh_signing_keys`
+returned HTTP 404 because the current token lacks `admin:ssh_signing_key`; no
+additional token scope was requested. The owner may register the signing key
+in GitHub to establish GitHub's verification status. GitHub transport remains
+HTTPS. No deployment, public URL response, Tunnel, or R2 acceptance evidence
+exists. Independent review is the next role.
 
 ### Smallest owner actions to complete runtime acceptance
 
