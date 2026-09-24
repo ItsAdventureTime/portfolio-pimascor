@@ -92,6 +92,22 @@ reports `unknown_key` although local `git verify-commit` succeeds. The runtime
 folder/secrets, Tunnel, public URL, and R2 acceptance remain unresolved; no
 deployment claim is supported.
 
+## Final sync — 2026-09-24
+
+- Signed fix commit `4f649cde570b77030299460474fc1bd96776c055` was pushed via
+  the guarded HTTPS workflow. `git verify-commit HEAD` passed, local `main`
+  matched GitHub `main` at that SHA, and the worktree was clean before this
+  handoff update.
+- GitHub's commit API still reports `verified: false`, reason `unknown_key`.
+  The current `gh` token lacks `admin:ssh_signing_key`; no extra scope was
+  requested. The owner must register the Bitwarden-held public key with GitHub
+  as a signing key (or resolve GitHub's verification by another approved
+  route) to clear that gate. HTTPS remains the Git transport.
+- The reviewer follow-up independently validated the corrected UID-70
+  placeholder-secret probe and the updated hosting decision. Source verdict:
+  conditional pass. Public demo acceptance: fail because DNS/runtime/Tunnel
+  and private R2 acceptance are unavailable.
+
 ### Smallest owner actions to complete runtime acceptance
 
 1. Create `~/docker/portfolio/pimascor/secrets/` outside the checkout with

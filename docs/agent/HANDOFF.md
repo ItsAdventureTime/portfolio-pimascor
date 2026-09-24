@@ -1,7 +1,7 @@
 # PIMASCOR demo implementation handoff
 
-ACTIVE_ROLE: implementation complete; independent review pending
-NEXT_OWNER: GPT-6 Sol (High), independent review of the published candidate
+ACTIVE_ROLE: implementation complete; public acceptance blocked by runtime prerequisites
+NEXT_OWNER: project owner to provide runtime/DNS/R2 configuration and register the GitHub signing key; then GPT-6 Sol (High) can complete runtime review
 IMPLEMENTATION_OWNER: GPT-6 Luna (High)
 REVIEW_OWNER: GPT-6 Sol (High), separate follow-up turn
 TARGET: `https://pimascor.delegateops.business`
@@ -132,13 +132,12 @@ this handoff, the demo source of truth, the Compose runbook, and the changed
 source. **Verdict: source checks conditionally pass; public demo acceptance
 fails.** No deployment or secret/Tunnel/R2 change was made.
 
-- **P1 — runbook secret probe cannot pass as written.**
+- **P1 — runbook secret probe (resolved in `4f649cde`).**
   `production-app/infra/docker-compose/README.md:98-99` overrides the
-  PostgreSQL entrypoint with `/bin/sh` and then requires UID 70. The exact
-  pinned image returned UID 0 for that shell; the `postgres` account is UID
-  70. Run the database probe with `--user 70:70` (or another proven equivalent)
-  before using it as the startup gate, then check secret readability on the
-  actual OrbStack mount without relaxing host permissions.
+  PostgreSQL entrypoint with `/bin/sh`. The original command returned UID 0.
+  The corrected command adds `--user 70:70`; independent Compose validation
+  returned UID 70 and read a disposable placeholder secret. Actual OrbStack
+  file readability remains unverified.
 - **P1 — runtime acceptance unavailable.** The expected
   `~/docker/portfolio/pimascor/` folder is absent, and the public hostname
   failed DNS resolution (`curl` exit 6). No DB/API health, Tunnel route, role,
@@ -148,9 +147,10 @@ fails.** No deployment or secret/Tunnel/R2 change was made.
   `verified: false`, reason `unknown_key`. The owner must register the signing
   key with GitHub, or otherwise resolve GitHub verification, before the
   post-change signature gate is complete. Git transport is HTTPS.
-- **P3 — stale planning wording.**
-  `production-app/docs/DEMO-HOSTING-DECISION-2026-09-24.md:13-14` still says
-  the Compose/API edits are uncommitted. Revise it after the source repair.
+- **P3 — stale planning wording (resolved in `4f649cde`).**
+  `production-app/docs/DEMO-HOSTING-DECISION-2026-09-24.md:13-17` now says
+  the implementation is published and clearly separates source publication
+  from deployment evidence.
 
 Independent validation used only `jk-sbx-project validate` on the committed
 snapshot: `uv sync --locked --extra dev` and `uv run --locked pytest -q`
@@ -176,5 +176,22 @@ without private R2 configuration and live checks.
   as deployment evidence.
 - Remaining blockers: expected OrbStack secrets/runtime folder is absent,
   public DNS fails, R2 acceptance is unverified, and GitHub reports
-  `unknown_key` for the locally verified SSH signature. The reviewer should
-  recheck the corrected probe and documentation in the follow-up commit.
+  `unknown_key` for the locally verified SSH signature. The reviewer
+  independently rechecked the corrected probe and documentation in commit
+  `4f649cde570b77030299460474fc1bd96776c055`; both findings are resolved.
+
+## Reviewer follow-up — 2026-09-24
+
+Committed `4f649cde570b77030299460474fc1bd96776c055` resolves the original
+P1 probe and P3 wording findings above. `jk-sbx-project validate` ran the
+updated `docker compose run --user 70:70 --entrypoint /bin/sh db` against the
+pinned PostgreSQL image with a disposable placeholder secret: exit 0, UID 70,
+file readable. This proves the command form only; it does not prove ownership
+or readability of absent OrbStack runtime files. The runbook and hosting
+decision diff passed `git diff --check`.
+
+The P1 runtime/DNS and P2 GitHub signature blockers remain. The public DNS
+request was not repeated. Local `git verify-commit HEAD` passed; GitHub's
+`main` SHA matches `4f649cde570b77030299460474fc1bd96776c055` and still
+reports `verified: false`, reason `unknown_key`. **Verdict remains: source
+checks conditionally pass; public demo acceptance fails.**
