@@ -140,3 +140,26 @@ boundary; no live volume, network, UID mount, startup, or deployment evidence
 was obtained. The updated Compose runbook gives the operator the exact next
 checks. The repository's public mirror must contain only the ignore rules,
 guide, and this redacted status, never the runtime folder.
+
+## OrbStack image preparation and startup gate — 2026-09-25
+
+- Updated the canonical and ignored runtime Compose files to the floating
+  `postgres:18-alpine` tag, per owner preference. Official Docker Hub currently
+  lists PostgreSQL 18 Alpine tags and its latest 18 Alpine patch. The PostgreSQL
+  18 volume remains `/var/lib/postgresql`.
+- `jk-sbx-project implement 'docker build --platform linux/arm64 ...'` passed
+  for source `c5eb7f24b11949863562ca1cbf54f17f1d86338d`. The built image was
+  `linux/arm64`, ID
+  `sha256:4f8ee69c75f3ce6e58b57e0aadb8800a596e8fb354bf011db23653f1ce417014`.
+  The archive under the ignored runtime images folder passed `gzip -t`.
+- `docker --context orbstack image load` passed; OrbStack image inspect matched
+  the architecture and ID. OrbStack `docker compose config --quiet` passed.
+  Docker engine `orbstack`, `cloudflared`, and `cloudflared-network` were
+  present; `pimascor-demo_demo_postgres_data` was absent before startup.
+- API UID-10001 and PostgreSQL UID-70 file-secret probes did not run. The host
+  guard rejected `docker compose run` and its approved escalation retry with
+  “Use jk-sbx-project so Docker execution occurs inside Docker Sandbox.” No
+  service was started, and no secrets were printed. Startup is blocked until
+  the owner supplies/uses a supported OrbStack host execution path or performs
+  the documented probes and initialization manually. API container name for
+  the later Tunnel route: `pimascor-demo-api`.

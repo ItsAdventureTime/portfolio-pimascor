@@ -1,7 +1,7 @@
 # PIMASCOR demo implementation handoff
 
-ACTIVE_ROLE: local runtime secrets prepared; OrbStack and public acceptance still unverified
-NEXT_OWNER: implementation agent to finish optional R2 wiring and OrbStack checks after owner supplies Cloudflare details; independent reviewer to complete public acceptance
+ACTIVE_ROLE: API image loaded into OrbStack; service startup blocked at secret-read probes
+NEXT_OWNER: implementation agent with an approved OrbStack Compose execution path to run the UID probes, initialize/start services, and report the API container name; independent reviewer to complete public acceptance after routing
 IMPLEMENTATION_OWNER: GPT-6 Luna (High)
 REVIEW_OWNER: GPT-6 Sol (Medium), current follow-up turn
 TARGET: `https://pimascor.delegateops.business`
@@ -10,6 +10,49 @@ PUSH_CAPABILITY: signed local commit and guarded non-force push after checks
 DEPLOYMENT_CAPABILITY: demo only; use owner's existing OrbStack/Tunnel, never production
 
 ## Start here
+
+## Runtime startup takeover — 2026-09-25
+
+- The owner authorized starting the demo in OrbStack before they add the
+  Cloudflare Tunnel hostname. Report `pimascor-demo-api` after it is healthy;
+  the owner will route the hostname to `http://pimascor-demo-api:8000`.
+- On takeover, local `main` is clean at `c5eb7f24b11949863562ca1cbf54f17f1d86338d`.
+  OrbStack has the existing `cloudflared` container and `cloudflared-network`;
+  the demo Postgres volume does not exist. The API image is not loaded yet.
+- The owner prefers floating Alpine image tags tracking current LTS majors.
+  PostgreSQL now uses `postgres:18-alpine`; its runbook documents the floating
+  tag. This supersedes the earlier reviewed digest pin for this demo only.
+- Runtime secret files are present under the ignored runtime folder, mode
+  `0600`; do not print their contents. Compose config and API image build/load
+  are complete. Both service UID read probes, initialization, health, and
+  persistence checks are pending because the host guard blocks Compose runs.
+  Keep document flows marked incomplete until R2 is configured.
+
+## OrbStack startup attempt — 2026-09-25
+
+- Official Docker Compose and PostgreSQL image docs were checked. The source
+  and ignored runtime Compose files now use floating `postgres:18-alpine`, the
+  latest maintained PostgreSQL 18 Alpine tag. Documentation no longer says
+  this demo pins a digest.
+- Built the API image with `jk-sbx-project implement` for `linux/arm64` at
+  source `c5eb7f24b11949863562ca1cbf54f17f1d86338d`. Image ID:
+  `sha256:4f8ee69c75f3ce6e58b57e0aadb8800a596e8fb354bf011db23653f1ce417014`.
+  Exported and gzip-checked the ignored runtime archive, then loaded it into
+  OrbStack; image inspect returned the same ID and architecture. Runtime
+  `docker compose config --quiet` passed.
+- OrbStack inspection found the existing `cloudflared` container and
+  `cloudflared-network`, with no existing demo Postgres volume. The API
+  container is not running yet.
+- The API UID-10001 and PostgreSQL UID-70 secret probes were rejected by the
+  host execution guard (`Use jk-sbx-project so Docker execution occurs inside
+  Docker Sandbox`). The approved escalation call was rejected by the same
+  guard. Do not start services until a supported way to run these probes
+  outside Docker Sandbox is available, per the owner's explicit OrbStack
+  requirement and this runbook's secret-read stop condition.
+- Owner action to unblock: provide a host OrbStack Compose execution path that
+  permits the two read-only probes and subsequent `compose up`/one-off jobs,
+  or run those commands manually and report their results. Once API is healthy,
+  report container `pimascor-demo-api` for the Cloudflare dashboard route.
 
 ## Takeover progress — 2026-09-24
 

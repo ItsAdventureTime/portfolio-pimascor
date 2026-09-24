@@ -83,10 +83,11 @@ docker --context orbstack image load --input production-app/infra/docker-compose
 docker --context orbstack image inspect pimascor-demo-api:latest --format '{{.RepoTags}} {{.Architecture}} {{.Id}}'
 ```
 
-Compose pins PostgreSQL to `18.6-alpine3.23` and its multi-platform manifest
-digest. PostgreSQL 18 stores data below `/var/lib/postgresql/18/docker`. Its
-volume must target `/var/lib/postgresql`. Never point an initialized volume at
-a different major version.
+Compose uses the floating `postgres:18-alpine` tag to follow the latest
+PostgreSQL 18 Alpine patch. PostgreSQL 18 stores data below
+`/var/lib/postgresql/18/docker`; its volume must target `/var/lib/postgresql`.
+Review and smoke-check the pulled image before starting it, and never point an
+initialized volume at a different major version.
 
 ## 3. Check runtime prerequisites before startup
 
@@ -97,6 +98,8 @@ Confirm the existing Tunnel container and network. Do not create another
 docker --context orbstack ps --filter name=cloudflared
 docker --context orbstack network inspect cloudflared-network
 docker --context orbstack volume inspect pimascor-demo_demo_postgres_data
+docker --context orbstack pull postgres:18-alpine
+docker --context orbstack image inspect postgres:18-alpine --format '{{.RepoDigests}} {{.Architecture}} {{.Id}}'
 cd production-app/infra/docker-compose/.runtime/pimascor-demo
 docker --context orbstack compose config --quiet
 ```
@@ -110,7 +113,7 @@ Check secret access without displaying file contents:
 ```sh
 docker --context orbstack compose run --rm --no-deps --entrypoint /bin/sh api \
   -c 'test "$(id -u)" = 10001 && test -r /run/secrets/database_url'
-docker --context orbstack compose run --rm --no-deps --user 70:70 --entrypoint /bin/sh db \
+docker --context orbstack compose run --rm --no-deps --pull never --user 70:70 --entrypoint /bin/sh db \
   -c 'test "$(id -u)" = 70 && test -r /run/secrets/postgres_password'
 ```
 

@@ -72,10 +72,11 @@ the public Vite bundle.
    `chmod 600` on the Mac alone does not prove the non-root container can read
    them. Resolve the mismatch without making secret files world-readable and
    test the final setup in OrbStack.
-3. Pin the PostgreSQL major/version and image digest chosen for the demo; do
-   not use a floating `postgres:alpine` tag. Check the volume target against
-   that image's current official data-directory guidance before first start.
-   Never repoint an initialized database volume to a different major image.
+3. Use the floating `postgres:18-alpine` tag to follow maintained PostgreSQL
+   18 Alpine patch releases. Review and smoke-check each pulled image before
+   startup. Check the volume target against that image's current official
+   data-directory guidance before first start. Never repoint an initialized
+   database volume to a different major image.
 4. Keep database migration, synthetic account initialization, and demo reset
    explicit. Restarting the API must not reset business data. Preserve
    `DEPLOYMENT_TIER=demo`, secure session cookies, CSRF checks, demo-only entry,
