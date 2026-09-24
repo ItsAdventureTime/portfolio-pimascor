@@ -1,0 +1,89 @@
+# SUPERSEDED: use compose.yaml for the manual image-only OrbStack demo.
+# This draft is retained for history and must not be used for deployment.
+name: pimascor-demo-legacy
+
+services:
+  db:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_DB: pimascor
+      POSTGRES_USER: pimascor
+      POSTGRES_PASSWORD_FILE: /run/secrets/postgres_password
+      PGDATA: /var/lib/postgresql/data/pgdata
+    secrets: [postgres_password]
+    volumes:
+      - demo_postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U pimascor -d pimascor"]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+    restart: unless-stopped
+
+  api:
+    build:
+      context: ../..
+      dockerfile: infra/docker-compose/api.Containerfile.alpine
+      args:
+        VITE_BASE_PATH: /
+        VITE_API_URL: /api/v1
+        VITE_CSRF_COOKIE_NAME: bridge_ph_pimascor_demo_csrf
+        VITE_DEPLOYMENT_TIER: demo
+    environment:
+      APP_ENV: production
+      DEPLOYMENT_TIER: demo
+      APP_NAME: PIMASCOR Demo
+      DATABASE_URL_FILE: /run/secrets/database_url
+      FRONTEND_ORIGINS: '["https://pimascor.delegateops.business"]'
+      PUBLIC_APP_URL: https://pimascor.delegateops.business/
+      SESSION_COOKIE_NAME: bridge_ph_pimascor_demo_session
+      CSRF_COOKIE_NAME: bridge_ph_pimascor_demo_csrf
+      SESSION_COOKIE_SECURE: "true"
+      EMAIL_PROVIDER: resend
+      RESEND_API_KEY_FILE: /run/secrets/resend_api_key
+      EMAIL_FROM_ADDRESS: pimascor@delegateops.business
+      INCIDENT_EMAIL_ENABLED: "false"
+      DATA_EXPORT_ENABLED: "false"
+      B2_ENDPOINT_URL: https://bda73429aa949b36c5a75f8b20c4725b.r2.cloudflarestorage.com
+      B2_REGION: auto
+      B2_BUCKET: bridge-ph
+      B2_OBJECT_PREFIX: pimascor/demo
+      B2_KEY_ID_FILE: /run/secrets/b2_key_id
+      B2_APPLICATION_KEY_FILE: /run/secrets/b2_application_key
+    secrets:
+      - database_url
+      - resend_api_key
+      - b2_key_id
+      - b2_application_key
+    depends_on:
+      db:
+        condition: service_healthy
+    ports:
+      - "127.0.0.1:8081:8000"
+    tmpfs:
+      - /tmp:rw,size=512m,mode=1777
+    volumes:
+      - demo_backup_catalog:/var/lib/pimascor/backup-catalog
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/api/v1/health', timeout=2)"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
+    restart: unless-stopped
+
+volumes:
+  demo_postgres_data:
+  demo_backup_catalog:
+
+secrets:
+  postgres_password:
+    file: ./secrets/postgres_password.txt
+  database_url:
+    file: ./secrets/database_url.txt
+  resend_api_key:
+    file: ./secrets/resend_api_key.txt
+  b2_key_id:
+    file: ./secrets/b2_key_id.txt
+  b2_application_key:
+    file: ./secrets/b2_application_key.txt

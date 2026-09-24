@@ -1,0 +1,7 @@
+tunnel: REPLACE_WITH_EXISTING_TUNNEL_ID
+credentials-file: /etc/cloudflared/REPLACE_WITH_CREDENTIALS_JSON
+
+ingress:
+  - hostname: pimascor.delegateops.business
+    service: http://pimascor-demo-api:8000
+  - service: http_status:404

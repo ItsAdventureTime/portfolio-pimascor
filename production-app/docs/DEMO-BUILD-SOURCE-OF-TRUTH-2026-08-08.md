@@ -65,9 +65,11 @@ production decision explicitly changes them. Generated PDFs are delivery
 snapshots and must be regenerated before a client handoff if their wording is
 intended to describe this demo revision.
 
-## Evidence required before CDN purge
+## Evidence required before Cloudflare cache changes
 
-Run the local transfer command, then the VPS activation command in
-`docs/DEMO-VPS-DEPLOYMENT.md`. Verify the deployed commit, health endpoint,
-Admin entry, visible role switch, role-specific gates, quotation preview, and
-protected document viewer before purging mutable Bunny URLs.
+The 2026-09-24 demo hosting decision moved the demo to OrbStack and the
+existing Cloudflare Tunnel. Follow `DEMO-HOSTING-DECISION-2026-09-24.md` and
+`../infra/docker-compose/README.md`; the VPS transfer procedure is historical
+for this demo. Verify the image commit, public health endpoint, Admin entry,
+visible role switch, role-specific gates, quotation preview, and protected
+document viewer before changing any Cloudflare cache rule or purging assets.

@@ -2,6 +2,12 @@
 
 This directory is the working root for the new PIMASCOR Operational Control System.
 
+The current portfolio demo target is the Mac mini M1 with OrbStack and the
+existing Cloudflare Tunnel at `https://pimascor.delegateops.business`. Read
+`docs/DEMO-HOSTING-DECISION-2026-09-24.md` and the implementation handoff at
+the repository-root `docs/agent/HANDOFF.md` before treating in-progress
+Compose files as deployed.
+
 ## Current documents
 
 - `PLAN.md`: approved product, architecture, security, migration, testing, and delivery plan
@@ -25,6 +31,7 @@ This directory is the working root for the new PIMASCOR Operational Control Syst
 - `docs/DEMO-BUILD-SOURCE-OF-TRUTH-2026-08-08.md`: newest demo-only Admin entry and role-evaluation rules
 - `docs/SUPPORT-TICKETS.md`: production support tickets and demo simulation contract
 - `docs/DEMO-DOCUMENTATION-INDEX.md`: starting point and file map for demo-only work
+- `docs/DEMO-HOSTING-DECISION-2026-09-24.md`: current OrbStack/Tunnel decision, Cloudflare feasibility, and manual operator steps
 - `docs/CODEX-OPERATIONAL-WORKFLOW-FOUNDATION-PROMPT.md`: downloadable Codex foundation prompt for adapting the system to another industry
 - `apps/web/`: React and Vite PWA with connected Shipment Profitability, GM-controlled Billing, professional A4 printing, view-only confidential documents, and the Admin-only Bridge PH Activity Monitor
 - `apps/api/`: FastAPI application with PostgreSQL migrations, password plus email-code sign-in, API-enforced roles, GM approval gates, privacy-minimized audit/incident events, controlled payment sources, and financial workflow controls
@@ -32,7 +39,7 @@ This directory is the working root for the new PIMASCOR Operational Control Syst
 
 ## Next deliverables
 
-1. Deploy the team-demo release at `/demo/pimascor/` by following `infra/README.md`; no host Python, Node.js, npm, or PostgreSQL installation is required. The Docker Sandbox builds the API image and static PWA locally, and the existing Caddy container serves the exported files directly.
+1. Finish and validate the OrbStack Compose demo at `https://pimascor.delegateops.business` by following `infra/docker-compose/README.md`. The Docker Sandbox builds its API/PWA image; OrbStack runs the image, and the existing Cloudflare Tunnel publishes it.
 2. Review the Phase 0 specification and hosted demo with each operational owner.
 3. Record accepted changes and sign off the screen and workflow behavior.
 4. Validate Shipment Profitability plus the connected GM approval, DCS payment, Additional Budget, Liquidation, Billing/replacement/Credit Memo, Client Payment, and Request for Payment workflows with each role owner.
@@ -49,7 +56,13 @@ The application currently uses two local processes. This is development setup, n
 
 ## Deployment boundary
 
-This repository includes reviewed Containerfiles, Quadlet templates, Caddy path handlers, and a manual Fedora CoreOS runbook. Hosted deployments use no `.env` files: non-secret values stay in `.container` files and credentials are mounted from Podman secrets. The Mac-side transfer scripts build the API image and static PWA inside the Docker Sandbox, then transfer a commit-matched source and artifact bundle. The VPS performs plain artifact deployment and runtime activation; it does not compile or build. PostgreSQL 18 binds the exact `data/postgres/18/docker` directory. Caddy is the only public container. The public API uses the production security profile and Quadlet health checks. The 03:00 Asia/Manila maintenance job deletes objects below `pimascor/demo/documents/`, replaces disposable demo data locally, preserves accounts, and uses no backup restore. Production keeps separate credentials, the `pimascor/` object prefix, and the `pimascor/backups/restic/` repository.
+The current demo uses Docker Compose on OrbStack. Safe configuration stays in
+`compose.yaml`; secrets are external mounted files. PostgreSQL is private to
+the Compose network, while the API joins the existing `cloudflared-network`.
+The public endpoint and any R2 storage remain unverified until the runbook's
+runtime checks pass. The older Fedora CoreOS Quadlets, Caddy path handlers,
+VPS transfer scripts, and separate production credentials remain production
+or historical infrastructure; they are not the selected demo deployment.
 
 The current production requirements source of truth is `docs/MEETING-DECISIONS-2026-07-24.md`, followed by `docs/REQUIREMENTS-V2.md` for implementation detail. The current demo-only source of truth is `docs/DEMO-BUILD-SOURCE-OF-TRUTH-2026-08-08.md`; it supersedes older demo wording and generated handoff snapshots. The meeting record supersedes older prototype assumptions. For deployment and operational claims, follow `docs/FACTUAL-BASIS.md`; never present an unverified VPS state as completed. Historical source prompts and generated snapshots are archived under the repository-root `not-needed/` boundary and are not active guidance.
 

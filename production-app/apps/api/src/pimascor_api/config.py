@@ -83,7 +83,9 @@ class Settings(BaseSettings):
         if self.app_env == "production":
             if not self.public_app_url.startswith("https://"):
                 raise ValueError("PUBLIC_APP_URL must use HTTPS in production")
-            if self.email_provider == "development":
+            # The demo keeps production cookie/database safeguards while
+            # logging synthetic OTPs instead of requiring a real mail account.
+            if self.email_provider == "development" and self.deployment_tier != "demo":
                 raise ValueError("EMAIL_PROVIDER cannot be development in production")
             if self.email_provider == "resend" and self.resend_api_key_file is None:
                 raise ValueError("RESEND_API_KEY_FILE must reference a Podman secret")

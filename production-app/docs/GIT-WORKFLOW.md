@@ -1,11 +1,11 @@
-# Local and private Git workflow
+# Local and public portfolio Git workflow
 
-This repository contains NDA-sensitive project material. The local Git
-repository and its checked-out, reviewed `main` branch are the source of truth.
-The private GitHub repository is the synchronized remote mirror:
+This repository contains material that requires public-exposure review. The
+local Git repository and its checked-out, reviewed `main` branch are the source
+of truth. The owner-selected public demo mirror is:
 
 ```text
-https://github.com/ItsAdventureTime/bridge-pimascor.git
+https://github.com/ItsAdventureTime/portfolio-pimascor.git
 ```
 
 ## Required sequence for every tracked change
@@ -23,24 +23,24 @@ SSH GitHub remote or SSH Git transport. `gh auth setup-git
 credential helper. Authentication must still be verified with `gh auth status`;
 do not assume a machine is authenticated.
 
-Before staging, check `docs/REPOSITORY-EXPOSURE-AND-NDA.md`. Client records,
-supplied quotation PDFs, screenshots, photos, and generated handoff packets are
-allowed in the authorized private mirror. Credentials, private keys, local
-databases, and runtime output remain prohibited.
+Before staging, check `docs/REPOSITORY-EXPOSURE-AND-NDA.md`. Do not add new
+client records, supplied PDFs, photos, or generated packets to the public
+mirror. Credentials, private keys, local databases, and runtime output remain
+prohibited.
 
 1. Review the worktree and confirm the intended files are the only changes.
 2. Run the relevant local checks from `CONTRIBUTING.md`.
 3. Commit the change locally with a focused signed Conventional Commit message.
-4. Confirm `origin` still resolves to the HTTPS private repository above.
+4. Confirm `origin` resolves to the HTTPS portfolio repository above.
 5. Run `gh auth setup-git --hostname github.com`; GitHub CLI supplies the
    authenticated HTTPS credential helper used by Git operations.
 6. Push the commit to `main` without force-push, using the repository's
-   explicit private-push guard.
+   explicit portfolio-push guard.
 7. Verify GitHub authentication and the published commit with GitHub CLI.
-8. For demo changes, use the committed tree with
-   `infra/scripts/deploy-demo-vps.sh`. It builds the API image and static PWA
-   in the Docker Sandbox before transfer; then run the documented VPS
-   activation command with the commit-specific artifact paths.
+8. For demo changes, follow `DEMO-HOSTING-DECISION-2026-09-24.md` and
+   `../infra/docker-compose/README.md`. Build the combined API/PWA image in
+   the Docker Sandbox, then load and run it in OrbStack. Confirm the public
+   Tunnel route separately from Git publication.
 
 The responsibility is intentionally split: local Git creates the commit;
 GitHub CLI authenticates and verifies publication to the HTTPS remote.
@@ -53,21 +53,22 @@ that the VPS or GitHub received a release.
 Remote push output plus a GitHub CLI API verification are evidence of GitHub
 synchronization; VPS command output is required separately for deployment
 evidence. GitHub CLI supplies HTTPS credentials and verifies the mirror; local Git
-remains the commit and push transport for this private repository. `gh repo
+remains the commit and push transport for this public portfolio repository. `gh repo
 sync` is not a replacement for publishing local commits; it synchronizes a
 repository from another repository or parent branch.
 
 ### Commit authentication
 
-No SSH key or SSH signing setup is required for this project. Local Git creates
-the commit, and GitHub CLI authenticates the HTTPS remote through its credential
-helper. Verify the published commit with `gh api`; do not put credentials in a
-URL or repository file.
+Use the configured local signing key for `git commit -S`; signing format and
+Git transport are separate. GitHub CLI authenticates the HTTPS remote through
+its credential helper. Verify the published commit with `gh api`; do not put
+credentials in a URL or repository file.
 
 Removing a file from the current tree does not remove it from prior commits.
-If a confirmed secret or NDA file was committed historically, stop and use the
-approved sensitive-data-removal procedure. History rewriting requires explicit
-authorization because it changes commit IDs and may require a force push.
+If a confirmed secret or NDA file was committed historically, stop and use a
+separate owner-reviewed sensitive-data-removal procedure. History rewriting
+requires explicit authorization because it changes commit IDs and may require
+a force push.
 
 ## Exact synchronization commands
 
@@ -78,12 +79,12 @@ git add <reviewed-files>
 git commit -S -m "type(scope): concise change"
 git remote get-url origin
 git status --short
-git remote set-url origin https://github.com/ItsAdventureTime/bridge-pimascor.git
+git remote set-url origin https://github.com/ItsAdventureTime/portfolio-pimascor.git
 gh auth setup-git --hostname github.com
-PIMASCOR_ALLOW_PRIVATE_GITHUB_PUSH=1 git push origin main
+PIMASCOR_ALLOW_PORTFOLIO_GITHUB_PUSH=1 git push origin main
 gh auth status
-gh repo view ItsAdventureTime/bridge-pimascor --json nameWithOwner,isPrivate,defaultBranchRef
-gh api repos/ItsAdventureTime/bridge-pimascor/commits/main --jq .sha
+gh repo view ItsAdventureTime/portfolio-pimascor --json nameWithOwner,isPrivate,defaultBranchRef
+gh api repos/ItsAdventureTime/portfolio-pimascor/commits/main --jq .sha
 ```
 
 The remote must print the HTTPS URL shown above. Stop if it prints a different

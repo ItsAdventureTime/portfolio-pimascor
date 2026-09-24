@@ -3,13 +3,13 @@ set -eu
 
 remote_name="${1:-}"
 remote_url="${2:-}"
-approved_remote='https://github.com/ItsAdventureTime/bridge-pimascor.git'
+approved_remote='https://github.com/ItsAdventureTime/portfolio-pimascor.git'
 
 if [ "${remote_url}" != "${approved_remote}" ] ||
-   [ "${PIMASCOR_ALLOW_PRIVATE_GITHUB_PUSH:-}" != '1' ]; then
-  printf '%s\n' 'Push blocked: this NDA-covered repository permits only the explicitly approved private GitHub remote.' >&2
-  printf '%s\n' 'For the approved remote, use PIMASCOR_ALLOW_PRIVATE_GITHUB_PUSH=1 with git push.' >&2
+   [ "${PIMASCOR_ALLOW_PORTFOLIO_GITHUB_PUSH:-}" != '1' ]; then
+  printf '%s\n' 'Push blocked: only the owner-approved portfolio GitHub remote is allowed.' >&2
+  printf '%s\n' 'Review staged content for public exposure, then use PIMASCOR_ALLOW_PORTFOLIO_GITHUB_PUSH=1 with git push.' >&2
   exit 1
 fi
 
-printf 'Authorized private push: %s (%s)\n' "${remote_name}" "${remote_url}" >&2
+printf 'Authorized portfolio push: %s (%s)\n' "${remote_name}" "${remote_url}" >&2

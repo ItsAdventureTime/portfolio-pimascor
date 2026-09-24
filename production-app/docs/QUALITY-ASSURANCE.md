@@ -77,18 +77,19 @@ than an unintended primary-click navigation.
 
 ## Public demo release evidence
 
-After VPS activation and before any Bunny purge:
+After OrbStack startup and Tunnel route activation, before any Cloudflare
+cache change:
 
 1. Confirm the public health endpoint responds successfully.
-2. Record the release commit and expected fingerprinted CSS/JavaScript assets
-   printed by the VPS updater. Confirm the public `index.html` references those
-   exact assets after any required targeted Bunny purge.
+2. Record the release commit and image digest. Confirm public `index.html`
+   references the expected fingerprinted CSS/JavaScript assets.
 3. Confirm the current UI contains the deployed scrollbar and responsive fixes.
 4. Confirm Accounting Export shows separate Billing CSV and Collections CSV.
 5. Confirm the complete local-record archive message says the feature is disabled
    in the demo and does not send mail or create a download.
-6. Purge only the documented mutable URLs when the updater reports an older
-   public index, then repeat every public-route check.
+6. If Cloudflare still serves an old mutable index after image replacement,
+   purge only the affected hostname/path, then repeat every public-route
+   check. Keep API and session responses private and uncached.
 
 ## Evidence classification
 

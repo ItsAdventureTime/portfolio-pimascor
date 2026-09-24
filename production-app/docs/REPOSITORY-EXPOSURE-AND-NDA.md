@@ -1,51 +1,30 @@
 # Repository exposure and NDA boundary
 
-Effective 2026-08-08, the local Git repository is the source of truth and the
-private GitHub mirror (`ItsAdventureTime/bridge-pimascor`) is its synchronized
-cross-computer recovery copy. Private visibility is required for approved
-NDA/client material, but it is not permission to commit credentials.
+On 2026-09-24 the owner selected the public
+`ItsAdventureTime/portfolio-pimascor` repository as the demo's GitHub target.
+Both that repository and the older `ItsAdventureTime/bridge-pimascor` endpoint
+reported public visibility and the same `main` SHA during planning. Therefore
+no remote in this workflow is a private recovery copy. Verify visibility and
+SHA again before each publication; a repo name does not establish privacy.
 
-## Repository-safe content
+## Public-safe additions
 
-The remote repository may contain application source, tests, infrastructure
-definitions, synthetic demo data, deployment runbooks, design-system guidance,
-API contracts, approved NDA/client records, supplied references, screenshots,
-photos, and generated handoff packets. These materials are for this private
-mirror only and must not be published or copied into public web assets.
+Application source, tests, generic synthetic demo fixtures, and sanitized
+deployment guidance may be published after exact-path review. Do not add
+credentials, tokens, private keys, local databases, logs, runtime output,
+operator identity details, live production data, or new NDA/client records,
+photos, supplied PDFs, or generated client packets to the public mirror.
+Keep those outside public assets and new commits. Review every staged binary.
 
-## Always-excluded content
+The existing Git history already includes supplied documents and images. This
+policy does not assert they are cleared for publication, nor does it erase
+them. Removing a file in a new commit leaves previous commits, clones, and
+caches intact. If an exposed item requires removal, first classify it with
+the owner and follow a separate sensitive-data remediation plan. Rotate or
+revoke any exposed credential before considering history changes. Do not
+rewrite history or force push without explicit authorization.
 
-The following remain excluded from both local commits and the remote:
-
-- credentials, tokens, private keys, local databases, logs, runtime output, and active secrets.
-
-Client-specific files are allowed because this repository is private and
-explicitly authorized. Review every staged binary before committing.
-
-## Required checks
-
-```bash
-git status --short
-git diff --cached --check
-git diff --cached --name-only
-```
-
-Review every staged path before committing. Enable GitHub Secret Protection and
-push protection for the private repository when the plan allows it.
-
-## Historical exposure
-
-`git rm --cached` and a new commit remove a path from the current tree only.
-Earlier commits, clones, forks, pull requests, and cached GitHub objects may
-still contain it. Do not rewrite history automatically. If a confirmed secret
-was committed, revoke or rotate it first, obtain explicit authorization for a
-history rewrite, coordinate other clones, and follow GitHub's sensitive-data
-removal procedure. A rewrite changes commit IDs and requires a coordinated
-force push.
-
-## Demo handoff rule
-
-The demo deploy script transfers source/build artifacts, not the client packet.
-Keep generated handoff PDFs and supplied quotation references out of the public
-web directory and release archives, even though they are retained in this
-private Git mirror.
+Before a signed commit and push, run `git status --short`, inspect
+`git diff --cached --name-only` and `git diff --cached`, and run
+`git diff --cached --check`. The guarded push and SHA checks are in
+`POST-CHANGE-SYNC-CHECKLIST.md`.

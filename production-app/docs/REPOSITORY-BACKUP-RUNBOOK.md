@@ -1,22 +1,20 @@
-# Private repository backup and recovery
+# Repository backup and recovery
 
-This project uses the local Git repository as its source of truth and the
-private GitHub repository as a controlled continuity mirror, not as the only
-backup location. Private visibility limits access, but
-does not replace encryption, account protection, retention, or an independent
-recovery copy.
+This project uses the local Git repository as its source of truth. The
+owner-selected portfolio GitHub repository is public and is a synchronization
+target, not a confidential backup. Keep an independent encrypted recovery
+copy with appropriate access and retention.
 
 ## What belongs in GitHub
 
 Keep reviewed application source, tests, migrations, deployment definitions,
-redacted documentation, and reproducible configuration in the private
-repository. Never commit passwords, Podman secret values, VPS keys, live
+redacted documentation, and reproducible configuration in the public
+portfolio repository. Never commit passwords, Podman secret values, VPS keys, live
 databases, client records, uploaded documents, reset tokens, or unreviewed NDA
 evidence.
 
 The root `.gitignore` and `docs/REPOSITORY-EXPOSURE-AND-NDA.md` define the
-current boundary. A private repository is still a complete copy of its Git
-history for every person or service with access.
+current boundary. The public repository exposes its full Git history.
 
 ## GitHub continuity check
 
@@ -24,13 +22,13 @@ Run from the repository root:
 
 ```bash
 gh auth status
-gh repo view ItsAdventureTime/bridge-pimascor --json nameWithOwner,isPrivate,visibility,viewerPermission
+gh repo view ItsAdventureTime/portfolio-pimascor --json nameWithOwner,isPrivate,visibility,viewerPermission
 git remote get-url origin
 git rev-parse HEAD
-gh api repos/ItsAdventureTime/bridge-pimascor/commits/main --jq .sha
+gh api repos/ItsAdventureTime/portfolio-pimascor/commits/main --jq .sha
 ```
 
-The repository must report `PRIVATE`, `ADMIN` for the owner, the approved
+The repository must report `PUBLIC`, `ADMIN` for the owner, the approved
 remote, and a remote SHA equal to the local `HEAD`.
 
 ## Independent encrypted mirror
@@ -39,7 +37,7 @@ GitHub's documented mirror method preserves the Git repository and history:
 
 ```bash
 gh auth setup-git --hostname github.com
-git clone --mirror https://github.com/ItsAdventureTime/bridge-pimascor.git /secure/backup/bridge-pimascor.git
+git clone --mirror https://github.com/ItsAdventureTime/portfolio-pimascor.git /secure/backup/portfolio-pimascor.git
 ```
 
 Place that mirror on an encrypted disk or approved encrypted backup service.
@@ -56,8 +54,8 @@ approved encrypted process, with retention and access records.
 Restore into a new temporary directory, never over the active workspace:
 
 ```bash
-git clone /secure/backup/bridge-pimascor.git /secure/restore/bridge-pimascor-check
-cd /secure/restore/bridge-pimascor-check
+git clone /secure/backup/portfolio-pimascor.git /secure/restore/portfolio-pimascor-check
+cd /secure/restore/portfolio-pimascor-check
 git fsck --full
 git log -1 --oneline
 ```

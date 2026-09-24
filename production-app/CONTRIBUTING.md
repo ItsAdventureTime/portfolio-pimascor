@@ -30,19 +30,19 @@ invent a path, service state, provider configuration, or production decision.
 ## Commit and release policy
 
 - Never rewrite published `main` history or move a release tag.
-- This project uses the private HTTPS GitHub remote `https://github.com/ItsAdventureTime/bridge-pimascor.git`, authenticated through GitHub CLI.
-- Every change that modifies tracked files must be committed locally and pushed to that private HTTPS remote after local validation. Run `gh auth setup-git --hostname github.com`, use `PIMASCOR_ALLOW_PRIVATE_GITHUB_PUSH=1 git push origin main`, then verify the SHA and signature with `gh api`. Never push to an unverified remote, and never use force-push.
+- The owner-selected demo GitHub target is the public HTTPS repository `https://github.com/ItsAdventureTime/portfolio-pimascor.git`, authenticated through GitHub CLI. Check `docs/REPOSITORY-EXPOSURE-AND-NDA.md` before staging.
+- Every reviewed tracked change must be committed locally and pushed to that HTTPS remote after validation. Run `gh auth setup-git --hostname github.com`, use `PIMASCOR_ALLOW_PORTFOLIO_GITHUB_PUSH=1 git push origin main`, then verify SHA and signature with `gh api`. Never push to an unverified remote or force-push.
 - Tag an accepted release only after the demo or production validation evidence is recorded.
 - Treat secrets, personal data, live finance records, and production exports as incident-sensitive: do not commit them. If one is committed, stop distribution, rotate the affected secret or access, and use an approved remediation process rather than casually rewriting history.
-- For every demo-relevant change handoff, provide the exact one-line local
-  transfer command and exact one-line VPS activation command from
-  `docs/DEMO-VPS-DEPLOYMENT.md`, plus the checks that actually passed. Keep
-  local validation distinct from VPS activation evidence.
+- For demo changes, use `docs/DEMO-HOSTING-DECISION-2026-09-24.md` and the
+  OrbStack Compose runbook. Report local image checks, OrbStack checks, and
+  public Tunnel checks separately.
 - Do not describe a release as production-ready until the role, responsive, and
   browser-engine checks in `docs/QUALITY-ASSURANCE.md` are recorded.
 
-## Private hosted-repository controls
+## Public hosted-repository controls
 
-Keep the GitHub repository private. Where GitHub repository settings are used,
-configure a `main` ruleset that blocks force-pushes, requires passing checks and
-review, and protects workflow/security configuration with CODEOWNERS.
+Keep new client/NDA material and all secrets out of the public repository.
+Where GitHub settings are available, configure a `main` ruleset that blocks
+force-pushes, requires passing checks and review, and protects
+workflow/security configuration with CODEOWNERS.

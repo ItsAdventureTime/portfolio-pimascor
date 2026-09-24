@@ -1,10 +1,17 @@
 #!/bin/sh
 set -eu
 
-# The Quadlet starts this container only after PostgreSQL has reported healthy.
-# Fail fast if a migration is invalid; systemd will retain the failure in the
-# journal instead of hiding it behind a one-minute retry loop.
-alembic upgrade head
+# Keep runtime startup separate from maintenance commands. Existing hosted
+# runtimes retain automatic migration/reset behavior; the manual Compose demo
+# sets AUTO_MIGRATE=false and runs each initialization step explicitly.
+if [ "${AUTO_MIGRATE:-true}" = "true" ]; then
+  alembic upgrade head
+
+  if [ "${DEPLOYMENT_TIER:-}" = "demo" ]; then
+    python -m pimascor_api.demo_initializer
+    python -m pimascor_api.demo_reset
+  fi
+fi
 
 if [ "$#" -gt 0 ]; then
   exec "$@"

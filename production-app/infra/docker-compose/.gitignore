@@ -1,0 +1,3 @@
+secrets/*.txt
+cloudflared/config.yml
+cloudflared/*.json

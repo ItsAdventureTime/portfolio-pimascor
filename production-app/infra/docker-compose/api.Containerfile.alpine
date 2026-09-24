@@ -1,0 +1,42 @@
+FROM node:lts-alpine AS web-build
+
+WORKDIR /build/web
+COPY apps/web/package.json apps/web/package-lock.json ./
+RUN npm ci
+COPY apps/web/index.html apps/web/tsconfig*.json apps/web/vite.config.ts ./
+COPY apps/web/public ./public
+COPY apps/web/src ./src
+
+ARG VITE_BASE_PATH=/
+ARG VITE_API_URL=/api/v1
+ARG VITE_CSRF_COOKIE_NAME=bridge_ph_pimascor_csrf
+ARG VITE_DEPLOYMENT_TIER=production
+ENV VITE_BASE_PATH=${VITE_BASE_PATH} \
+    VITE_API_URL=${VITE_API_URL} \
+    VITE_CSRF_COOKIE_NAME=${VITE_CSRF_COOKIE_NAME} \
+    VITE_DEPLOYMENT_TIER=${VITE_DEPLOYMENT_TIER}
+RUN npm run build
+
+FROM python:alpine
+
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1 \
+    PATH=/opt/pimascor/bin:$PATH
+
+RUN addgroup -S -g 10001 pimascor \
+    && adduser -S -D -H -u 10001 -G pimascor pimascor
+
+WORKDIR /opt/pimascor
+COPY apps/api/pyproject.toml apps/api/alembic.ini ./
+COPY apps/api/migrations ./migrations
+COPY apps/api/src ./src
+COPY apps/api/container/entrypoint.sh ./bin/entrypoint
+COPY --from=web-build /build/web/dist ./web-dist
+
+RUN python -m pip install --no-cache-dir . \
+    && chmod 0555 ./bin/entrypoint \
+    && chown -R pimascor:pimascor /opt/pimascor
+
+USER pimascor
+EXPOSE 8000
+ENTRYPOINT ["/opt/pimascor/bin/entrypoint"]

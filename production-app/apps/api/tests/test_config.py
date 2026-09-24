@@ -26,6 +26,37 @@ def test_maintenance_runtime_does_not_require_api_only_secrets(tmp_path):
     assert settings.session_cookie_secure is False
 
 
+def test_demo_production_runtime_can_use_local_email_sink(tmp_path):
+    database_secret = tmp_path / "database_url"
+    database_secret.write_text("postgresql+psycopg://demo:secret@database/demo", encoding="utf-8")
+
+    settings = Settings(
+        app_env="production",
+        deployment_tier="demo",
+        database_url_file=database_secret,
+        public_app_url="https://pimascor.delegateops.business/",
+        email_provider="development",
+        session_cookie_secure=True,
+    )
+
+    assert settings.email_provider == "development"
+
+
+def test_production_runtime_rejects_local_email_sink(tmp_path):
+    database_secret = tmp_path / "database_url"
+    database_secret.write_text("postgresql+psycopg://demo:secret@database/demo", encoding="utf-8")
+
+    with pytest.raises(ValidationError, match="EMAIL_PROVIDER cannot be development in production"):
+        Settings(
+            app_env="production",
+            deployment_tier="production",
+            database_url_file=database_secret,
+            public_app_url="https://pimascor.delegateops.business/",
+            email_provider="development",
+            session_cookie_secure=True,
+        )
+
+
 def test_backblaze_configuration_is_all_or_nothing(tmp_path):
     database_secret = tmp_path / "database_url"
     database_secret.write_text("postgresql+psycopg://demo:secret@database/demo", encoding="utf-8")

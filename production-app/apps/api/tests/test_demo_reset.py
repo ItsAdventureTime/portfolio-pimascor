@@ -1,9 +1,11 @@
 from types import SimpleNamespace
 
 import pytest
-from sqlalchemy import func, select
+from sqlalchemy import delete, func, select
 
+from pimascor_api import demo_initializer
 from pimascor_api import demo_reset
+from pimascor_api.config import get_settings
 from pimascor_api.models import (
     ApprovalDecision,
     BudgetRequest,
@@ -19,7 +21,56 @@ from pimascor_api.models import (
     User,
 )
 
-from .conftest import TestingSession
+from .conftest import Base, TestingSession, test_engine
+
+
+def test_demo_initializer_creates_five_synthetic_accounts_idempotently(monkeypatch):
+    monkeypatch.setattr(demo_initializer, "SessionLocal", TestingSession)
+    monkeypatch.setattr(demo_initializer, "engine", test_engine)
+    monkeypatch.setattr(
+        demo_initializer,
+        "get_settings",
+        lambda: SimpleNamespace(deployment_tier="demo"),
+    )
+
+    with TestingSession() as db:
+        db.execute(delete(User))
+        db.commit()
+
+    demo_initializer.ensure_demo_accounts()
+    demo_initializer.ensure_demo_accounts()
+
+    with TestingSession() as db:
+        users = db.scalars(select(User).order_by(User.username)).all()
+        assert len(users) == 5
+        assert [user.username for user in users] == ["admin", "dcs", "gm", "mich", "requester"]
+        assert {user.role for user in users} == set(Role)
+        assert all(user.email.endswith("@demo.delegateops.business") for user in users)
+        assert all(user.status.value == "ACTIVE" and not user.must_set_password for user in users)
+
+
+def test_empty_demo_database_can_create_demo_session_after_initializer(monkeypatch, client):
+    """The container's cold-start initializer must run before demo entry is used."""
+    monkeypatch.setattr(demo_initializer, "SessionLocal", TestingSession)
+    monkeypatch.setattr(demo_initializer, "engine", test_engine)
+    monkeypatch.setattr(
+        demo_initializer,
+        "get_settings",
+        lambda: SimpleNamespace(deployment_tier="demo"),
+    )
+
+    Base.metadata.drop_all(test_engine)
+    demo_initializer.ensure_demo_accounts()
+
+    settings = get_settings()
+    original_tier = settings.deployment_tier
+    settings.deployment_tier = "demo"
+    try:
+        response = client.post("/api/v1/auth/demo")
+        assert response.status_code == 200, response.text
+        assert response.json()["user"]["username"] == "admin"
+    finally:
+        settings.deployment_tier = original_tier
 
 
 def test_demo_reset_builds_actionable_role_scenarios(monkeypatch):

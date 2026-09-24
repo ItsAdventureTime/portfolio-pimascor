@@ -1,5 +1,22 @@
 # PIMASCOR demo deployment
 
+## Docker Desktop on macOS
+
+The demo runs from [`docker-compose/compose.yaml`](docker-compose/compose.yaml)
+with an already-built `pimascor-demo-api:latest` image. Build and save the
+image with `jk-sbx-project`, load it into the OrbStack `orbstack` context, and
+start it manually with `docker compose up --no-build --pull never`. The API
+serves the PWA and joins the internal `pimascor-network` plus the existing
+external `cloudflared-network`; PostgreSQL remains internal. It uses two
+file-backed Compose secrets and no `.env`, Keychain, 1Password CLI, host
+ports, or second `cloudflared` container. Follow
+[`docker-compose/README.md`](docker-compose/README.md) for the complete
+step-by-step build, load, migration, reset, tunnel, rollback, and CDN guide.
+
+The old `docker-compose.yml` and `compose.demo.yml` drafts are not the demo
+runtime authority. The former describes the separate production-shaped stack;
+the latter is retained as a superseded build-and-port draft.
+
 Before following this runbook, read `../docs/FACTUAL-BASIS.md`. The commands
 describe the reviewed repository configuration; they do not prove the current
 VPS state. Verify host-specific facts with command output before modifying them.

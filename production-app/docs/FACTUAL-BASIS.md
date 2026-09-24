@@ -25,10 +25,10 @@ Never convert an inference or unknown into a command that can modify the VPS,
 database, storage, secrets, DNS, or CDN. State the missing evidence and obtain
 it first.
 
-## Confirmed VPS layout
+## Historical VPS layout (superseded for the demo)
 
-**Confirmed by owner on 30 July 2026.** These are the only application and
-Quadlet paths that the current demo deployment instructions may use:
+**Confirmed by owner on 30 July 2026.** These were the only application and
+Quadlet paths allowed for the earlier VPS demo deployment:
 
 ```text
 ~/bridge-ph/pimascor-demo
@@ -57,9 +57,9 @@ The repository provides a local SSH helper that targets only those paths:
 prove that the deletion has run. Treat deletion as unknown until the operator
 records the command output from the VPS.
 
-## Current deployment evidence boundary
+## Historical VPS deployment evidence boundary
 
-**Confirmed in the current local repository HEAD.** The demo transfer helper
+**Confirmed in the repository's earlier VPS setup.** The demo transfer helper
 stages source under `~/bridge-ph/pimascor-demo/source`; the demo updater and demo Quadlets
 use `~/bridge-ph/pimascor-demo` for runtime data; the compiled demo PWA is written to
 `~/bridge-ph/pimascor-demo/web-dist`; production backup Quadlets use
@@ -72,40 +72,26 @@ provider command output.
 
 ## Git synchronization boundary
 
-**Confirmed in the local repository configuration.** The configured `origin` is
-the private HTTPS GitHub repository
-`https://github.com/ItsAdventureTime/bridge-pimascor.git`.
-Every tracked change must be validated, committed locally, and pushed to that
-private remote. A successful push proves GitHub synchronization only; it does
-not prove VPS deployment.
+**Confirmed by owner on 2026-09-24.** The selected demo GitHub target is the
+public HTTPS repository
+`https://github.com/ItsAdventureTime/portfolio-pimascor.git`. At planning time,
+the local `origin` still pointed to `bridge-pimascor`; both endpoints reported
+the same `main` SHA and public visibility. The publisher must verify the
+current remote URL and SHA before pushing. A successful push proves GitHub
+synchronization only; it does not prove Mac, Tunnel, or VPS deployment.
 
 ## Required demo deployment handoff
 
-**Confirmed by owner on 30 July 2026; deployment workflow revised on 16 August
-2026.** Whenever a completed change affects the demo release, the handoff must
-include the local transfer command and the commit-specific VPS activation
-command below:
-
-```bash
-/Users/jk.deguzman/dev/bridge-ph_Dashboard/production-app/infra/scripts/deploy-demo-vps.sh
-```
-
-Run that command locally on the Mac. After it succeeds and after logging in,
-run the commit-specific activation command from the deployment guide. The
-transfer script prints the release commit and artifact path as facts. Its shape is:
-
-```bash
-cd ~/bridge-ph/pimascor-demo/source && ./infra/scripts/update-demo.sh --source ~/bridge-ph/pimascor-demo/source --api-image-archive ~/bridge-ph/pimascor-demo/release-artifacts/COMMIT/api-image.tar --web-dist ~/bridge-ph/pimascor-demo/release-artifacts/COMMIT/web-dist && bash ./infra/scripts/reconcile-demo-web-root.sh
-```
-
-**Confirmed in repository.** The local transfer builds the API image and static
-PWA in the Docker Sandbox, then sends the reviewed source and commit-matched
-release artifacts; it excludes local `apps/web/dist`, `node_modules`, virtual
-environments, and test data. A local check is evidence of local validation only.
-The VPS updater loads the API image and stages the PWA before it activates the
-demo. Report local and VPS evidence separately and never claim the VPS update,
-migration, restart, health check, or CDN purge completed until its command
-output is available.
+**Confirmed by owner on 2026-09-24.** The current demo target is the Mac mini
+M1 with OrbStack and the existing Cloudflare Tunnel at
+`https://pimascor.delegateops.business`. Follow
+`DEMO-HOSTING-DECISION-2026-09-24.md` and
+`../infra/docker-compose/README.md`. The older VPS transfer/activation
+instructions remain repository history but are not the current demo deployment
+path. A Docker Sandbox build proves only the image build. OrbStack command
+output proves local container startup. An external HTTPS check proves only the
+tested public route and time. Record each separately; no current runtime
+state has been verified by this planning document.
 
 ## Sales quotation printing
 

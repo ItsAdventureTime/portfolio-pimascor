@@ -6,7 +6,7 @@ files, documentation, guides, generated handoff artifacts, and repository
 configuration.
 
 The goal is to keep the working tree, active documentation, signed local Git
-history, and the private GitHub mirror synchronized.
+history, and the owner-selected public portfolio GitHub mirror synchronized.
 
 ## 1. Search current guidance before acting
 
@@ -71,10 +71,13 @@ VPS production operations and Podman Quadlets. Host-side Git, `gh`, source
 editing, and exact sandbox lifecycle commands remain allowed control-plane
 operations.
 
-For deployment changes, the local release builder must produce the API image
-archive and static PWA before transfer. The VPS updater is activation-only: it
-loads the supplied image, stages the supplied web directory, runs the required
-runtime migrations and health checks, and never calls podman build.
+For the selected OrbStack demo, build the combined API/PWA image in the Docker
+Sandbox, export it, load it into OrbStack, and verify the public Tunnel route.
+For separate VPS production changes, the local release builder must produce
+the API image archive and static PWA before transfer. The VPS updater is
+activation-only: it loads the supplied image, stages the supplied web
+directory, runs the required runtime migrations and health checks, and never
+calls podman build.
 
 For documentation-only changes, at minimum run `git diff --check`, review the
 staged diff, verify referenced files exist, and run any applicable artifact
@@ -101,10 +104,10 @@ commit, but never use an SSH Git remote or SSH Git transport for this project.
 
 ## 6. Publish through authenticated HTTPS GitHub CLI workflow
 
-The remote must remain the authorized private HTTPS repository:
+The owner-selected demo remote is the public HTTPS portfolio repository:
 
 ```text
-https://github.com/ItsAdventureTime/bridge-pimascor.git
+https://github.com/ItsAdventureTime/portfolio-pimascor.git
 ```
 
 GitHub CLI has no local commit command. Local Git creates the signed commit;
@@ -112,16 +115,17 @@ GitHub CLI has no local commit command. Local Git creates the signed commit;
 commit through the guarded push, and verifies the remote. Run:
 
 ```bash
-git remote set-url origin https://github.com/ItsAdventureTime/bridge-pimascor.git
+git remote set-url origin https://github.com/ItsAdventureTime/portfolio-pimascor.git
 gh auth setup-git --hostname github.com
 gh auth status --hostname github.com
-PIMASCOR_ALLOW_PRIVATE_GITHUB_PUSH=1 git push origin main
+PIMASCOR_ALLOW_PORTFOLIO_GITHUB_PUSH=1 git push origin main
 ```
 
-Never put tokens, passwords, private keys, or credentials in a remote URL or
-repository file. Never use `gh auth token` or `gh auth status --show-token` in
-logs or shared output. Never force-push this repository without explicit
-authorization.
+Before using the guard flag, review the exact commit for public exposure under
+`REPOSITORY-EXPOSURE-AND-NDA.md`. Never put tokens, passwords, private keys, or
+credentials in a remote URL or repository file. Never use `gh auth token` or
+`gh auth status --show-token` in logs or shared output. Never force-push this
+repository without explicit authorization.
 
 ## 7. Verify local and remote synchronization
 
@@ -130,9 +134,9 @@ commit SHA through GitHub CLI:
 
 ```bash
 gh auth status --hostname github.com
-gh repo view ItsAdventureTime/bridge-pimascor --json nameWithOwner,isPrivate,defaultBranchRef
+gh repo view ItsAdventureTime/portfolio-pimascor --json nameWithOwner,isPrivate,defaultBranchRef
 git rev-parse HEAD
-gh api repos/ItsAdventureTime/bridge-pimascor/commits/main --jq .sha
+gh api repos/ItsAdventureTime/portfolio-pimascor/commits/main --jq .sha
 git status --short --branch
 ```
 

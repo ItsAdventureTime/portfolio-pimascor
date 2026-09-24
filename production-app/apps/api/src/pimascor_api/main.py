@@ -1,12 +1,15 @@
 import asyncio
 import logging
+from pathlib import Path
 import uuid
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse
+from fastapi.responses import FileResponse, JSONResponse
+from fastapi.staticfiles import StaticFiles
+from starlette.exceptions import HTTPException as StarletteHTTPException
 
 from .config import get_settings
 from .db import Base, SessionLocal, engine
@@ -19,6 +22,19 @@ from .services.support_tickets import auto_close_stale_tickets
 
 settings = get_settings()
 logger = logging.getLogger("pimascor.api")
+FRONTEND_DIST = Path("/opt/pimascor/web-dist")
+
+
+class SPAStaticFiles(StaticFiles):
+    async def get_response(self, path: str, scope: dict):
+        try:
+            return await super().get_response(path, scope)
+        except StarletteHTTPException as exc:
+            if exc.status_code == 404 and scope["method"] in {"GET", "HEAD"} and not Path(path).suffix:
+                index = FRONTEND_DIST / "index.html"
+                if index.is_file():
+                    return FileResponse(index)
+            raise
 
 
 @asynccontextmanager
@@ -82,6 +98,19 @@ async def correlation_id(request: Request, call_next):
     response.headers["X-Content-Type-Options"] = "nosniff"
     response.headers["Referrer-Policy"] = "no-referrer"
     response.headers["Permissions-Policy"] = "camera=(), microphone=(), geolocation=()"
+    return response
+
+
+@app.middleware("http")
+async def cache_policy(request: Request, call_next):
+    response = await call_next(request)
+    path = request.url.path
+    if path.startswith(settings.api_prefix):
+        response.headers.setdefault("Cache-Control", "private, no-store, max-age=0")
+    elif path in {"/", "/index.html", "/sw.js", "/manifest.webmanifest"} or response.headers.get("content-type", "").startswith("text/html"):
+        response.headers["Cache-Control"] = "no-cache"
+    elif response.status_code == 200 and path.startswith("/assets/"):
+        response.headers["Cache-Control"] = "public, max-age=31536000, immutable"
     return response
 
 
@@ -295,3 +324,13 @@ app.include_router(backups.router, prefix=settings.api_prefix)
 app.include_router(admin_activity.router, prefix=settings.api_prefix)
 app.include_router(incidents.router, prefix=settings.api_prefix)
 app.include_router(support_tickets.router, prefix=settings.api_prefix)
+
+
+@app.api_route("/api/{path:path}", methods=["GET", "HEAD"], include_in_schema=False)
+def unknown_api_route() -> None:
+    raise HTTPException(status_code=404, detail="Not found")
+
+
+# Registered last so API routes always win, while StaticFiles provides the PWA
+# shell and its client-side routes for every non-API browser request.
+app.mount("/", SPAStaticFiles(directory=FRONTEND_DIST, html=True, check_dir=False), name="frontend")

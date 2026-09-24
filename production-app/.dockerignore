@@ -1,0 +1,31 @@
+# Keep the monorepo build context small and prevent accidental disclosure.
+.git
+.gitignore
+**/.git
+**/.gitignore
+.env
+.env.*
+**/.env
+**/.env.*
+node_modules
+**/node_modules
+__pycache__
+**/__pycache__
+*.py[cod]
+.pytest_cache
+**/.pytest_cache
+.venv
+**/.venv
+var
+**/var
+*.db
+*.sqlite3
+.DS_Store
+
+# Local deployment credentials and tunnel identity files.
+infra/docker-compose/secrets
+infra/docker-compose/cloudflared/config.yml
+infra/docker-compose/cloudflared/*.json
+
+# Existing build output is rebuilt inside the image.
+apps/web/dist

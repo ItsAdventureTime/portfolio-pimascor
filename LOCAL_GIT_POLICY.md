@@ -1,41 +1,22 @@
 # Local Git policy
 
-The local Git repository is the project's source of truth. The private GitHub
-repository is a synchronized off-device mirror, not the authority for
-uncommitted or unpublished work.
+The local repository is the working source of truth. The owner selected the
+public HTTPS portfolio mirror `https://github.com/ItsAdventureTime/portfolio-pimascor.git`
+for this demo on 2026-09-24. Do not assume GitHub visibility is private.
 
-The local Git repository is the source of truth. The owner has authorized the
-private GitHub mirror as a synchronized recovery copy, including approved
-NDA/client project materials. Credentials, access tokens, private keys, local
-databases, runtime state, and unapproved secrets remain excluded.
+After every tracked change, follow
+`production-app/docs/POST-CHANGE-SYNC-CHECKLIST.md`: review exact paths, run
+relevant checks, create a signed local commit, push through authenticated HTTPS,
+and verify the remote SHA. Use local `git` for commits and `gh` for HTTPS
+authentication and remote checks. No SSH Git remote or force push.
 
-## Default post-change rule
+The public mirror must not receive credentials, active secrets, local databases,
+runtime output, or new NDA/client material. The remote already shares history
+with the older `bridge-pimascor` repository, including previously committed
+references. Changing this policy does not remove historical exposure; any
+remediation requires a separate reviewed decision. See
+`production-app/docs/REPOSITORY-EXPOSURE-AND-NDA.md`.
 
-Every update, revision, or modification must follow
-`production-app/docs/POST-CHANGE-SYNC-CHECKLIST.md`. A change is not complete
-until the relevant documentation and guides are synchronized, applicable
-checks pass, the local commit is signed, the authorized HTTPS remote is
-published through GitHub CLI authentication, and the remote SHA is verified.
-
-- The project owner has authorized this exact private mirror: `https://github.com/ItsAdventureTime/bridge-pimascor.git`.
-- GitHub publication uses HTTPS with the GitHub CLI credential helper. Run `gh auth setup-git --hostname github.com`; do not configure an SSH GitHub remote.
-- Create signed commits with local `git commit -S`; use `gh auth setup-git` plus the guarded HTTPS push and `gh api` verification for remote synchronization. GitHub CLI does not provide a separate local `gh commit` command.
-- The configured pre-push hook blocks every other remote and requires the explicit `PIMASCOR_ALLOW_PRIVATE_GITHUB_PUSH=1` flag for this mirror.
-- Never change the remote to a public repository or push NDA material to any other service.
-- Use a private, access-controlled, encrypted backup for the working directory and Git metadata. A Git bundle can provide a portable offline copy of committed history, but it does not include uncommitted worktree changes, local configuration, hooks, or the index.
-- Review staged files and the staged diff before every commit. Never commit credentials, access tokens, private keys, local databases, runtime output, or active secrets. Client records, supplied reference PDFs, screenshots/photos, and generated handoff packets may be committed only to this exact private mirror.
-- If a secret is committed, treat it as exposed: rotate or revoke it first, then use an approved remediation process. Deleting the current file does not remove it from Git history.
-
-## Working conventions
-
-Use local `git` for `add`, signed `commit`, and history inspection. No SSH Git
-remote or SSH Git transport is allowed for this workflow. Use GitHub CLI for
-remote authentication, publication, and verification over the HTTPS origin:
-`gh auth setup-git --hostname github.com`, `gh auth status`, and
-`PIMASCOR_ALLOW_PRIVATE_GITHUB_PUSH=1 git push origin main`. Never replace the
-HTTPS GitHub remote with an SSH URL. SSH remains limited to VPS deployment.
-
-1. Keep `main` stable and create a short-lived branch for a focused change.
-2. Use small, imperative commit messages, for example `fix(api): reject invalid payment allocation`.
-3. Validate the relevant API, web, documentation, or infrastructure change before committing.
-4. Create a local annotated release tag only after the related demo or production evidence is accepted.
+The pre-push hook allows only the portfolio HTTPS URL with
+`PIMASCOR_ALLOW_PORTFOLIO_GITHUB_PUSH=1`. Check the path list and staged diff
+before using that flag. Keep user changes outside the focused commit.

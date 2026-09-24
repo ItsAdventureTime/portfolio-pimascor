@@ -21,7 +21,7 @@ demo authority, runbook sequence, generated-artifact boundary, and exclusions.
   the production-to-demo design-change protocol.
 - `UI-UX-ISSUES-2026-08-09.md` — current demo findings and production
   carry-forward fixes for menus, grids, and responsive forms.
-- `REPOSITORY-BACKUP-RUNBOOK.md` — private GitHub continuity, encrypted mirror,
+- `REPOSITORY-BACKUP-RUNBOOK.md` — public GitHub synchronization, encrypted mirror,
   restore checks, and exposure response.
 - `POST-CHANGE-SYNC-CHECKLIST.md` — required research, documentation sync,
   validation, signed commit, HTTPS publication, and remote verification flow.
@@ -58,8 +58,9 @@ demo authority, runbook sequence, generated-artifact boundary, and exclusions.
 - `../infra/scripts/` — deployment and maintenance commands.
 - `../infra/quadlet/production/` — production-only rootless Podman units.
 - `../infra/caddy/` — production Caddy fragments and reviewed configuration.
-- `../infra/quadlet/demo/` and `DEMO-VPS-DEPLOYMENT.md` — demo only; do not
-  mix with production paths or secrets.
+- `DEMO-HOSTING-DECISION-2026-09-24.md` and `../infra/docker-compose/` —
+  current OrbStack demo only; do not mix with production paths or secrets.
+  Older demo Quadlets and VPS runbook are historical deployment material.
 
 The Mac-side production release builder is
 `../infra/scripts/build-local-release.sh`; the transfer entry point is
@@ -89,8 +90,8 @@ creation; a remote SHA mismatch means the mirror is stale.
 
 ## Repository hygiene
 
-The remote repository contains source, migrations, tests, reviewed
-documentation, deployment definitions, approved reference PDFs, client-facing
-handoff material, and authorized project records for this private mirror. It
-excludes credentials, private keys, local databases, secrets, and runtime data.
-The root `.gitignore` is the prevention layer for those always-excluded files.
+The public portfolio repository contains existing history, including earlier
+reference and client-facing material. New commits must contain only reviewed
+public-safe files under `REPOSITORY-EXPOSURE-AND-NDA.md`. Credentials, private
+keys, local databases, secrets, and runtime data remain excluded. The root
+`.gitignore` is one prevention layer; staged-path review is still required.

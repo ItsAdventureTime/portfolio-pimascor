@@ -24,28 +24,34 @@ inferring behavior from screenshots.
 
 1. `DEMO-BUILD-SOURCE-OF-TRUTH-2026-08-08.md` is the controlling demo
    decision record. Newer dated demo decisions supersede it.
-2. `DEMO-VPS-DEPLOYMENT.md` is the current demo release runbook and contains
-   the approved Mac-to-VPS transfer and automatic VPS activation sequence. `infra/README.md`
-   remains a lower-level manual/bootstrap reference.
+2. `../infra/docker-compose/README.md` is the current macOS OrbStack demo
+   runbook. It covers the manual Docker Sandbox image build, image export and
+   load, Compose startup, explicit migration/seed/reset, tunnel route, CDN
+   behavior, and rollback. `DEMO-VPS-DEPLOYMENT.md` is superseded historical
+   VPS guidance and must not be used for this demo.
 3. Code, Quadlets, and scripts are the implementation evidence. Documentation
    must not claim a deployed result without recorded local or VPS evidence.
 4. `docs/reference/` contains quotation-format reference files. They inform
    dynamic rendering; they are not static application data.
 
-## Tutorial — first demo release
+## Tutorial — first macOS demo run
 
 - Read this file and the source-of-truth decision record.
 - Read `FACTUAL-BASIS.md` before treating any local, VPS, or external state as
   verified evidence.
-- Run the local transfer command in `DEMO-VPS-DEPLOYMENT.md`.
-- The deploy script performs VPS activation automatically after transfer.
-- Complete the health, Admin entry, role-workspace, quotation-preview,
-  protected-document, and cache-validation checks before CDN purge.
+- Follow `../infra/docker-compose/README.md` one command at a time.
+- Build and export the image with `jk-sbx-project`, then load it into OrbStack.
+- Run migration, account initialization, and demo reset as separate manual
+  commands before starting the API.
+- Complete the health, Admin entry, role-workspace, and quotation-preview
+  checks at `https://pimascor.delegateops.business`.
 
 ## How-to guides — operational tasks
 
-- `DEMO-VPS-DEPLOYMENT.md` — build, transfer, automatic activation, validate,
-  and targeted Bunny cache purge.
+- `../infra/docker-compose/README.md` — manual macOS Sandbox build, OrbStack
+  Compose startup, Cloudflare Tunnel route, CDN behavior, and rollback.
+- `DEMO-VPS-DEPLOYMENT.md` — superseded VPS runbook retained for historical
+  context; it is not an authority for the macOS demo.
 - `DEMO-INCIDENT-RECOVERY-PODMAN-RM.md` — recovery after broad rootless Podman
   stop/remove commands; inspect first and preserve demo data.
 - `../infra/scripts/deploy-demo-vps.sh` — Mac-side transfer entry point.
