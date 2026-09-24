@@ -163,3 +163,22 @@ guide, and this redacted status, never the runtime folder.
   the owner supplies/uses a supported OrbStack host execution path or performs
   the documented probes and initialization manually. API container name for
   the later Tunnel route: `pimascor-demo-api`.
+
+## Independent secret-access check — 2026-09-25
+
+On committed `311766c517f7093357e2f9aa6011587e4c9d43a6`, validation used
+disposable file-backed secrets in `jk-sbx-project validate`. Compose config
+passed. The `postgres:18-alpine` image pulled successfully. Container root
+could read mode `0600` files, mounted as UID/GID `1000:1000`; PostgreSQL UID
+70 and API UID 10001 could not. With disposable mode `0640` files and
+supplemental GID 1000, both UIDs could read their own mounts. The disposable
+validation volume was removed. No actual secret or OrbStack container was
+changed. The runbook now includes metadata-only OrbStack probes and keeps
+startup blocked until real non-root reads pass.
+
+Local secret pair, directory/file modes, ignored paths, and four R2
+placeholders passed recheck without printing credential contents. Public
+health still failed DNS resolution (curl exit 6). Local commit signature
+passed; GitHub main matched the local SHA but reported `unknown_key`. API/web
+tests were not repeated because source code did not change after the earlier
+passing run.

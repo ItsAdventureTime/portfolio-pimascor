@@ -117,8 +117,24 @@ docker --context orbstack compose run --rm --no-deps --pull never --user 70:70 -
   -c 'test "$(id -u)" = 70 && test -r /run/secrets/postgres_password'
 ```
 
-If the external network, required secret files, or either permission probe is
-missing or fails, stop here. Do not start services or relax secret modes.
+If the external network or a required secret is missing, stop here. If a
+permission probe fails, inspect only the mounted file's owner and mode:
+
+```sh
+docker --context orbstack compose run --rm --no-deps --entrypoint /bin/sh --user 0:0 api \
+  -c 'stat -c "%u:%g %a" /run/secrets/database_url'
+docker --context orbstack compose run --rm --no-deps --pull never --entrypoint /bin/sh --user 0:0 db \
+  -c 'stat -c "%u:%g %a" /run/secrets/postgres_password'
+```
+
+These commands print file metadata, not secret values. A disposable Docker
+Sandbox check found that mode `0600` files were mounted as UID/GID `1000:1000`:
+neither UID 10001 nor UID 70 could read them. Mode `0640` with a matching
+supplemental group worked in that Sandbox. OrbStack may map ownership
+differently. Have the implementation agent use the observed OrbStack GID to
+configure group access for each service, keep the host secret directories mode
+`0700`, and rerun both non-root probes. Stop until they pass. Never use mode
+`0644`.
 
 ## 4. Initialize and start
 
@@ -205,6 +221,7 @@ Load it and recreate only the API after checking migration compatibility.
 ## References
 
 - [Docker Compose service secrets](https://docs.docker.com/reference/compose-file/services/#secrets)
+- [Docker Compose supplemental groups](https://docs.docker.com/reference/compose-file/services/#group_add)
 - [Official PostgreSQL image](https://hub.docker.com/_/postgres)
 - [Docker image save](https://docs.docker.com/reference/cli/docker/image/save/)
 - [Cloudflare R2 S3 setup](https://developers.cloudflare.com/r2/get-started/s3/)

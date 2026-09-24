@@ -12,9 +12,10 @@ Do not add a Worker solely to host this demo.
 
 This is a hosting decision, not deployment evidence. The implementation is
 published on the public portfolio repository's `main` branch. Independent
-review found that `pimascor.delegateops.business` did not resolve in DNS. Mac
-runtime state, Tunnel routing, R2 activation, and protected document behavior
-remain unverified. Prove them before claiming a working demo.
+review found that `pimascor.delegateops.business` did not resolve in DNS.
+OrbStack has the API image and existing Tunnel network, but the demo services
+have not started. Secret access, Tunnel routing, R2 activation, and protected
+document behavior remain unverified. Prove them before sharing the demo.
 
 ### Why this path
 
@@ -70,8 +71,9 @@ the public Vite bundle.
    bind mounts, and [Compose ignores `uid`, `gid`, and `mode` overrides for
    file-backed secrets](https://docs.docker.com/reference/compose-file/services/#secrets).
    `chmod 600` on the Mac alone does not prove the non-root container can read
-   them. Resolve the mismatch without making secret files world-readable and
-   test the final setup in OrbStack.
+   them. Disposable Docker Sandbox checks found that both service UIDs could
+   not read `0600` file-backed secrets. Check OrbStack's mounted UID/GID and
+   resolve any mismatch with restrictive group access, then test there.
 3. Use the floating `postgres:18-alpine` tag to follow maintained PostgreSQL
    18 Alpine patch releases. Review and smoke-check each pulled image before
    startup. Check the volume target against that image's current official
@@ -122,11 +124,12 @@ commands are a draft, not verified operational evidence.
 4. Copy only the reviewed `compose.yaml` to the ignored
    `infra/docker-compose/.runtime/pimascor-demo/` folder in the checkout.
    Keep its generated PostgreSQL password and matching SQLAlchemy database
-   URL in separate files; use `chmod 700` on the secrets directory and
-   `chmod 600` on each file. Do not replace credentials for an existing
+   URL in separate files; use `chmod 700` on the secrets directory and start
+   with mode `0600` on each file. Do not replace credentials for an existing
    database volume. Add R2 key files only if R2 is enabled. Never display
    secret contents in logs or test output. Prove the API and database
-   containers can read their own files as their non-root users.
+   containers can read their own files as their non-root users. If `0600`
+   fails, follow the runbook's metadata and group-access checks before startup.
 5. From the runtime folder, run `docker --context orbstack compose config
    --quiet` and the non-root secret-read probe from the runbook. Start only
    `db`; wait for its health check. Run Alembic migration, demo account

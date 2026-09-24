@@ -1,9 +1,9 @@
 # PIMASCOR demo implementation handoff
 
-ACTIVE_ROLE: API image loaded into OrbStack; service startup blocked at secret-read probes
+ACTIVE_ROLE: independent review and validation; OrbStack startup blocked at secret-read probes
 NEXT_OWNER: implementation agent with an approved OrbStack Compose execution path to run the UID probes, initialize/start services, and report the API container name; independent reviewer to complete public acceptance after routing
 IMPLEMENTATION_OWNER: GPT-6 Luna (High)
-REVIEW_OWNER: GPT-6 Sol (Medium), current follow-up turn
+REVIEW_OWNER: GPT-6 Sol (High), current follow-up turn
 TARGET: `https://pimascor.delegateops.business`
 GIT_TARGET: `https://github.com/ItsAdventureTime/portfolio-pimascor.git` over HTTPS
 PUSH_CAPABILITY: signed local commit and guarded non-force push after checks
@@ -100,8 +100,8 @@ assert those edits pass tests or are deployed.
 1. Finish the existing `production-app/infra/docker-compose/compose.yaml`
    path. Keep one API image serving the built web app, one PostgreSQL service,
    a named DB volume, no host port, and the existing external
-   `cloudflared-network`. Do not create another `cloudflared` service. Pin the
-   PostgreSQL image and validate the correct volume path for that major.
+   `cloudflared-network`. Do not create another `cloudflared` service. Use the
+   owner-selected `postgres:18-alpine` tag and validate its volume path.
 2. Keep only safe non-secret values in Compose. Keep credentials in the ignored
    `.runtime/pimascor-demo/secrets/` folder and mount per service. No `.env`. Prove UID 10001
    can read API secrets and PostgreSQL can read its password with mode/ownership
@@ -301,3 +301,39 @@ files readable to other Mac users. Then complete the manual startup and R2
 checks in the updated runbook. The owner must repair DNS/Tunnel routing and
 register the existing Git signing key with GitHub. Public browser and role
 acceptance follows only after a reachable deployment.
+
+## Independent runtime review — 2026-09-25
+
+Reviewed clean `main` at `311766c517f7093357e2f9aa6011587e4c9d43a6`.
+The ignored runtime Compose copy matches tracked source. Its PostgreSQL
+password and database URL still match, both files and four R2 placeholders
+are mode `0600`, and the secrets directory is mode `0700`. Git ignores the
+runtime folder. No secret value was printed or changed. The API image and
+Compose configuration reported in the startup handoff were not reloaded.
+
+**P1 — current file permissions fail non-root reads in Docker Sandbox.** In
+`jk-sbx-project validate`, `docker compose config --quiet` passed with
+disposable secrets. The current `postgres:18-alpine` image was pulled. A
+file-backed secret with source mode `0600` appeared inside both containers as
+UID/GID `1000:1000`, mode `600`; root could read it, but PostgreSQL UID 70 and
+API UID 10001 could not. Disposable mode `0640` files with supplemental GID
+1000 passed both non-root reads. This proves a possible group-read pattern in
+the Docker Sandbox, not OrbStack's actual UID/GID mapping. No real secret was
+chmodded, and no OrbStack service was started.
+
+Next implementation agent: use the runbook's root-only metadata probes to
+learn OrbStack's mounted UID/GID without displaying contents. If OrbStack
+shows the same mismatch, configure a service-specific supplemental group and
+restrictive group-read file mode, keeping host parent directories `0700` and
+each secret mounted only in its intended service. Recheck that other Mac users
+cannot read the files. Prove both real non-root Compose probes before startup;
+never use `0644`. Do not assume the Sandbox GID 1000 applies to OrbStack.
+
+The public health request still exits 6 (`Could not resolve host`). GitHub
+`main` matched local `311766c517f7093357e2f9aa6011587e4c9d43a6`, but its
+signature remains `unknown_key` despite local `git verify-commit` passing.
+R2 placeholders remain unmounted and document acceptance remains incomplete.
+API and web suites were not repeated because this commit changed only Compose
+image selection and documentation; the new image's secret access was tested.
+**Verdict: source configuration passes; runtime and public acceptance remain
+blocked.**
