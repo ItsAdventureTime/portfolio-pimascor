@@ -63,9 +63,9 @@ the public Vite bundle.
    `infra/docker-compose/compose.yaml` as the one canonical Compose file;
    remove or mark older drafts as superseded. Preserve all unrelated work.
 2. Keep non-secret runtime settings inside `compose.yaml`. Mount each secret
-   file only into the service that needs it. Keep the files outside the Git
-   checkout under `~/docker/portfolio/pimascor/secrets/`, with owner-only
-   directory access and restrictive file permissions. No `.env` file.
+   file only into the service that needs it. Keep the runtime copy under the
+   ignored `infra/docker-compose/.runtime/pimascor-demo/` folder, with
+   owner-only directory access and restrictive file permissions. No `.env` file.
    **Probe readability as API UID 10001.** Docker Compose file secrets are
    bind mounts, and [Compose ignores `uid`, `gid`, and `mode` overrides for
    file-backed secrets](https://docs.docker.com/reference/compose-file/services/#secrets).
@@ -118,13 +118,14 @@ commands are a draft, not verified operational evidence.
    `docker --context orbstack image load --input <archive>`. OrbStack and the
    Docker Sandbox are separate image stores. Record the image's commit and
    architecture before loading it.
-4. Copy only the reviewed `compose.yaml` to
-   `~/docker/portfolio/pimascor/compose.yaml`. Create its `secrets/` folder
-   outside the checkout. Set the PostgreSQL password and matching SQLAlchemy
-   database URL in separate files; use `chmod 700` on the secrets directory
-   and `chmod 600` on each file. Add R2 key files only if R2 is enabled. Never
-   display secret contents in logs or test output. Use the executor's proven
-   ownership/readability method for the non-root API and database containers.
+4. Copy only the reviewed `compose.yaml` to the ignored
+   `infra/docker-compose/.runtime/pimascor-demo/` folder in the checkout.
+   Keep its generated PostgreSQL password and matching SQLAlchemy database
+   URL in separate files; use `chmod 700` on the secrets directory and
+   `chmod 600` on each file. Do not replace credentials for an existing
+   database volume. Add R2 key files only if R2 is enabled. Never display
+   secret contents in logs or test output. Prove the API and database
+   containers can read their own files as their non-root users.
 5. From the runtime folder, run `docker --context orbstack compose config
    --quiet` and the non-root secret-read probe from the runbook. Start only
    `db`; wait for its health check. Run Alembic migration, demo account

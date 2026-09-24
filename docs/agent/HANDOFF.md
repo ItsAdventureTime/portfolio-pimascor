@@ -1,7 +1,7 @@
 # PIMASCOR demo implementation handoff
 
-ACTIVE_ROLE: independent source review complete; public acceptance blocked by runtime prerequisites
-NEXT_OWNER: project owner to provide runtime/DNS/R2 configuration and register the GitHub signing key; implementation agent to activate and verify the demo; independent reviewer to complete public acceptance
+ACTIVE_ROLE: local runtime secrets prepared; OrbStack and public acceptance still unverified
+NEXT_OWNER: implementation agent to finish optional R2 wiring and OrbStack checks after owner supplies Cloudflare details; independent reviewer to complete public acceptance
 IMPLEMENTATION_OWNER: GPT-6 Luna (High)
 REVIEW_OWNER: GPT-6 Sol (Medium), current follow-up turn
 TARGET: `https://pimascor.delegateops.business`
@@ -59,8 +59,8 @@ assert those edits pass tests or are deployed.
    a named DB volume, no host port, and the existing external
    `cloudflared-network`. Do not create another `cloudflared` service. Pin the
    PostgreSQL image and validate the correct volume path for that major.
-2. Keep only safe non-secret values in Compose. Keep credentials in ignored
-   files outside the checkout and mount per service. No `.env`. Prove UID 10001
+2. Keep only safe non-secret values in Compose. Keep credentials in the ignored
+   `.runtime/pimascor-demo/secrets/` folder and mount per service. No `.env`. Prove UID 10001
    can read API secrets and PostgreSQL can read its password with mode/ownership
    that does not expose them to other Mac users. Compose file secrets do not
    remap UID/GID; do not solve this with `chmod 644`.
@@ -225,3 +225,36 @@ private R2 configuration and test upload, protected range view, delete, and
 reset cleanup before claiming it works. Record exact commands and results in
 `HANDOFF.notes.md`; hand public URL, role, browser, and cache acceptance to
 an independent reviewer. Resolve GitHub's signing-key registration separately.
+
+## Runtime preparation and remaining work — 2026-09-25
+
+- Created `production-app/infra/docker-compose/.runtime/pimascor-demo/` in
+  the workspace. It contains the current Compose copy, a newly generated
+  64-character hexadecimal PostgreSQL password, and a matching database URL.
+  The secrets directory is mode `0700`; both credential files are mode `0600`.
+  A local check confirmed the URL and password match without printing either.
+  Git ignores the entire runtime folder, and the Docker build context excludes
+  it. Existing legacy files under `infra/docker-compose/secrets/` were left
+  untouched. The generated pair is for a fresh DB volume only.
+- Four R2 input placeholders sit in the ignored runtime secrets directory.
+  They are not mounted. The owner must supply a private R2 bucket, scoped S3
+  access key pair, and account endpoint. Current Compose and application
+  storage validation still need demo-specific R2 wiring before document
+  acceptance can pass. Preserve the production B2 settings.
+- Updated the public Compose guide with workspace-local secret preparation,
+  image transfer, volume and UID checks, Tunnel routing, public checks, and
+  rollback. The hosting decision points to the same runtime folder.
+- Public `/api/v1/health` still fails DNS resolution (curl exit 6). OrbStack
+  volume, network, image, and secret mounts have not been inspected. The host
+  Docker control commands were rejected by the execution boundary, which
+  requires project Docker work through `jk-sbx-project`; its isolated
+  validation lane cannot inspect OrbStack. No startup or deployment occurred.
+
+Next implementation checks: first inspect whether
+`pimascor-demo_demo_postgres_data` already exists. If it does, do not start
+PostgreSQL with the new password until credentials and data are reconciled.
+Prove Compose can mount each secret for UID 10001 and UID 70 without making
+files readable to other Mac users. Then complete the manual startup and R2
+checks in the updated runbook. The owner must repair DNS/Tunnel routing and
+register the existing Git signing key with GitHub. Public browser and role
+acceptance follows only after a reachable deployment.

@@ -120,3 +120,23 @@ deployment claim is supported.
 3. If document flows are required, activate R2 and provide a private bucket
    with a bucket-scoped Object Read & Write S3 token; then configure and test
    multipart upload, protected range reads, delete, and reset cleanup.
+
+## Workspace runtime preparation — 2026-09-25
+
+The reviewer created an ignored runtime folder at
+`production-app/infra/docker-compose/.runtime/pimascor-demo/`. A fresh
+PostgreSQL password and matching database URL were generated there. A local
+check confirmed a 64-character hexadecimal password, matching URL fields,
+directory mode `0700`, and secret-file mode `0600`, without logging values.
+The Compose copy matches the tracked source. Four unmounted R2 placeholders
+identify manual Cloudflare inputs. Existing legacy secret files were not
+changed. Do not use the new credentials against an existing DB volume until
+its current password and data are accounted for.
+
+Git ignore checks pass for the runtime Compose copy and generated secrets.
+The public health request again failed with curl exit 6 because the hostname
+does not resolve. OrbStack Docker commands were rejected by the host execution
+boundary; no live volume, network, UID mount, startup, or deployment evidence
+was obtained. The updated Compose runbook gives the operator the exact next
+checks. The repository's public mirror must contain only the ignore rules,
+guide, and this redacted status, never the runtime folder.

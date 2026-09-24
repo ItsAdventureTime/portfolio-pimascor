@@ -24,6 +24,7 @@ var
 
 # Local deployment credentials and tunnel identity files.
 infra/docker-compose/secrets
+infra/docker-compose/.runtime
 infra/docker-compose/cloudflared/config.yml
 infra/docker-compose/cloudflared/*.json
 

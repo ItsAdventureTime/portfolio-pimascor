@@ -31,6 +31,8 @@
 .env
 .env.*
 !.env.example
+production-app/infra/docker-compose/secrets/*.txt
+production-app/infra/docker-compose/.runtime/
 **/*.log
 *.bundle
 
