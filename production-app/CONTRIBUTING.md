@@ -13,7 +13,8 @@ invent a path, service state, provider configuration, or production decision.
 
 ## Local workflow
 
-1. Start from `main` and create one short-lived branch per focused change, such as `feat/client-payment-filter` or `fix/demo-reset-health-check`.
+1. Keep the local checkout on `main` and commit focused changes directly
+   there. Do not create or switch branches; publish only to `origin/main`.
 2. Keep commits small and use an imperative Conventional Commit-style subject, for example `fix(api): reject invalid payment allocation`.
 3. Before committing an API change, use the repository Docker Sandbox for the
    pinned environment: `jk-sbx-project exec sh -lc 'cd production-app/apps/api

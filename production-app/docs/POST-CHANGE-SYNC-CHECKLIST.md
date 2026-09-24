@@ -33,10 +33,14 @@ Before editing:
 
 1. Read the applicable project instructions and the relevant documentation
    index.
-2. Inspect the current worktree, branch, remote URL, and existing user changes.
-3. Preserve unrelated modifications. Do not stage or overwrite them.
-4. Do not read, search, analyze, quote, or use `not-needed/` material.
-5. Do not edit or stage
+2. Confirm `git branch --show-current` is `main`; this repository uses the
+   `main` branch locally and remotely. Do not create or switch to a feature,
+   release, or work branch. Publish only to `origin/main`.
+3. Inspect the current worktree, remote URL, and existing user changes. Confirm
+   remote `main` has not moved unexpectedly before publication.
+4. Preserve unrelated modifications. Do not stage or overwrite them.
+5. Do not read, search, analyze, quote, or use `not-needed/` material.
+6. Do not edit or stage
    `production-app/docs/CHATGPT-PIMASCOR-PRODUCTION-HANDOFF-CONTEXT-PROMPT.md`.
 
 ## 3. Synchronize documentation and implementation

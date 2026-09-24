@@ -8,6 +8,15 @@ of truth. The owner-selected public demo mirror is:
 https://github.com/ItsAdventureTime/portfolio-pimascor.git
 ```
 
+## Main-only branch policy
+
+Keep the local checkout on `main` and publish only to `origin/main`. Create
+focused commits directly on local `main`; do not create or switch to feature,
+release, or work branches for this repository. Before editing and before
+publication, confirm `git branch --show-current` is `main` and that remote
+`main` has not moved unexpectedly. If either check fails, stop and reconcile
+without rewriting history.
+
 ## Required sequence for every tracked change
 
 **Default rule:** after every update, revision, or modification, follow

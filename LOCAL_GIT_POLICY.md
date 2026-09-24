@@ -4,6 +4,12 @@ The local repository is the working source of truth. The owner selected the
 public HTTPS portfolio mirror `https://github.com/ItsAdventureTime/portfolio-pimascor.git`
 for this demo on 2026-09-24. Do not assume GitHub visibility is private.
 
+Always work on `main` locally and publish to `origin/main`. Make focused
+commits directly on the local `main` branch; do not create or switch to feature
+branches for this repository. Before editing, committing, or pushing, verify
+the local branch and remote `main` state. If either is not the expected `main`
+line, stop and reconcile without rewriting history.
+
 After every tracked change, follow
 `production-app/docs/POST-CHANGE-SYNC-CHECKLIST.md`: review exact paths, run
 relevant checks, create a signed local commit, push through authenticated HTTPS,
